@@ -1,0 +1,16 @@
+# phrase => scripts that run, in order (one script = the line is NOT split)
+open gmail and open calendar => open_gmail,open_calendar
+open youtube then open github => open_youtube,open_github
+add expense 1,200.50 rent => add_expense
+random choice pizza, burger or pasta => random_choice
+search tom and jerry => search_google
+add note buy milk and eggs => note_add
+shopping add milk, eggs and bread => shopping_add
+send whatsapp to mom milk and eggs => send_whatsapp
+spent 450 on groceries milk and eggs => add_expense
+set timer 5 minutes and open youtube => set_timer
+open gmail & open calendar => open_gmail,open_calendar
+25 * 4 => calculate
+2 * 3 => calculate
+15% of 200 => calculate
+open github.com => open_website
