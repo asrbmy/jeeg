@@ -1,4 +1,4 @@
-# keywords: listening ports, open ports, ports in use, what is using port, listening, netstat, which ports, active ports, show ports
+# keywords: listening ports, open ports, ports in use, listening, netstat, which ports, active ports, show ports
 # desc: Show which programs are listening on network ports
 # category: network
 import shutil

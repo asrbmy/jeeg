@@ -1,6 +1,7 @@
 """Run an editable routine (a list of task phrases). Not a task."""
 import json
 import os
+import re
 import sys
 import time
 
@@ -37,11 +38,33 @@ def ensure_file():
     return p
 
 
-def run(key):
+def fill(step, words):
+    """Replace {args} and {1} {2} ... in one step with the words typed after the routine name."""
+    step = step.replace("{args}", " ".join(words))
+    return re.sub(r"\{(\d+)\}", lambda m: words[int(m.group(1)) - 1] if int(m.group(1)) <= len(words) else m.group(0), step)
+
+
+def needs(steps):
+    """Highest placeholder number used, and whether {args} is used."""
+    top, anyargs = 0, False
+    for s in steps:
+        s = str(s)
+        anyargs = anyargs or "{args}" in s
+        for m in re.finditer(r"\{(\d+)\}", s):
+            top = max(top, int(m.group(1)))
+    return top, anyargs
+
+
+def run(key, words=()):
     routines = load()
     steps = routines.get(key)
     if steps is None:
         fail(f"No routine called '{key}'. Known: {', '.join(sorted(routines))}")
+    top, anyargs = needs(steps)
+    words = list(words)
+    if len(words) < top or (anyargs and not words):
+        fail(f"'{key.replace('_', ' ')}' needs {max(top, 1)} extra word(s):  run routine {key.replace('_', ' ')} <word>" + (" <word>" * (top - 1) if top > 1 else ""))
+    steps = [fill(str(s), words) for s in steps]
     here = os.path.dirname(os.path.abspath(__file__))
     sys.path.insert(0, os.path.dirname(here))
     import jeeg as tr

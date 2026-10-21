@@ -1,11 +1,11 @@
-# JeeG 2.2 - How It Works
+# JeeG 2.3 - How It Works
 
 You type what you want in plain words ("open youtube", "set timer 10 minutes", "send whatsapp to mom hi").
 JeeG finds the matching script in the `scripts` folder and runs it.
 
 - Pure Python 3.9+, nothing to install. Works on Windows, macOS and Linux.
 - Light: about 16 MB of memory, about 65 ms per command, nothing running in the background (except reminders and alarms you set yourself).
-- 357 ready-made tasks. You can add your own by dropping in a file.
+- 399 ready-made tasks. You can add your own by dropping in a file.
 
 ---
 
@@ -188,6 +188,19 @@ Notes on three popular tasks:
 
 ---
 
+### New in version 2.3
+
+| Area | Examples |
+|---|---|
+| Data safety | `export data`, `import data backup.zip`, `backup status` (a gentle reminder appears if you have not backed up for a while), `export records expenses` |
+| Summaries | `weekly summary`, `monthly summary` |
+| Daily life | `water log 500 ml`, `sleep log 7 hours`, `bmi 70 kg 175 cm`, `tip 1200 10%`, `unit price 500g 45 vs 1kg 80`, `fuel cost 250 km 18 kmpl 105`, `add bill electricity 15 1200`, `upcoming bills`, `add class maths mon 9:00`, `todays classes` |
+| Time and sky | `meeting time 9 am india in london`, `sunrise delhi`, `moon phase`, `public holidays india 2026` |
+| Files and developer | `old large files`, `rename photos by date <folder>`, `compare folders a b`, `zip with password <folder>`, `file hash <file>`, `json to yaml`, `run tests`, `who uses port 3000`, `regex test`, `git contributors` |
+| Engine | `pack off <category>` / `pack on <category>`, `tips`, routines that take words (`run routine morning Asha`), closest-task suggestions, failing-task flags in `stats` |
+
+Optional extras for a few of these: `pip install pyzipper pyyaml`.
+
 ## 6. Adding your own task
 
 1. Create a file in `scripts/` named after the task, for example `open_notes_app.py`. The file name is what people will say ("open notes app"), so use words, joined by underscores.
@@ -249,7 +262,7 @@ Optional extras: `pip install pillow psutil pypdf qrcode[pil]` (screenshots, pro
 ## 9. Checking it yourself
 
     python jeeg.py selftest        every script: header, valid code, found by its own name
-    python tests/test_routing.py         over 200 phrases and multi-task lines must pick the right script
+    python tests/test_routing.py         over 250 phrases and multi-task lines must pick the right script
     python tests/test_parsers.py         the online tasks against sample API replies (no internet needed)
     python tests/test_engine.py          aliases, explain, did-you-mean, logs, installer
 
@@ -258,6 +271,6 @@ The folder includes `.github/workflows/test.yml`. If you put this project on Git
 ## 10. What was and was not tested
 
 - Routing, maths (EMI, SIP, GST and so on), dates, file, text, PDF, picture, git and personal-record tasks are tested automatically on Linux, including typo and polite-wording variants of every task name.
-- Online tasks (weather, Wikipedia, news, currency, crypto, dictionary, pincode, breach check) are tested against sample replies shaped like the real services, not the live services. If a provider changes its format, that one task will say it could not read the answer.
+- Online tasks (weather, Wikipedia, news, currency, crypto, dictionary, pincode, breach check, public holidays, exchange rates, gold price) are tested against sample replies shaped like the real services, not the live services. If a provider changes its format, that one task will say it could not read the answer.
 - Not built, on purpose: a pop-up launcher window (needs Tk, which I could not run here) and recurring scheduled tasks through cron or Windows Task Scheduler (could not be tested here). Both are best added once they can be tried on your own computer.
 - Windows- and macOS-specific parts (volume keys, startup list, installed programs, screen off, restart explorer, and similar) were written carefully but have not been run on real Windows or macOS machines here. Report any that misbehave and they are quick to fix.

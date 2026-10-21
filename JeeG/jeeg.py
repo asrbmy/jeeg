@@ -14,6 +14,7 @@ Commands (interactive or one-shot):
     alias add wa = send whatsapp to     your own short words (alias list / alias remove wa)
     explain <words>   show which tasks match and why        misses   phrases it could not match
     stats             what you use most                     doctor   check this computer
+    tips              suggest a task you have not used      pack list / pack off <category> / pack on <category>
     exit              quit
 
 Options:
@@ -48,7 +49,7 @@ import sys
 import time
 from pathlib import Path
 
-__version__ = "2.2"
+__version__ = "2.3"
 
 HERE = Path(__file__).resolve().parent
 def _state_dir() -> Path:
@@ -348,7 +349,7 @@ def resolve(query: str, entries: list[dict]):
 
 # ------------------------------------------------- your data: aliases, logs
 RESERVED = {"list", "help", "history", "again", "repeat", "redo", "reindex", "selftest", "exit", "quit", "alias",
-            "explain", "misses", "stats", "doctor", "tasks"}
+            "explain", "misses", "stats", "doctor", "tasks", "pack", "tips", "tip"}
 
 
 def _load_json(name: str, default):
@@ -455,6 +456,107 @@ def cmd_explain(q: str, entries: list[dict]) -> int:
     return 0
 
 
+
+def active(entries: list[dict]) -> list[dict]:
+    """Entries minus categories you switched off with  pack off <category>."""
+    off = set(_load_json("disabled.json", []))
+    return [e for e in entries if e["cat"] not in off] if off else entries
+
+
+def cmd_pack(q: str, entries: list[dict]) -> int:
+    parts = q.split()
+    cats: dict[str, int] = {}
+    for e in entries:
+        cats[e["cat"]] = cats.get(e["cat"], 0) + 1
+    off = set(_load_json("disabled.json", []))
+    sub = parts[1].lower() if len(parts) > 1 else "list"
+    if sub == "list":
+        for c in sorted(cats):
+            print(f"  {'off' if c in off else 'on ':<4} {c:<14}{cats[c]:>3} tasks")
+        print("Switch one with:  pack off <category>   /   pack on <category>")
+        return 0
+    if sub in {"on", "off"} and len(parts) > 2:
+        want = parts[2].lower()
+        if want == "all" and sub == "on":
+            _save_json("disabled.json", [])
+            print("All categories are on.")
+            return 0
+        if want not in cats:
+            print(f"No category '{want}'. Type 'pack list' to see them.")
+            return 1
+        if sub == "off":
+            if len(off | {want}) >= len(cats):
+                print("At least one category must stay on.")
+                return 1
+            off.add(want)
+        else:
+            off.discard(want)
+        _save_json("disabled.json", sorted(off))
+        print(f"{want}: {'off' if sub == 'off' else 'on'} ({cats[want]} tasks).")
+        return 0
+    print("Usage: pack list | pack off <category> | pack on <category> | pack on all")
+    return 1
+
+
+def cmd_tips(entries: list[dict]) -> int:
+    import random
+    used = set()
+    try:
+        for l in (STATE / "log.jsonl").read_text(encoding="utf-8").splitlines():
+            try:
+                used.add(json.loads(l)["s"])
+            except (ValueError, KeyError):
+                pass
+    except OSError:
+        pass
+    fresh = [e for e in entries if e["name"] not in used and not e["confirm"] and e["desc"]]
+    if not fresh:
+        print("You have tried every task that is safe to suggest. Type 'list' to browse.")
+        return 0
+    e = random.choice(fresh)
+    print(f"Try:  {e['name'].replace('_', ' ')}   [{e['cat']}]")
+    print(f"      {e['desc']}")
+    if e["usage"]:
+        print(f"      usage: {e['usage']}")
+    return 0
+
+
+def closest(query: str, entries: list[dict], n: int = 3) -> list[dict]:
+    """Tasks that share words with the query or look like it, best first."""
+    import difflib
+    qt = set(norm_list(query))
+    q = query.lower().strip()
+    scored = []
+    for e in entries:
+        name = e["name"].replace("_", " ")
+        s = difflib.SequenceMatcher(None, q, name).ratio()
+        pool = set(e["name_t"]) | set(e["kw_t"]) | set(e["desc_t"])
+        s += 0.25 * len(qt & pool)
+        if s > 0.45:
+            scored.append((s, e))
+    scored.sort(key=lambda x: -x[0])
+    return [e for _, e in scored[:n]]
+
+
+def nudge_backup() -> None:
+    """Once a day, mention a backup if you have personal data and have not exported it for 30 days."""
+    try:
+        mine = [f for f in STATE.iterdir() if f.name not in {"index.json", "log.jsonl", "history.jsonl", "misses.log",
+                                                              "last_backup.json", "nudge.json", "disabled.json"} and f.is_file()]
+        if not mine:
+            return
+        today = time.strftime("%Y-%m-%d")
+        if _load_json("nudge.json", {}).get("d") == today:
+            return
+        last = _load_json("last_backup.json", {}).get("t")
+        days = (time.time() - last) / 86400 if last else None
+        if days is None or days > 30:
+            _save_json("nudge.json", {"d": today})
+            print("Tip: " + ("your data has never been backed up." if days is None else f"your last backup was {int(days)} days ago.") + "  Type: export data")
+    except OSError:
+        pass
+
+
 def log_run(e: dict, rc: int, dt: float) -> None:
     _append_line("log.jsonl", json.dumps({"t": int(time.time()), "s": e["name"], "rc": rc, "dt": round(dt, 2)}))
 
@@ -497,6 +599,11 @@ def cmd_stats() -> int:
     for name, n in cnt.most_common(10):
         ts = [r["dt"] for r in rows if r["s"] == name]
         print(f"  {name.replace('_', ' '):<24}{n:>4}x   avg {sum(ts) / len(ts):.2f}s" + (f"   {fails[name]} failed" if fails[name] else ""))
+    often = [(nm, fails[nm], cnt[nm]) for nm in cnt if cnt[nm] >= 3 and fails[nm] / cnt[nm] >= 0.5]
+    if often:
+        print("Often failing (check these first):")
+        for nm, f_, c_ in sorted(often, key=lambda x: -x[1]):
+            print(f"  {nm.replace('_', ' '):<24}{f_} of {c_} runs failed")
     return 0
 
 
@@ -680,6 +787,11 @@ def run_query(query: str, entries: list[dict], opt: dict) -> int:
                 return run_query(near[0], entries, opt)
             return 3
         print("No matching task." + (f" Did you mean: {', '.join(near)}?" if near else "") + " Type 'list' to see what is available.")
+        cl = [e for e in closest(query, entries) if e["name"].replace("_", " ") not in near]
+        if cl:
+            print("Closest tasks:")
+            for e in cl:
+                print(f"  {e['name'].replace('_', ' '):<24}{e['usage'] or e['desc']}")
         return 1
     if st == "ok":
         _, e, args = hit
@@ -756,7 +868,12 @@ def handle(line: str, dirs, opt) -> int | None:
         return 0
     if low in {"exit", "quit", "q"}:
         return None
-    entries = load_index(dirs, rebuild=(low == "reindex"))
+    all_entries = load_index(dirs, rebuild=(low == "reindex"))
+    entries = active(all_entries)
+    if low == "pack" or low.startswith("pack "):
+        return cmd_pack(q, all_entries)
+    if low in {"tips", "tip"}:
+        return cmd_tips(entries)
     if low == "alias" or low.startswith("alias "):
         return cmd_alias(q, entries)
     if low == "explain" or low.startswith("explain "):
@@ -766,7 +883,7 @@ def handle(line: str, dirs, opt) -> int | None:
     if low == "stats":
         return cmd_stats()
     if low == "doctor":
-        return cmd_doctor(dirs, entries)
+        return cmd_doctor(dirs, all_entries)
     if low == "reindex":
         print(f"Indexed {len(entries)} tasks.")
         return 0
@@ -781,7 +898,7 @@ def handle(line: str, dirs, opt) -> int | None:
             print(f"  {time.strftime('%m-%d %H:%M', time.localtime(h['t']))}  {h['q']}  -> {h['s']}")
         return 0
     if low == "selftest":
-        return cmd_selftest(entries)
+        return cmd_selftest(all_entries)
     if low in {"again", "repeat", "redo"}:
         last = history_read(1)
         if not last:
@@ -837,6 +954,7 @@ def main(argv: list[str]) -> int:
         pass
     n = len(load_index(dirs))
     print(f"JeeG {__version__} - {n} tasks. Say what to do ('list' for help, 'exit' to quit).")
+    nudge_backup()
     while True:
         try:
             line = input("task> ")

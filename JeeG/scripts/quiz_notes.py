@@ -1,4 +1,4 @@
-# keywords: quiz, quiz me, quiz notes, flashcards, test myself, revision quiz, study quiz, practice questions, self test
+# keywords: quiz, quiz me, quiz notes, test myself, revision quiz, study quiz, practice questions, self test
 # desc: Quiz yourself from a notes file of 'question | answer' lines (quiz notes myfile.txt)
 # category: fun
 # usage: quiz notes [file]

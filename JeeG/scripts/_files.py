@@ -141,3 +141,9 @@ def is_text_file(path, size_limit=5 * 1024 * 1024):
             return b"\0" not in f.read(2048)
     except OSError:
         return False
+
+
+def drop_tokens(text, words):
+    """Remove whole words (not parts of paths) from text: drop_tokens('export data to backup', {'export','data'})."""
+    ws = {w.lower() for w in words}
+    return " ".join(t for t in text.split() if t.lower().strip(",.;:") not in ws)

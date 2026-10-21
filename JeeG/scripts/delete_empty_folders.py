@@ -10,7 +10,8 @@ from _lib import args_text, fail
 from _files import resolve_folder, SKIP_DIRS
 t = args_text()
 preview = bool(re.search(r"\b(preview|dry-run|dry)\b", t, re.I))
-t = re.sub(r"\b(preview|dry-run|dry|in|inside|from)\b", " ", t, flags=re.I).strip()
+from _files import drop_tokens
+t = drop_tokens(t, {"preview", "dry-run", "dry", "in", "inside", "from"})
 if not t: fail("Usage: delete empty folders <folder> [preview]   (a folder name is required)")
 root = resolve_folder(t)
 if root == Path.home().resolve() or root == Path(root.anchor):

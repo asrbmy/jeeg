@@ -26,7 +26,7 @@ Contents
 
 - A small launcher written in Python (standard library only). It has no background service and does not need an account.
 - It reads every script in `scripts/`, matches your words to a script, and runs it. A script is just a file you can open and edit.
-- 357 tasks are included across apps, websites, files, system, network, reminders, personal records, money calculators, text tools, developer tools and quick searches.
+- 399 tasks are included across apps, websites, files, system, network, reminders, personal records, money calculators, text tools, developer tools and quick searches.
 - It runs on Windows, macOS and Linux. Python 3.9 or newer is required.
 - It is quick (about 56 ms per command including Python start-up, measured on Linux) and light (about 16 MB while a command runs; nothing stays in memory between commands, except reminders and alarms you set).
 
@@ -136,6 +136,8 @@ Commands (typed at the prompt or after `jeeg.py`):
 | `misses` | Phrases that matched nothing, to teach as aliases |
 | `stats` | Which tasks you use most, how long they take, how often they fail |
 | `doctor` | Check Python, the data folder, scripts, optional tools and internet |
+| `pack list` / `pack off <category>` / `pack on <category>` | Turn whole categories of tasks off or on (for example `pack off games`). Turned-off tasks are never matched |
+| `tips` | Show one task you may not have tried yet |
 | `reindex` | Rebuild the script cache (after you edit a script's header) |
 | `selftest` | Check every script: it has a description and keywords, its code compiles, and it is found by its own name |
 | `exit` | Quit |
@@ -210,6 +212,7 @@ A routine is a named list of task phrases JeeG runs in order.
 
       "start_work_day": ["say:Starting...", "open gmail", "open calendar", "todo list"]
 
+- Routines can take words. Write `{1}`, `{2}` ... in a step, then give the words when you run it: `run routine morning Asha london`. If you give too few, JeeG stops and says how many it needs.
 - Add your own routine by adding a new key, then run it with `run routine <name>`.
 
 ### 8.4 Reminders, alarms and timers
@@ -303,6 +306,16 @@ Most accept text after the task name or use your clipboard if you give none, and
 
 ---
 
+### 8.15 New in version 2.3
+- **Data safety:** `export data [folder]` zips all your JeeG records; `import data <file.zip>` restores them (your current data is first saved in a `trash/before-import-...` folder; zips with unsafe paths are refused). `backup status` shows when you last backed up, and JeeG gently reminds you if it has been a long time. `export records expenses` writes one record type to a CSV file.
+- **Summaries:** `weekly summary` / `monthly summary` bring spending, habits, journal, to-dos, water and sleep onto one page.
+- **Health and daily life:** `water log 500 ml`, `sleep log 7.5 hours`, `bmi 70 kg 175 cm`, `calorie calculator ...`, `fuel cost 250 km 18 kmpl 105`, `tip 1200 10%`, `unit price 500g 45 vs 1kg 80`, `cooking convert 2 cups flour to grams`.
+- **Bills and classes:** `add bill electricity 15 1200`, `upcoming bills`, `remove bill ...`, `add class maths mon 9:00`, `show timetable`, `todays classes`, `remove class ...`.
+- **Time, sky and money:** `meeting time 9 am india in london`, `sunrise delhi`, `sunset mumbai`, `moon phase`, `public holidays india 2026`, `exchange rates`, `gold price` (the last three need internet).
+- **Files:** `old large files 100 mb`, `rename photos by date <folder>` (preview first), `compare folders a b`, `convert encoding old.txt`, `zip with password <folder>` (needs `pip install pyzipper`), `file hash setup.exe`, `json to yaml` / `yaml to json` (needs `pip install pyyaml`), `reading time notes.txt`, `meeting notes <title>`, `flashcards <file>`.
+- **Developer:** `run tests`, `who uses port 3000`, `regex test "a+" on "caaat"` (runs in a separate process with a time limit), `git contributors`, `git recent changes`.
+- **When nothing matches:** JeeG shows the closest tasks instead of just failing, and `stats` flags tasks that keep failing.
+
 ## 9. Teaching and checking JeeG
 
 **Aliases: your own short words**
@@ -391,6 +404,8 @@ JeeG needs nothing installed beyond Python. A few tasks use extras, and each tel
 | Brightness on Linux | `brightnessctl` |
 | Speaking text on Linux | `espeak-ng` |
 | Timezone names on Windows | `pip install tzdata` |
+| Password-protected zips | `pip install pyzipper` |
+| JSON/YAML conversion | `pip install pyyaml` |
 
 `doctor` shows which of these you already have.
 
@@ -437,9 +452,9 @@ JeeG needs nothing installed beyond Python. A few tasks use extras, and each tel
 ## 14. What has and has not been tested
 
 - Routing, maths, dates, files, text, PDF, picture, git and personal-record tasks are tested automatically on Linux. That includes typo and polite-wording variants of every task name.
-- Online tasks (weather, Wikipedia, news, currency, crypto, dictionary, pincode, breach check) were tested against sample replies shaped like the real services, not the live services. If a provider changes its format, that one task will say it could not read the answer.
+- Online tasks (weather, Wikipedia, news, currency, crypto, dictionary, pincode, breach check, public holidays, exchange rates, gold price) were tested against sample replies shaped like the real services, not the live services. If a provider changes its format, that one task will say it could not read the answer.
 - Parts that are specific to Windows or macOS (volume keys, startup list, installed programs, screen off, restart explorer and similar) were written carefully but have not been run on real Windows or macOS machines. The included `.github/workflows/test.yml` runs the test suite on all three systems if you put the project on GitHub.
-- Not included in this version: a pop-up launcher window, recurring scheduled tasks through the system scheduler, and voice input.
+- Not included in this version: a pop-up launcher window, recurring scheduled tasks through the system scheduler, remote control from a phone, and voice input.
 
 Run the checks yourself any time:
 
@@ -452,7 +467,7 @@ Run the checks yourself any time:
 
 ## 15. Appendix: every task
 
-357 tasks. In the Usage column, `<...>` is something you fill in and `[...]` is optional. A star means the task asks before running.
+399 tasks. In the Usage column, `<...>` is something you fill in and `[...]` is optional. A star means the task asks before running.
 
 
 ### ai
@@ -495,6 +510,15 @@ Run the checks yourself any time:
 | open wifi settings |  | Open Wi-Fi settings |
 | open word |  | Open Microsoft Word / a word processor |
 
+### backup
+
+| Task | Usage | What it does |
+|---|---|---|
+| backup info |  | Show when your data was last backed up and how much data you have |
+| export data | `export data [folder]` | Back up all your JeeG data (to-dos, notes, expenses, journal...) into one zip file (export data) |
+| export records | `export records <expenses\|journal\|todos\|habits\|birthdays\|notes>` | Save one list as a CSV file for Excel (export records expenses \| journal \| todos \| habits \| birthdays \| notes) |
+| import data * | `import data <backup.zip>` | Restore your data from a backup zip made by 'export data' (current data is saved first) |
+
 ### birthdays
 
 | Task | Usage | What it does |
@@ -522,21 +546,24 @@ Run the checks yourself any time:
 | create venv |  | Create a Python virtual environment (.venv) here |
 | csv preview | `csv preview <file.csv>` | Show the first rows of a CSV file as a table (csv preview data.csv) |
 | docker ps |  | List running Docker containers |
-| docker stop all \* |  | Stop all running Docker containers |
+| docker stop all * |  | Stop all running Docker containers |
 | git branch |  | List git branches |
 | git checkout | `git checkout <branch> \| git checkout new <branch>` | Switch to a git branch, or create one (git switch main, git checkout new feature-x) |
 | git clone | `git clone <url>` | Clone a repository (git clone https://github.com/user/repo) |
-| git commit \* | `git commit <message>` | Stage everything and commit (git commit fix login bug) |
+| git commit * | `git commit <message>` | Stage everything and commit (git commit fix login bug) |
+| git contributors |  | Who has committed to this git project, and how much (git contributors) |
 | git diff |  | Summarise uncommitted git changes |
 | git log |  | Show the last 10 git commits |
 | git pull |  | Pull the latest changes (fast-forward only) |
-| git push \* |  | Push commits to the remote |
+| git push * |  | Push commits to the remote |
+| git recent changes | `git recent changes [days]` | What changed in this git project recently (git recent changes, git recent changes 14 days) |
 | git stash | `git stash [pop\|list\|save <note>]` | Stash or restore uncommitted changes (git stash, git stash pop, git stash list) |
 | git status |  | Show git status of the current folder |
-| git undo commit \* |  | Undo the last commit but keep your changes (git undo last commit) |
+| git undo commit * |  | Undo the last commit but keep your changes (git undo last commit) |
 | http get | `http get <url>` | Fetch a URL and show status, headers and the start of the body (http get https://example.com) |
 | json to csv | `json to csv <file.json>` | Convert a JSON file (a list of records) to CSV (json to csv data.json) |
-| kill port \* | `kill port <number>` | Stop whatever is listening on a port (kill port 3000) |
+| json to yaml | `json to yaml <file.json>` | Convert a JSON file to YAML (json to yaml config.json) |
+| kill port * | `kill port <number>` | Stop whatever is listening on a port (kill port 3000) |
 | new project | `new project <name> [python\|node\|html\|flask]` | Create a starter project folder (new project myapp python \| node \| html \| flask) |
 | open codepen |  | Open CodePen |
 | open dockerhub | `open dockerhub <words>` | Open Docker Hub |
@@ -552,12 +579,15 @@ Run the checks yourself any time:
 | open stackoverflow | `open stackoverflow <words>` | Open Stack Overflow or search it |
 | open vscode here |  | Open the current folder in VS Code |
 | open w3schools |  | Open W3Schools |
-| pip install \* | `pip install <packages>` | Install Python packages (pip install requests) |
+| pip install * | `pip install <packages>` | Install Python packages (pip install requests) |
 | pip list |  | List installed Python packages |
 | pip outdated |  | List Python packages that have updates |
+| regex tester | `regex test "<pattern>" on "<text>"` | Try a regular expression on some text and see the matches (regex test "\d+" on "abc 123 def 45") |
+| run tests |  | Run the tests of the project in this folder (run tests): pytest, unittest, npm, go or cargo is detected |
 | serve folder | `serve folder [port]` | Serve the current folder at http://localhost:8000 |
 | show env variables | `env variables [filter]` | List environment variables (secrets hidden); add a word to filter (env variables java) |
 | show path |  | Show the folders in your PATH, one per line, marking missing ones |
+| yaml to json | `yaml to json <file.yaml>` | Convert a YAML file to JSON (yaml to json config.yaml) |
 
 ### email
 
@@ -589,14 +619,16 @@ Run the checks yourself any time:
 |---|---|---|
 | backup folder | `backup folder <folder>` | Zip a folder into ~/Backups with a timestamp (backup folder documents) |
 | bulk rename | `bulk rename <folder> replace <old> with <new>` | Rename many files at once, with a preview first (bulk rename downloads replace img with photo) |
-| clean temp files \* |  | Delete temporary files older than 24 hours |
+| clean temp files * |  | Delete temporary files older than 24 hours |
 | compare files | `compare files <a> <b>` | Compare two files: same or different, and what changed (compare files a.txt b.txt) |
+| compare folders | `compare folders <a> <b>` | Compare two folders: what is only in one, and what differs (compare folders a b) |
+| convert encoding | `convert encoding <file>` | Fix garbled text by saving a file as UTF-8 (convert encoding old.txt) |
 | copy file | `copy file <file> to <folder>` | Copy a file or folder (copy file report.pdf to desktop) |
 | copy path | `copy path of <file>` | Copy a file or folder's full path to the clipboard (copy path of report.pdf) |
 | create folder | `create folder <name>` | Create a new folder on your Desktop (create folder projects) |
-| delete empty folders \* | `delete empty folders <folder>` | Remove empty folders inside a folder (add 'preview' to just list them) |
-| delete old downloads \* | `delete old downloads [days]` | Move old files from Downloads to a safe holding folder (delete old downloads 90 days) |
-| empty trash \* |  | Empty the Recycle Bin / Trash permanently |
+| delete empty folders * | `delete empty folders <folder>` | Remove empty folders inside a folder (add 'preview' to just list them) |
+| delete old downloads * | `delete old downloads [days]` | Move old files from Downloads to a safe holding folder (delete old downloads 90 days) |
+| empty trash * |  | Empty the Recycle Bin / Trash permanently |
 | file types | `file types in <folder>` | Count files by type in a folder (file types in downloads) |
 | find duplicates | `find duplicates [folder]` | Find duplicate files in a folder (read-only report) |
 | find file | `find file <name words>` | Find files by name under your home folder (find file invoice pdf) |
@@ -606,10 +638,13 @@ Run the checks yourself any time:
 | large files | `large files [folder]` | Find the biggest files (large files downloads) |
 | move file | `move file <file> to <folder>` | Move a file or folder (move file report.pdf to documents) |
 | open last download |  | Open the newest file in Downloads |
-| organize downloads \* | `organize downloads [preview]` | Sort loose files in Downloads into folders by type (add 'preview' to just look) |
+| organize downloads * | `organize downloads [preview]` | Sort loose files in Downloads into folders by type (add 'preview' to just look) |
 | recent files |  | List recently changed files in Documents, Downloads and Desktop |
+| rename photos by date | `rename photos by date <folder> [apply]` | Rename photos to their date taken, e.g. 2026-10-21_143005.jpg (preview first; add 'apply') |
+| stale files | `old large files [size] [age] [folder]` | Find big files you have not touched for a long time (old large files 100 mb 1 year in downloads) |
 | unzip file | `unzip file <archive>` | Extract a .zip / .tar.gz safely (unzip file archive.zip) |
 | zip folder | `zip folder <folder>` | Zip a folder next to itself (zip folder projects) |
+| zip with password | `zip with password <file\|folder>` | Make a password-protected AES zip of a file or folder (the password is asked privately, not typed in the command) |
 
 ### folders
 
@@ -665,6 +700,15 @@ Run the checks yourself any time:
 | volume down | `volume down [amount]` | Lower the volume |
 | volume up | `volume up [amount]` | Raise the volume |
 
+### health
+
+| Task | Usage | What it does |
+|---|---|---|
+| bmi calculator | `bmi <weight> kg <height> cm` | Body mass index from weight and height (bmi 70 kg 175 cm, bmi 70 5 ft 9 in) |
+| calorie calculator | `calorie calculator <male\|female> <age> years <kg> kg <cm> cm [activity]` | Estimate daily calories you burn (calorie calculator male 30 years 70 kg 175 cm moderate) |
+| sleep log | `sleep log <hours> \| sleep show` | Log how long you slept and see your recent average (sleep log 7.5 hours, sleep show) |
+| water log | `water log <amount> [ml\|glasses\|bottles] \| water today \| water goal <ml>` | Log water you drank and see today's total (water log 500 ml, water log 2 glasses, water today, water goal 3000) |
+
 ### info
 
 | Task | Usage | What it does |
@@ -672,9 +716,12 @@ Run the checks yourself any time:
 | check weather | `check weather <words>` | Weather for a city (e.g. weather mumbai) |
 | daily quote |  | Show an inspiring quote |
 | define word | `meaning of <word>` | Dictionary meaning in the terminal (meaning of ephemeral); opens Google if offline |
+| moon phase |  | Today's moon phase and the next new and full moon (moon phase) |
 | news headlines | `news headlines [topic]` | Top news headlines in the terminal (news headlines, news cricket) (needs internet) |
 | pincode lookup | `pincode <PIN>` | Look up an Indian PIN code (pincode 110001) (needs internet) |
+| public holidays | `public holidays [country] [year] \| next holiday` | Public holidays for a country and year (public holidays india 2026, holidays in us) |
 | random fact |  | Show an interesting fact |
+| sunrise sunset | `sunrise [city] [tomorrow\|date]` | Sunrise, sunset and day length for a city (sunrise delhi, sunset mumbai tomorrow) |
 | tell joke |  | Tell a clean joke |
 | weather report | `weather report [city]` | Weather as text in the terminal (weather report mumbai) (needs internet) |
 | wiki summary | `wiki summary <topic>` | Short Wikipedia summary (wiki summary einstein) (needs internet) |
@@ -710,7 +757,7 @@ Run the checks yourself any time:
 | Task | Usage | What it does |
 |---|---|---|
 | shopping add | `shopping add <items>` | Add items to the shopping list (shopping add milk, eggs and bread) |
-| shopping clear \* |  | Clear the whole shopping list |
+| shopping clear * |  | Clear the whole shopping list |
 | shopping list |  | Show the shopping list |
 | shopping remove | `shopping remove <n\|name>` | Cross an item off (shopping remove 2, or shopping remove milk) |
 
@@ -739,19 +786,26 @@ Run the checks yourself any time:
 
 | Task | Usage | What it does |
 |---|---|---|
+| add bill | `add bill <name> <day> [amount]` | Remember a monthly bill's due day (add bill electricity 15 1200) |
 | add expense | `add expense <amount> <category> [note]` | Record spending (spent 450 on groceries, add expense 200 food lunch) |
 | compound interest | `compound interest <amount> <rate%> <years>` | Compound interest (compound interest 10000 7 3 years [monthly]) |
 | crypto price | `crypto price <coin>` | Live cryptocurrency price (crypto price bitcoin) (needs internet) |
 | currency convert | `currency <amount> <from> to <to>` | Live currency conversion (currency 100 usd to inr) (needs internet) |
 | discount price | `discount <price> <percent> [more %]` | Price after discount(s) (discount 2000 30% off, discount 2000 30 10) |
 | emi loan | `emi <amount> <rate%> <years>` | Loan EMI (emi 5 lakh 8.5 5 years) |
+| exchange rates | `exchange rates [base currency]` | Table of today's exchange rates against the rupee (exchange rates, exchange rates eur) |
 | expense total | `expense total [month]` | Spending totals by category (expense total, expense total last month) |
+| fuel cost | `fuel cost <km> km <mileage> kmpl <price>` | Trip fuel cost from distance, mileage and price (fuel cost 250 km 18 kmpl 105 per litre) |
 | gst amount | `gst <amount> [rate] [inclusive]` | GST add or remove (gst 1000 18, gst 1180 18 inclusive) |
 | percentage change | `percentage change <old> to <new>` | Percentage change between two numbers (percentage change 80 to 100) |
+| remove bill | `remove bill <name>` | Delete a saved bill (remove bill electricity) |
 | show expenses | `show expenses [category] [month]` | List expenses (show expenses, show expenses food, show expenses last month) |
 | sip growth | `sip <monthly> <return%> <years>` | SIP growth (sip 5000 12 10 years: monthly amount, yearly return %, years) |
 | split bill | `split bill <amount> among <n> [tip %]` | Split a bill (split bill 2400 among 4 tip 10%) |
-| undo expense \* |  | Remove the last recorded expense |
+| tip calculator | `tip <bill> [percent%] [split <people>]` | Work out a tip and split the bill (tip 1200 10%, tip 2450 12% split 4) |
+| undo expense * |  | Remove the last recorded expense |
+| unit price | `unit price <qty><unit> <price> vs <qty><unit> <price>` | Which pack is cheaper per kg or litre (unit price 500g 45 vs 1kg 80) |
+| upcoming bills | `upcoming bills [days]` | Bills due soon (upcoming bills, upcoming bills 30) |
 
 ### network
 
@@ -761,11 +815,12 @@ Run the checks yourself any time:
 | check speed |  | Test internet speed (Speedtest) |
 | check website | `check website <url>` | Check if a website is up (check website github.com) |
 | dns lookup | `dns lookup <domain>` | Look up the IP addresses of a domain |
-| flush dns \* |  | Clear the DNS cache |
+| flush dns * |  | Clear the DNS cache |
 | listening ports |  | Show which programs are listening on network ports |
 | live network speed | `live network speed [seconds]` | Watch your current download/upload speed for a few seconds (live network speed) |
 | ping host | `ping host <name or ip>` | Ping a host (ping google.com) |
 | port check | `port check <host> <port>` | Check if a port is open (port check example.com 443) |
+| port owner | `who uses port <number>` | Which program is using a port (who uses port 3000) |
 | show ip |  | Show your local and public IP address |
 | trace route | `trace route <host>` | Trace the network route to a host |
 | wifi info |  | Show the Wi-Fi network you are connected to |
@@ -776,11 +831,11 @@ Run the checks yourself any time:
 |---|---|---|
 | cancel shutdown |  | Cancel a pending shutdown or restart |
 | lock screen |  | Lock the computer |
-| log out \* |  | Sign out of the current user |
-| restart pc \* |  | Restart the computer (30 second delay, can be cancelled) |
-| schedule shutdown \* | `schedule shutdown <minutes>` | Shut down after N minutes (schedule shutdown 45 minutes) |
-| shutdown pc \* |  | Shut the computer down (30 second delay, can be cancelled) |
-| sleep pc \* |  | Put the computer to sleep |
+| log out * |  | Sign out of the current user |
+| restart pc * |  | Restart the computer (30 second delay, can be cancelled) |
+| schedule shutdown * | `schedule shutdown <minutes>` | Shut down after N minutes (schedule shutdown 45 minutes) |
+| shutdown pc * |  | Shut the computer down (30 second delay, can be cancelled) |
+| sleep pc * |  | Put the computer to sleep |
 
 ### productivity
 
@@ -792,6 +847,7 @@ Run the checks yourself any time:
 | todo clear |  | Remove finished items from the to-do list |
 | todo done | `todo done <number\|text>` | Mark a to-do done (todo done 3, or part of its text) |
 | todo list |  | Show your to-do list |
+| weekly summary | `weekly summary \| monthly summary` | One-page summary of your week or month: spending, habits, journal, to-dos, water and sleep (weekly summary, monthly summary) |
 
 ### reference
 
@@ -822,7 +878,7 @@ Run the checks yourself any time:
 | list routines |  | List your routines and their steps |
 | meeting mode |  | Routine: open Meet and your calendar (editable) |
 | night mode |  | Routine: dark mode, dim screen, low volume (editable) |
-| run routine | `run routine <name>` | Run any routine from your routines file (run routine <name>) |
+| run routine | `run routine <name> [words]` | Run any routine from your routines file (run routine <name> [words]; steps can use {1} {2} {args}) |
 | start work day |  | Routine: open mail and calendar, show your to-dos (editable) |
 | study mode |  | Routine: notes app, low volume, 25-minute study timer (editable) |
 
@@ -831,6 +887,7 @@ Run the checks yourself any time:
 | Task | Usage | What it does |
 |---|---|---|
 | cricket score | `cricket score [team]` | Open live cricket scores (cricket score india, cricket score csk) |
+| gold price | `gold price [city] \| silver price [city]` | Look up gold or silver rates (gold price, silver price delhi) |
 | search google | `search google <words>` | Search Google (or open it) |
 | search images | `search images <words>` | Search Google Images |
 | search news | `search news <words>` | Search Google News / latest headlines |
@@ -843,8 +900,9 @@ Run the checks yourself any time:
 | Task | Usage | What it does |
 |---|---|---|
 | breach check | `breach check "<password>"` | Check if a password has appeared in known data leaks (only a 5-character hash prefix is sent) |
+| file hash | `file hash <file> [expected hash]` | Show the SHA-256, SHA-1 and MD5 fingerprint of a file, to check a download (file hash setup.exe) |
 | password strength | `password strength "<password>"` | Rate how strong a password is, privately (password strength "MyPass123") |
-| shred file \* | `shred file <file>` | Overwrite a file with random data and delete it (cannot be undone) |
+| shred file * | `shred file <file>` | Overwrite a file with random data and delete it (cannot be undone) |
 
 ### shopping
 
@@ -881,21 +939,32 @@ Run the checks yourself any time:
 | send whatsapp | `send whatsapp <contact\|number> <message>` | Start a WhatsApp message to a saved contact or number (send whatsapp to mom hello) |
 | show contacts |  | List your saved contacts |
 
+### study
+
+| Task | Usage | What it does |
+|---|---|---|
+| add class | `add class <subject> <day> <time>` | Add a weekly class or lesson (add class maths mon 9:00, add class physics tue 2:30 pm room 4) |
+| flashcards | `flashcards [count] [file]` | Spaced-repetition flashcards from a 'question \| answer' file; cards you miss come back sooner (flashcards, flashcards 5 myfile.txt) |
+| reading time | `reading time <file>` | How long a text file or PDF takes to read (reading time notes.txt) |
+| remove class | `remove class <subject> [day]` | Remove a class from the timetable (remove class maths mon) |
+| show timetable |  | Show your weekly timetable |
+| todays classes | `todays classes \| tomorrows classes` | Classes you have today or tomorrow (todays classes, tomorrows classes) |
+
 ### system
 
 | Task | Usage | What it does |
 |---|---|---|
 | battery status |  | Show battery level and charging state |
-| check updates \* |  | Check which programs and system updates are waiting (does not install) |
+| check updates * |  | Check which programs and system updates are waiting (does not install) |
 | cpu temperature |  | Show processor temperature (where the computer allows it) |
 | cpu usage |  | Show current CPU load |
 | disk space |  | Show free space on your drives |
 | gpu info |  | Show graphics card details |
 | installed programs | `installed programs [name]` | List installed programs, or search them (installed programs chrome) |
 | keep awake | `keep awake [2 hours]` | Stop the computer sleeping for a while (keep awake 2 hours) |
-| kill process \* | `kill process <name>` | Close a program by name (e.g. kill process notepad) |
+| kill process * | `kill process <name>` | Close a program by name (e.g. kill process notepad) |
 | memory usage |  | Show RAM usage |
-| restart explorer \* |  | Restart Windows Explorer when the taskbar or desktop freezes |
+| restart explorer * |  | Restart Windows Explorer when the taskbar or desktop freezes |
 | running processes |  | List the programs using the most memory |
 | screen off |  | Turn the screen off without sleeping |
 | screen resolution |  | Show your screen resolution |
@@ -927,6 +996,7 @@ Run the checks yourself any time:
 |---|---|---|
 | add days | `add <n> days to <date>` | Date arithmetic (add 45 days to 1 jan 2027, 3 months from today, 10 days ago) |
 | age calculator |  | Work out an age from a birth date |
+| convert time zone | `meeting time <time> <place> in <place>[, <place>]` | Convert a meeting time between places (meeting time 9 am india in london, 3 pm new york to mumbai) |
 | date difference | `days between <date> and <date>` | Days between two dates (days between 1 jan 2027 and 25 dec 2027) |
 | days until |  | Days until a date (days until 25 dec 2026) |
 | set timer | `set timer <duration> [label]` | Countdown timer with a beep (set timer 10 minutes tea) |
@@ -964,6 +1034,7 @@ Run the checks yourself any time:
 |---|---|---|
 | calculate | `calculate <expression>` | Calculate anything (calculate 15% of 200, 12 * (3+4), sqrt 144) |
 | convert units | `convert <n> <unit> to <unit>` | Convert units offline (convert 5 km to miles, 100 f to c); falls back to Google for currency |
+| cooking convert | `cooking convert <amount> <unit> [ingredient] to <unit>` | Convert cooking measures, with grams for common ingredients (cooking convert 2 cups flour to grams) |
 | count words | `count words <text\|file>` | Count words, lines and characters in text or a file |
 | decode base64 | `decode base64 <text>` | Decode Base64 text |
 | encode base64 | `encode base64 <text>` | Base64-encode text |
@@ -982,6 +1053,12 @@ Run the checks yourself any time:
 |---|---|---|
 | open browser |  | Open the default web browser |
 | open website | `open website <address>` | Open any website (open website github.com) |
+
+### work
+
+| Task | Usage | What it does |
+|---|---|---|
+| meeting notes | `meeting notes [title]` | Create a dated meeting-notes file from a template (meeting notes weekly sync) |
 
 ### workspace
 

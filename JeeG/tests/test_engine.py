@@ -91,5 +91,42 @@ r = subprocess.run([sys.executable, str(ROOT / "install.py"), "--uninstall", "--
 r = subprocess.run([sys.executable, str(ROOT / "install.py"), "--uninstall", "--name", "jeegtest"], capture_output=True, text=True, env=env)
 check("uninstall", not list(Path(home).rglob("jeegtest*")))
 
+# ---- v2.3 features: packs, tips, routines with args, export/import
+rc, out = run("pack off backup")
+check("pack off", rc == 0 and "backup" in out.lower())
+rc, out = run("export data")
+check("disabled pack hides its tasks", "export_data.py" not in out, out[:120])
+rc, out = run("pack on backup")
+check("pack on", rc == 0)
+rc, out = run("pack list")
+check("pack list shows categories", "developer" in out and "tasks" in out)
+rc, out = run("tips")
+check("tips prints a task", rc == 0 and "Try:" in out)
+
+env2 = dict(os.environ, JEEG_HOME=tempfile.mkdtemp(), PYTHONIOENCODING="utf-8")
+def cli(*a, inp=""):
+    return subprocess.run([sys.executable, str(ROOT / "jeeg.py"), "-y", *a], capture_output=True, text=True, env=env2, input=inp, timeout=60)
+Path(env2["JEEG_HOME"]).mkdir(exist_ok=True)
+(Path(env2["JEEG_HOME"]) / "routines.json").write_text('{"morning": ["echo hello {1}"]}')
+r = cli("run routine morning")
+check("routine missing arg fails", r.returncode != 0 and "extra word" in (r.stdout + r.stderr), r.stdout + r.stderr)
+
+# export/import roundtrip
+(Path(env2["JEEG_HOME"]) / "notes.txt").write_text("remember milk\n")
+zdir = tempfile.mkdtemp()
+r = cli("export data", zdir)
+zips = list(Path(zdir).glob("*.zip"))
+check("export creates zip", r.returncode == 0 and len(zips) == 1, r.stdout + r.stderr)
+if zips:
+    (Path(env2["JEEG_HOME"]) / "notes.txt").write_text("changed\n")
+    r = cli("import data", str(zips[0]))
+    check("import restores", (Path(env2["JEEG_HOME"]) / "notes.txt").read_text() == "remember milk\n", r.stdout + r.stderr)
+    import zipfile
+    evil = Path(zdir) / "evil.zip"
+    with zipfile.ZipFile(evil, "w") as z:
+        z.writestr("../escape.txt", "x")
+    r = cli("import data", str(evil))
+    check("evil zip rejected", not (Path(zdir).parent / "escape.txt").exists())
+
 print(f"engine: {total - len(fails)}/{total} passed")
 sys.exit(1 if fails else 0)

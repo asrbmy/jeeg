@@ -8,7 +8,7 @@ from _lib import args_text, fail
 u = re.sub(r"^\s*(?:http\s+)?(?:get|fetch|request|call|test|curl)?\s*", "", args_text(), flags=re.I).strip().strip("\"'")
 if not u: fail("Usage: http get <url>")
 if not re.match(r"https?://", u, re.I): u = "https://" + u
-req = urllib.request.Request(u, headers={"User-Agent": "JeeG/2"})
+req = urllib.request.Request(u, headers={"User-Agent": "TaskRunner/2"})
 try:
     r = urllib.request.urlopen(req, timeout=10)
 except urllib.error.HTTPError as e:

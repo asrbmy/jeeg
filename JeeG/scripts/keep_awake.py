@@ -17,7 +17,7 @@ if WIN:
 elif MAC:
     spawn(["caffeinate", "-dis", "-t", str(secs)])
 elif shutil.which("systemd-inhibit"):
-    spawn(["systemd-inhibit", "--what=idle:sleep", "--who=JeeG", "--why=keep awake", "sleep", str(secs)])
+    spawn(["systemd-inhibit", "--what=idle:sleep", "--who=TaskRunner", "--why=keep awake", "sleep", str(secs)])
 else:
     fail("Needs systemd-inhibit (Linux) - not found.")
 print(f"Staying awake for {secs // 3600}h {secs % 3600 // 60}m (it ends by itself).")

@@ -71,5 +71,51 @@ check("currency ignores non-currency text", _money.currency_cli("5 km to miles")
 check("currency words map (dollars->USD, rupees->INR)", _money.code("dollars") == "USD" and _money.code("rupees") == "INR" and _money.code("foo1") is None)
 check("inr grouping", _money.inr(1234567.5) == "12,34,567.50" and _money.inr(999) == "999.00" and _money.inr(-100000) == "-1,00,000.00")
 check("numbers with suffixes", _money.numbers("5 lakh 8.5% 2 cr 50k") == [500000.0, 8.5, 20000000.0, 50000.0])
+
+# --- scripts that call _net.get directly: run them with a fake network (holidays, exchange rates, breach check)
+import hashlib, runpy, types
+def run_script(name, argv, responses):
+    fk = types.ModuleType("_net")
+    fk.get = fake(responses)
+    old = sys.modules.get("_net")
+    sys.modules["_net"] = fk
+    old_argv, sys.argv = sys.argv, [name + ".py"] + argv
+    out = io.StringIO()
+    code = 0
+    try:
+        with contextlib.redirect_stdout(out):
+            runpy.run_path(str(ROOT / "scripts" / (name + ".py")), run_name="__main__")
+    except SystemExit as e:
+        code = e.code or 0
+    finally:
+        sys.argv = old_argv
+        if old: sys.modules["_net"] = old
+    return code, out.getvalue()
+
+HOL = [{"date": "2026-01-26", "localName": "Republic Day", "name": "Republic Day", "global": True},
+       {"date": "2026-08-15", "localName": "Independence Day", "name": "Independence Day", "global": True},
+       {"date": "2026-10-02", "localName": "Gandhi Jayanti", "name": "Gandhi Jayanti", "global": True}]
+rc, o = run_script("public_holidays", ["public", "holidays", "india", "2026"], {"PublicHolidays/2026/IN": HOL})
+check("holidays list", rc == 0 and "Republic Day" in o and "Mon 26 Jan 2026" in o and "IN 2026" in o, o)
+rc, o = run_script("public_holidays", ["holidays", "india"], {})
+check("holidays offline -> clear failure", rc != 0 and "Could not fetch" in o, o)
+rc, o = run_script("public_holidays", ["holidays", "india", "2026"], {"PublicHolidays": {"unexpected": 1}})
+check("holidays odd shape -> no crash", rc != 0 and "No holiday data" in o, o)
+
+RATES = {"result": "success", "time_last_update_utc": "Tue, 20 Oct 2026 00:02:31 +0000", "rates": {"INR": 1.0, "USD": 0.0113, "EUR": 0.0098}}
+rc, o = run_script("exchange_rates", [], {"er-api": RATES})
+check("exchange rates table", rc == 0 and "1 USD = 88.4956 INR" in o and "1 EUR = 102.0408 INR" in o, o)
+rc, o = run_script("exchange_rates", [], {})
+check("exchange rates offline", rc != 0 and "Could not fetch" in o, o)
+
+h = hashlib.sha1(b"password").hexdigest().upper()
+body = "0018A45C4D1DEF81644B54AB7F969B88D65:1\r\n%s:9545824\r\n" % h[5:]
+rc, o = run_script("breach_check", ['"password"'], {"range/" + h[:5]: body})
+check("breach found", rc == 0 and "FOUND in 9,545,824" in o, o)
+rc, o = run_script("breach_check", ['"zzz-not-leaked-1"'], {"range/": "0018A45C4D1DEF81644B54AB7F969B88D65:1"})
+check("breach not found", rc == 0 and "Not found" in o, o)
+rc, o = run_script("breach_check", ['"password"'], {})
+check("breach offline", rc != 0 and "Could not reach" in o, o)
+
 print(f"parsers: {'all passed' if not fails else str(fails) + ' FAILED'}")
 sys.exit(1 if fails else 0)

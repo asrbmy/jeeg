@@ -10,7 +10,8 @@ from _files import resolve_folder, walk_files
 CODE = {".py": "Python", ".js": "JavaScript", ".ts": "TypeScript", ".jsx": "JavaScript", ".tsx": "TypeScript", ".java": "Java", ".c": "C", ".h": "C", ".cpp": "C++", ".hpp": "C++",
         ".cs": "C#", ".go": "Go", ".rs": "Rust", ".rb": "Ruby", ".php": "PHP", ".swift": "Swift", ".kt": "Kotlin", ".html": "HTML", ".css": "CSS", ".scss": "CSS",
         ".sh": "Shell", ".bat": "Batch", ".ps1": "PowerShell", ".sql": "SQL", ".json": "JSON", ".md": "Markdown", ".yml": "YAML", ".yaml": "YAML", ".r": "R", ".dart": "Dart", ".vue": "Vue"}
-folder = resolve_folder(re.sub(r"\b(in|of|for|the|folder|project)\b", " ", args_text(), flags=re.I).strip())
+from _files import drop_tokens
+folder = resolve_folder(drop_tokens(args_text(), {"in", "of", "for", "the", "folder", "project"}))
 lines, blank, files = Counter(), Counter(), Counter()
 for p, st in walk_files(folder, seconds=25):
     lang = CODE.get(os.path.splitext(p)[1].lower())

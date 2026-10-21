@@ -2,6 +2,7 @@
 # desc: Zip a folder next to itself (zip folder projects)
 # category: files
 # usage: zip folder <folder>
+# priority: 2
 from _lib import args_text, fail, human
 from _files import make_zip, resolve_folder, unique_path
 src = resolve_folder(args_text())

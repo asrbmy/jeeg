@@ -3,6 +3,7 @@
 # category: developer
 # usage: json to csv <file.json>
 # rawargs: yes
+# patterns: \bjson\b.*\b(to|into|2)\b.*\bcsv\b
 import csv, json
 from _lib import args_text, fail
 from _files import path_arg, unique_path
