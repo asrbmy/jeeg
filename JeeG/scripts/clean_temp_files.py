@@ -13,6 +13,8 @@ for entry in list(os.scandir(root)):
         st = entry.stat(follow_symlinks=False)
         if st.st_mtime > cutoff:
             continue
+        if hasattr(os, "getuid") and st.st_uid != os.getuid():
+            continue                      # never touch other users' or the system's files
         if entry.is_symlink() or entry.is_file(follow_symlinks=False):
             os.remove(entry.path); freed += st.st_size; removed += 1
         elif entry.is_dir(follow_symlinks=False):

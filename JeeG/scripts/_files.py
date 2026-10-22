@@ -19,9 +19,14 @@ def resolve_folder(text, default=None):
     t = text.strip().strip("\"'")
     if not t:
         return Path(default) if default else Path.cwd()
-    p = Path(t).expanduser()
-    if p.exists():
-        return p.resolve()
+    try:
+        p = Path(t).expanduser()
+        if p.exists():
+            if not p.is_dir():
+                fail(f"That is a file, not a folder: {p}")
+            return p.resolve()
+    except OSError:
+        fail("That is not a usable folder name.")
     for w in re.findall(r"[a-z]+", t.lower()):
         for n in KNOWN.get(w, ()):
             q = Path.home() / n

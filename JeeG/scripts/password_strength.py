@@ -35,7 +35,7 @@ if len(pw) < 8: notes.append("is short (use 12 or more characters)")
 if len(set(pw)) < max(3, len(pw) // 3): bits *= 0.8; notes.append("uses very few different characters")
 bits = max(bits, 0)
 label = "very weak" if bits < 28 else "weak" if bits < 36 else "fair" if bits < 60 else "strong" if bits < 80 else "very strong"
-secs = 2 ** bits / 1e10 / 2          # average, offline attack at 10 billion guesses per second
+secs = 2 ** min(bits, 1000) / 1e10 / 2          # average, offline attack at 10 billion guesses per second
 def span(s):
     for n, u in ((31557600, "years"), (86400, "days"), (3600, "hours"), (60, "minutes")):
         if s >= n: return f"{s / n:,.0f} {u}" if s / n < 1e12 else "longer than the age of the universe"

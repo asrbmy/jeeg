@@ -6,7 +6,7 @@
 import random, re
 from _lib import args_text, fail
 nums = [int(x) for x in re.findall(r"-?\d+", args_text())]
-lo, hi = (1, 100) if not nums else (1, nums[0]) if len(nums) == 1 else sorted(nums[:2])
+lo, hi = (1, 100) if not nums else tuple(sorted((1, nums[0]))) if len(nums) == 1 else sorted(nums[:2])
 if hi - lo > 10**12:
     fail("Range too large.")
 print(random.SystemRandom().randint(lo, hi), f"  (between {lo} and {hi})")

@@ -29,7 +29,11 @@ elif tarfile.is_tarfile(src):
         members = tf.getmembers()
         if any(not safe(m.name) or m.issym() or m.islnk() or m.isdev() for m in members):
             fail("Archive contains unsafe entries; refusing to extract.")
-        dest.mkdir(); tf.extractall(dest); n = len(members)
+        if sum(m.size for m in members if m.isfile()) > 20 * 1024 ** 3: fail("Archive expands to more than 20 GB; refusing.")
+        dest.mkdir()
+        try: tf.extractall(dest, filter="data")
+        except TypeError: tf.extractall(dest)          # older Python without extraction filters
+        n = len(members)
 else:
     fail("Not a supported archive (.zip, .tar, .tar.gz, .tgz).")
 print(f"Extracted {n} item(s) -> {dest}")

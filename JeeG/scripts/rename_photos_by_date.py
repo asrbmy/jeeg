@@ -45,4 +45,6 @@ tmp = []
 for i, (a, b, _) in enumerate(plan):
     t1 = a.with_name(f".jg_tmp_{os.getpid()}_{i}"); os.rename(a, t1); tmp.append((t1, b))
 for t1, b in tmp: os.rename(t1, b)
-print(f"Renamed {len(plan)} file(s).")
+from _undo import record
+record("rename photos", [(a, b) for a, b, _ in plan])
+print(f"Renamed {len(plan)} file(s). Type  undo  to put the names back.")

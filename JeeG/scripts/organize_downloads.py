@@ -20,6 +20,7 @@ PARTIAL = {".crdownload", ".part", ".tmp", ".download", ".partial", ".opdownload
 preview = "preview" in args_text().lower().split()
 folder = user_dir("Downloads")
 moved = {}
+done_moves = []
 for f in sorted(folder.iterdir()):
     if not f.is_file() or f.is_symlink() or f.name.startswith("."):
         continue
@@ -33,7 +34,10 @@ for f in sorted(folder.iterdir()):
     print(f"  {f.name}  ->  {cat}/")
     if not preview:
         dest.parent.mkdir(exist_ok=True)
-        shutil.move(str(f), str(dest))
+        shutil.move(str(f), str(dest)); done_moves.append((f, dest))
     moved[cat] = moved.get(cat, 0) + 1
 n = sum(moved.values())
+if done_moves:
+    from _undo import record
+    record("organise downloads", done_moves)
 print(f"{'Would move' if preview else 'Moved'} {n} file(s)." + ("" if n else " Nothing to organise."))

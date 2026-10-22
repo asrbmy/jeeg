@@ -49,7 +49,7 @@ import sys
 import time
 from pathlib import Path
 
-__version__ = "2.3"
+__version__ = "2.4.1"
 
 HERE = Path(__file__).resolve().parent
 def _state_dir() -> Path:
@@ -62,6 +62,18 @@ def _state_dir() -> Path:
 
 
 STATE = _state_dir()
+
+
+def _ensure_state() -> None:
+    """Create the data folder, readable only by you (your notes, journal and history are private)."""
+    STATE.mkdir(parents=True, exist_ok=True)
+    if os.name == "posix":
+        try:
+            if STATE.stat().st_mode & 0o077 and STATE.stat().st_uid == os.getuid():
+                STATE.chmod(0o700)
+        except OSError:
+            pass
+
 IS_WIN = os.name == "nt"
 
 RUNNERS = {
@@ -157,6 +169,7 @@ def script_dirs(cli_dirs: list[str]) -> list[Path]:
     cands = list(cli_dirs)
     cands += [d for d in os.environ.get("TASK_SCRIPTS_DIR", "").split(os.pathsep) if d]
     cands += [str(HERE / "scripts")]
+    cands += [str(STATE / "plugins")]
     seen, out = set(), []
     for c in cands:
         p = Path(c).expanduser()
@@ -203,7 +216,7 @@ def load_index(dirs: list[Path], rebuild: bool = False) -> list[dict]:
             names.add(p.stem.lower())
     if changed or set(files) != set(cache):
         try:
-            STATE.mkdir(parents=True, exist_ok=True)
+            _ensure_state()
             cache_file.write_text(json.dumps({"v": INDEX_VERSION, "files": files}), encoding="utf-8")
         except OSError:
             pass
@@ -349,7 +362,7 @@ def resolve(query: str, entries: list[dict]):
 
 # ------------------------------------------------- your data: aliases, logs
 RESERVED = {"list", "help", "history", "again", "repeat", "redo", "reindex", "selftest", "exit", "quit", "alias",
-            "explain", "misses", "stats", "doctor", "tasks", "pack", "tips", "tip"}
+            "explain", "misses", "stats", "doctor", "tasks", "pack", "tips", "tip", "plugins", "plugin"}
 
 
 def _load_json(name: str, default):
@@ -360,7 +373,7 @@ def _load_json(name: str, default):
 
 
 def _save_json(name: str, data) -> None:
-    STATE.mkdir(parents=True, exist_ok=True)
+    _ensure_state()
     tmp = STATE / (name + ".tmp")
     tmp.write_text(json.dumps(data, indent=1, ensure_ascii=False), encoding="utf-8")
     os.replace(tmp, STATE / name)
@@ -368,7 +381,7 @@ def _save_json(name: str, data) -> None:
 
 def _append_line(name: str, line: str, keep: int = 300, limit: int = 300_000) -> None:
     try:
-        STATE.mkdir(parents=True, exist_ok=True)
+        _ensure_state()
         f = STATE / name
         with open(f, "a", encoding="utf-8") as fh:
             fh.write(line.replace("\n", " ") + "\n")
@@ -461,6 +474,19 @@ def active(entries: list[dict]) -> list[dict]:
     """Entries minus categories you switched off with  pack off <category>."""
     off = set(_load_json("disabled.json", []))
     return [e for e in entries if e["cat"] not in off] if off else entries
+
+
+def cmd_plugins(entries: list[dict]) -> int:
+    d = STATE / "plugins"
+    mine = [e for e in entries if Path(e["path"]).resolve().parent == d.resolve()] if d.is_dir() else []
+    print(f"Plugin folder: {d}")
+    print("Put extra task scripts there (same header format as the built-in ones) and they are found automatically.")
+    print("Plugins are ordinary Python programs that run with your permissions: only add ones you trust.")
+    if not mine:
+        print("No plugins installed.")
+    for e in sorted(mine, key=lambda x: x["name"]):
+        print(f"  {e['name'].replace('_', ' '):<24}{e['desc'][:70]}")
+    return 0
 
 
 def cmd_pack(q: str, entries: list[dict]) -> int:
@@ -618,7 +644,7 @@ def cmd_doctor(dirs, entries: list[dict]) -> int:
     line(True, f"JeeG {__version__} on {sys.platform}")
     line(bool(entries), f"{len(entries)} tasks from {', '.join(str(d) for d in dirs)}")
     try:
-        STATE.mkdir(parents=True, exist_ok=True)
+        _ensure_state()
         t = STATE / ".write_test"
         t.write_text("x")
         t.unlink()
@@ -655,7 +681,7 @@ def did_you_mean(query: str, entries: list[dict]) -> list[str]:
 # ----------------------------------------------------------------- execution
 def history_add(query: str, name: str, private: bool = False) -> None:
     try:
-        STATE.mkdir(parents=True, exist_ok=True)
+        _ensure_state()
         f = STATE / "history.jsonl"
         with open(f, "a", encoding="utf-8") as fh:
             fh.write(json.dumps({"t": int(time.time()), "q": "(private - not saved)" if private else query, "s": name}) + "\n")
@@ -862,7 +888,10 @@ def cmd_selftest(entries: list[dict]) -> int:
 
 def handle(line: str, dirs, opt) -> int | None:
     """Return exit code, or None to quit."""
-    q = line.strip()
+    q = re.sub(r"[\x00-\x08\x0b-\x1f\x7f]", "", line).strip()      # no control or terminal-escape characters
+    if len(q) > 2000:
+        print("That line is too long (over 2000 characters). Please shorten it.")
+        return 1
     low = q.lower()
     if not q:
         return 0
@@ -874,6 +903,8 @@ def handle(line: str, dirs, opt) -> int | None:
         return cmd_pack(q, all_entries)
     if low in {"tips", "tip"}:
         return cmd_tips(entries)
+    if low in {"plugins", "plugin"}:
+        return cmd_plugins(all_entries)
     if low == "alias" or low.startswith("alias "):
         return cmd_alias(q, entries)
     if low == "explain" or low.startswith("explain "):

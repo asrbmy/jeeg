@@ -4,11 +4,12 @@
 # usage: daily briefing [city]
 import json, time
 from _lib import args_text, data_dir
+import urllib.parse
 from _net import get
 from _time import load_reminders
 print(time.strftime("%A, %d %B %Y   %I:%M %p"))
 city = "+".join(x for x in args_text().split() if x.lower() not in ("morning", "daily", "my", "today", "the", "evening"))
-wx = get(f"https://wttr.in/{city}?format=3", timeout=6)
+wx = get(f"https://wttr.in/{urllib.parse.quote(city, safe="+")}?format=3", timeout=6)
 print("Weather :", wx.strip() if wx else "(offline)")
 d = data_dir()
 todos = json.loads((d / "todos.json").read_text(encoding="utf-8")) if (d / "todos.json").exists() else []

@@ -26,7 +26,7 @@ Contents
 
 - A small launcher written in Python (standard library only). It has no background service and does not need an account.
 - It reads every script in `scripts/`, matches your words to a script, and runs it. A script is just a file you can open and edit.
-- 399 tasks are included across apps, websites, files, system, network, reminders, personal records, money calculators, text tools, developer tools and quick searches.
+- 417 tasks are included across apps, websites, files, system, network, reminders, personal records, money calculators, text tools, developer tools and quick searches.
 - It runs on Windows, macOS and Linux. Python 3.9 or newer is required.
 - It is quick (about 56 ms per command including Python start-up, measured on Linux) and light (about 16 MB while a command runs; nothing stays in memory between commands, except reminders and alarms you set).
 
@@ -137,6 +137,7 @@ Commands (typed at the prompt or after `jeeg.py`):
 | `stats` | Which tasks you use most, how long they take, how often they fail |
 | `doctor` | Check Python, the data folder, scripts, optional tools and internet |
 | `pack list` / `pack off <category>` / `pack on <category>` | Turn whole categories of tasks off or on (for example `pack off games`). Turned-off tasks are never matched |
+| `plugins` | Show the plugin folder and any plugins in it (see 10) |
 | `tips` | Show one task you may not have tried yet |
 | `reindex` | Rebuild the script cache (after you edit a script's header) |
 | `selftest` | Check every script: it has a description and keywords, its code compiles, and it is found by its own name |
@@ -163,7 +164,15 @@ Exit codes: `0` ok, `1` error or no match, `2` ambiguous (menu with no keyboard)
 - If JeeG is started by another program (no keyboard), confirmation-needing tasks refuse unless you add `--yes`.
 - Nothing is deleted without confirmation. `delete old downloads` does not delete: it moves files into a holding folder inside your data folder, and tells you where.
 - `bulk rename` only previews. Add the word `apply` to really rename. It refuses if two files would end up with the same name.
-- Zip extraction refuses archives that try to write outside their folder.
+- Zip and tar extraction refuse archives that try to write outside their folder, and tar files with links or device entries.
+- Only `http`, `https`, `mailto`, `tel`, `sms` and `whatsapp` links are ever opened, so a changed saved link cannot launch a program or open a local file. `http get` accepts only web addresses.
+- Text you type is put into web addresses safely (encoded), never pasted in raw.
+- Your data folder is readable only by you on Mac and Linux. (On Windows it lives in your user profile, which other accounts cannot normally read.)
+- `import data` checks every file in a backup before writing anything, and saves your current data first.
+- `clean temp files` only removes your own old files, never other users' or the system's.
+- Lines over 2000 characters are refused, and terminal control characters are removed.
+- If a task hits an unexpected problem it prints one plain line instead of a Python error. Set `JEEG_DEBUG=1` to see the full details.
+- Plugins and extra script folders (`--dir`) run with your permissions, like any program you install: only use ones you trust.
 - Host names, ports and package names are checked before being passed to other programs.
 - Critical system processes cannot be killed with `kill process`.
 - No task sends your files or personal data anywhere. Web tasks open a page in your normal browser, so you stay signed in; JeeG never reads your passwords.
@@ -316,6 +325,16 @@ Most accept text after the task name or use your clipboard if you give none, and
 - **Developer:** `run tests`, `who uses port 3000`, `regex test "a+" on "caaat"` (runs in a separate process with a time limit), `git contributors`, `git recent changes`.
 - **When nothing matches:** JeeG shows the closest tasks instead of just failing, and `stats` flags tasks that keep failing.
 
+### 8.16 New in version 2.4
+- **Undo:** `undo` puts back your last file move, rename or Downloads tidy (`move file`, `bulk rename ... apply`, `rename photos by date ... apply`, `organise downloads`). It remembers the last 20 and never overwrites a file that is already there; anything it cannot restore is listed as skipped.
+- **Contacts:** `add contact mom 9876543210`, `add email mom mom@example.com`, `find contact mom` (or `whose number is mom`), `remove contact mom`, `email mom about dinner` (opens a Gmail draft; you press send), plus the existing `send whatsapp to mom hello`.
+- **Budgets:** `set budget food 5000`, `budget report`, `remove budget food`. `add expense` now warns you at 80% of a category budget and when you go over.
+- **Countdowns:** `add countdown exam 12 dec 2026`, `show countdowns`, `remove countdown exam`.
+- **Search your own records:** `search my data dentist` looks through your notes, journal, to-dos, expenses and other saved lists.
+- **Files and data:** `large folders downloads` (what is taking space), `csv summary data.csv`, `text diff a.txt b.txt`, `json minify data.json`, `url encode ...`, `url decode ...`.
+- **Plugins:** drop extra task scripts into the `plugins` folder inside your JeeG data folder (type `plugins` to see where). They use the same header lines as the built-in tasks. Plugins are ordinary programs that run with your permissions, so only add ones you trust.
+- Timings: `stats` already shows the average run time of each task and which ones fail.
+
 ## 9. Teaching and checking JeeG
 
 **Aliases: your own short words**
@@ -462,12 +481,13 @@ Run the checks yourself any time:
     python tests/test_routing.py
     python tests/test_parsers.py
     python tests/test_engine.py
+    python tests/test_security.py
 
 ---
 
 ## 15. Appendix: every task
 
-399 tasks. In the Usage column, `<...>` is something you fill in and `[...]` is optional. A star means the task asks before running.
+417 tasks. In the Usage column, `<...>` is something you fill in and `[...]` is optional. A star means the task asks before running.
 
 
 ### ai
@@ -545,6 +565,7 @@ Run the checks yourself any time:
 | create gitignore | `create gitignore [python\|node\|java]` | Create or extend a .gitignore for a language (create gitignore python \| node \| java) |
 | create venv |  | Create a Python virtual environment (.venv) here |
 | csv preview | `csv preview <file.csv>` | Show the first rows of a CSV file as a table (csv preview data.csv) |
+| csv summary | `csv summary <file.csv>` | Summarise a CSV: rows, columns, number totals and common values (csv summary data.csv) |
 | docker ps |  | List running Docker containers |
 | docker stop all * |  | Stop all running Docker containers |
 | git branch |  | List git branches |
@@ -561,6 +582,7 @@ Run the checks yourself any time:
 | git status |  | Show git status of the current folder |
 | git undo commit * |  | Undo the last commit but keep your changes (git undo last commit) |
 | http get | `http get <url>` | Fetch a URL and show status, headers and the start of the body (http get https://example.com) |
+| json minify | `json minify <file.json>` | Shrink a JSON file onto one line (json minify data.json) |
 | json to csv | `json to csv <file.json>` | Convert a JSON file (a list of records) to CSV (json to csv data.json) |
 | json to yaml | `json to yaml <file.json>` | Convert a JSON file to YAML (json to yaml config.json) |
 | kill port * | `kill port <number>` | Stop whatever is listening on a port (kill port 3000) |
@@ -587,6 +609,7 @@ Run the checks yourself any time:
 | serve folder | `serve folder [port]` | Serve the current folder at http://localhost:8000 |
 | show env variables | `env variables [filter]` | List environment variables (secrets hidden); add a word to filter (env variables java) |
 | show path |  | Show the folders in your PATH, one per line, marking missing ones |
+| text diff | `text diff <file1> <file2>` | Show the differences between two text files (text diff a.txt b.txt) |
 | yaml to json | `yaml to json <file.yaml>` | Convert a YAML file to JSON (yaml to json config.yaml) |
 
 ### email
@@ -594,6 +617,7 @@ Run the checks yourself any time:
 | Task | Usage | What it does |
 |---|---|---|
 | compose email | `compose email <words>` | Compose a Gmail message (words become the subject) |
+| email to | `email <contact\|address> [about <subject>]` | Start an email to a saved contact or address (email mom about dinner) |
 | open gmail |  | Open Gmail |
 
 ### entertainment
@@ -636,12 +660,14 @@ Run the checks yourself any time:
 | folder size | `folder size [folder]` | Show how big a folder is (folder size downloads) |
 | folder tree | `folder tree [folder] [depth n]` | Show a folder as a tree (folder tree documents, tree depth 3) |
 | large files | `large files [folder]` | Find the biggest files (large files downloads) |
+| large folders | `large folders [folder]` | Show which sub-folders take the most space (large folders downloads) |
 | move file | `move file <file> to <folder>` | Move a file or folder (move file report.pdf to documents) |
 | open last download |  | Open the newest file in Downloads |
 | organize downloads * | `organize downloads [preview]` | Sort loose files in Downloads into folders by type (add 'preview' to just look) |
 | recent files |  | List recently changed files in Documents, Downloads and Desktop |
 | rename photos by date | `rename photos by date <folder> [apply]` | Rename photos to their date taken, e.g. 2026-10-21_143005.jpg (preview first; add 'apply') |
 | stale files | `old large files [size] [age] [folder]` | Find big files you have not touched for a long time (old large files 100 mb 1 year in downloads) |
+| undo files | `undo` | Undo your last file move, rename or Downloads tidy (undo, undo move, undo rename) |
 | unzip file | `unzip file <archive>` | Extract a .zip / .tar.gz safely (unzip file archive.zip) |
 | zip folder | `zip folder <folder>` | Zip a folder next to itself (zip folder projects) |
 | zip with password | `zip with password <file\|folder>` | Make a password-protected AES zip of a file or folder (the password is asked privately, not typed in the command) |
@@ -788,6 +814,7 @@ Run the checks yourself any time:
 |---|---|---|
 | add bill | `add bill <name> <day> [amount]` | Remember a monthly bill's due day (add bill electricity 15 1200) |
 | add expense | `add expense <amount> <category> [note]` | Record spending (spent 450 on groceries, add expense 200 food lunch) |
+| budget report | `budget report` | Show this month's spending against your budgets (budget report) |
 | compound interest | `compound interest <amount> <rate%> <years>` | Compound interest (compound interest 10000 7 3 years [monthly]) |
 | crypto price | `crypto price <coin>` | Live cryptocurrency price (crypto price bitcoin) (needs internet) |
 | currency convert | `currency <amount> <from> to <to>` | Live currency conversion (currency 100 usd to inr) (needs internet) |
@@ -799,6 +826,8 @@ Run the checks yourself any time:
 | gst amount | `gst <amount> [rate] [inclusive]` | GST add or remove (gst 1000 18, gst 1180 18 inclusive) |
 | percentage change | `percentage change <old> to <new>` | Percentage change between two numbers (percentage change 80 to 100) |
 | remove bill | `remove bill <name>` | Delete a saved bill (remove bill electricity) |
+| remove budget | `remove budget <category>` | Remove a category budget (remove budget food) |
+| set budget | `set budget <category> <amount>` | Set a monthly spending limit for a category (set budget food 5000) |
 | show expenses | `show expenses [category] [month]` | List expenses (show expenses, show expenses food, show expenses last month) |
 | sip growth | `sip <monthly> <return%> <years>` | SIP growth (sip 5000 12 10 years: monthly amount, yearly return %, years) |
 | split bill | `split bill <amount> among <n> [tip %]` | Split a bill (split bill 2400 among 4 tip 10%) |
@@ -841,6 +870,7 @@ Run the checks yourself any time:
 
 | Task | Usage | What it does |
 |---|---|---|
+| my data lookup | `search my data <words>` | Search your notes, journal, to-dos, expenses and other saved records (search my data milk) |
 | note add | `add note <text>` | Save a quick note (note add call dentist at 5) |
 | note list | `show notes [word]` | Show your recent notes (optionally filter by a word) |
 | todo add | `add todo <text>` | Add a to-do item (add todo buy milk) |
@@ -859,10 +889,13 @@ Run the checks yourself any time:
 
 | Task | Usage | What it does |
 |---|---|---|
+| add countdown | `add countdown <event> <date>` | Count the days to an event (add countdown exam 12 dec 2026) |
 | eye break | `eye break [minutes]` | 20-20-20 eye break reminder every 20 minutes |
 | pomodoro | `pomodoro [rounds] [N work] [N break]` | Pomodoro focus timer: 25 min work / 5 min break (pomodoro 4 rounds) |
 | remind me | `remind me <when> <what>` | Background reminder (remind me at 5:30pm to call mom / in 20 minutes ... / every 2 hours ...) |
+| remove countdown | `remove countdown <event>` | Delete a countdown (remove countdown exam) |
 | set alarm | `set alarm <time>` | Set an alarm for a clock time (set alarm 6:30 am) |
+| show countdowns | `show countdowns` | Show the days left for your events (show countdowns) |
 | show reminders |  | List active background reminders and alarms |
 | stop reminders |  | Cancel all background reminders and alarms |
 | stretch reminder | `stretch reminder [minutes]` | Remind you to stand up and stretch every 45 minutes |
@@ -926,6 +959,8 @@ Run the checks yourself any time:
 | Task | Usage | What it does |
 |---|---|---|
 | add contact | `add contact <name> <number>` | Save a contact for WhatsApp (add contact mom 9876543210) |
+| add email address | `add email <name> <address>` | Save an email address for a contact (add email mom mom@example.com) |
+| find contact | `find contact <name>` | Look up a saved contact by name (find contact mom) |
 | open discord |  | Open Discord |
 | open facebook |  | Open Facebook |
 | open instagram |  | Open Instagram |
@@ -936,6 +971,7 @@ Run the checks yourself any time:
 | open telegram |  | Open Telegram Web |
 | open twitter | `open twitter <words>` | Open X (Twitter) |
 | open whatsapp |  | Open WhatsApp Web |
+| remove contact * | `remove contact <name>` | Delete a saved contact (remove contact mom) |
 | send whatsapp | `send whatsapp <contact\|number> <message>` | Start a WhatsApp message to a saved contact or number (send whatsapp to mom hello) |
 | show contacts |  | List your saved contacts |
 
@@ -988,6 +1024,8 @@ Run the checks yourself any time:
 | sort lines | `sort lines <items>` | Sort a list alphabetically or by number (sort lines pear, apple, fig); add 'reverse' for Z-A |
 | title case text | `title case <text>` | Title Case Some Text (title case the quick brown fox) |
 | uppercase text | `uppercase <text>` | UPPERCASE some text (uppercase hello world); with no text it uses the clipboard |
+| url decode | `url decode <text>` | Turn a percent-encoded web address back into readable text (url decode hello%20world) |
+| url encode | `url encode <text>` | Make text safe for use in a web address (url encode hello world & more) |
 | word frequency | `word frequency <text\|file>` | Most common words in some text or a text file (word frequency notes.txt) |
 
 ### time

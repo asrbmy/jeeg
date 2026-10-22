@@ -54,4 +54,6 @@ for i, (a, b) in enumerate(plan):             # two steps so swapping names can 
     os.rename(a, t1); tmp.append((t1, b))
 for t1, b in tmp:
     os.rename(t1, b)
-print(f"Renamed {len(plan)} file(s).")
+from _undo import record
+record("bulk rename", [(a, b) for a, b in plan])
+print(f"Renamed {len(plan)} file(s). Type  undo  to put the names back.")

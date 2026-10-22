@@ -1,11 +1,11 @@
-# JeeG 2.3 - How It Works
+# JeeG 2.4.1 - How It Works
 
 You type what you want in plain words ("open youtube", "set timer 10 minutes", "send whatsapp to mom hi").
 JeeG finds the matching script in the `scripts` folder and runs it.
 
 - Pure Python 3.9+, nothing to install. Works on Windows, macOS and Linux.
 - Light: about 16 MB of memory, about 65 ms per command, nothing running in the background (except reminders and alarms you set yourself).
-- 399 ready-made tasks. You can add your own by dropping in a file.
+- 417 ready-made tasks. You can add your own by dropping in a file.
 
 ---
 
@@ -201,6 +201,17 @@ Notes on three popular tasks:
 
 Optional extras for a few of these: `pip install pyzipper pyyaml`.
 
+### New in version 2.4
+
+| Area | Examples |
+|---|---|
+| Undo | `undo` (puts back your last file move, rename or Downloads tidy; remembers 20; never overwrites) |
+| Contacts | `add email mom mom@example.com`, `find contact mom`, `remove contact mom`, `email mom about dinner` |
+| Budgets and goals | `set budget food 5000`, `budget report` (and `add expense` warns you near or over a limit), `add countdown exam 12 dec 2026`, `show countdowns` |
+| Your data | `search my data dentist` |
+| Files and data | `large folders downloads`, `csv summary data.csv`, `text diff a.txt b.txt`, `json minify`, `url encode`, `url decode` |
+| Engine | `plugins`: extra task scripts placed in the `plugins` folder of your data folder are found automatically |
+
 ## 6. Adding your own task
 
 1. Create a file in `scripts/` named after the task, for example `open_notes_app.py`. The file name is what people will say ("open notes app"), so use words, joined by underscores.
@@ -245,6 +256,8 @@ Helpers you can use inside Python scripts (from `_lib.py`): `args_text()` (the w
 - Critical system processes cannot be killed with `kill process`.
 - No task sends your files or personal data anywhere. Web tasks only open a page in your browser.
 
+Security notes (version 2.4.1): only safe link types are opened, archives cannot write outside their folder, backups are validated before import, your data folder is private to you on Mac/Linux, over-long or control-character input is refused, and unexpected errors show one plain line (`JEEG_DEBUG=1` for details). Plugins and `--dir` folders run with your permissions, so only use ones you trust.
+
 ## 8. Troubleshooting
 
 | Problem | Fix |
@@ -262,11 +275,12 @@ Optional extras: `pip install pillow psutil pypdf qrcode[pil]` (screenshots, pro
 ## 9. Checking it yourself
 
     python jeeg.py selftest        every script: header, valid code, found by its own name
-    python tests/test_routing.py         over 250 phrases and multi-task lines must pick the right script
+    python tests/test_routing.py         about 300 phrases and multi-task lines must pick the right script
     python tests/test_parsers.py         the online tasks against sample API replies (no internet needed)
-    python tests/test_engine.py          aliases, explain, did-you-mean, logs, installer
+    python tests/test_engine.py          aliases, explain, did-you-mean, logs, installer, undo, budgets, plugins
+    python tests/test_security.py        unsafe links, archives, backups, long or odd input, private data folder
 
-The folder includes `.github/workflows/test.yml`. If you put this project on GitHub, it runs all four test files on Windows, macOS and Linux with Python 3.9 and 3.12 on every change, which is the easiest way to find problems on systems you do not have at hand.
+The folder includes `.github/workflows/test.yml`. If you put this project on GitHub, it runs all five test files on Windows, macOS and Linux with Python 3.9 and 3.12 on every change, which is the easiest way to find problems on systems you do not have at hand.
 
 ## 10. What was and was not tested
 

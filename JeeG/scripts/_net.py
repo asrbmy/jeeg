@@ -7,6 +7,8 @@ UA = {"User-Agent": "Mozilla/5.0 JeeG/2"}
 
 
 def get(url, timeout=8, as_json=False):
+    if not url.lower().startswith(("https://", "http://")):
+        return None
     try:
         req = urllib.request.Request(url, headers=UA)
         with urllib.request.urlopen(req, timeout=timeout) as r:

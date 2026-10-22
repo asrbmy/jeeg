@@ -16,4 +16,6 @@ home = __import__("pathlib").Path.home().resolve()
 if src in (home, __import__("pathlib").Path(src.anchor)): fail("Refusing to move your home folder or drive.")
 out = unique_path(dst / src.name)
 shutil.move(str(src), str(out))
+from _undo import record
+record("move file", [(src, out)])
 print(f"Moved to {out}")

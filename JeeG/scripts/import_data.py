@@ -25,12 +25,21 @@ with z:
     for n in names:
         if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,80}", n) or n.endswith(".tmp") or n in ("index.json", "reminders.json"):
             fail(f"Unsafe or unexpected file name in the backup: {n!r}. Nothing was imported.")
+    blobs = {}
+    for n in names:                                   # read with a hard cap: a zip can lie about its size
+        with z.open(n) as fh:
+            blob = fh.read(50 * 1024 * 1024 + 1)
+        if len(blob) > 50 * 1024 * 1024: fail(f"{n} is larger than 50 MB; nothing was imported.")
+        if n.endswith(".json"):
+            try: json.loads(blob.decode("utf-8"))
+            except ValueError: fail(f"{n} in the backup is not valid JSON; nothing was imported.")
+        blobs[n] = blob
     keep = data_dir() / "trash" / time.strftime("before-import-%Y%m%d-%H%M%S")
     cur = data_files()
     if cur:
         keep.mkdir(parents=True, exist_ok=True)
         for f in cur: shutil.copy2(f, keep / f.name)
-    for n in names:
-        (data_dir() / n).write_bytes(z.read(n))
+    for n, blob in blobs.items():
+        (data_dir() / n).write_bytes(blob)
 print(f"Restored {len(names)} file(s) from the backup made {man.get('created', '?')}.")
 if cur: print(f"Your previous data was copied to {keep}")

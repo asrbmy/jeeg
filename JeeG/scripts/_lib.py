@@ -13,6 +13,24 @@ for _s in (sys.stdout, sys.stderr):      # never crash on emoji / accents in a l
     except (AttributeError, ValueError):
         pass
 
+def _friendly_crash(kind, value, tb):
+    """One plain line instead of a Python traceback. Set JEEG_DEBUG=1 to see the full details."""
+    if os.environ.get("JEEG_DEBUG") or issubclass(kind, (SystemExit, KeyboardInterrupt)):
+        sys.__excepthook__(kind, value, tb)
+        return
+    if issubclass(kind, OSError) and getattr(value, "errno", None) == 36:
+        msg = "that name is too long"
+    elif issubclass(kind, OSError):
+        msg = value.strerror or str(value)
+    else:
+        msg = f"{kind.__name__}: {value}"
+    print(f"Could not finish: {msg}. (Set JEEG_DEBUG=1 for details.)")
+    sys.stdout.flush()
+    os._exit(1)
+
+
+sys.excepthook = _friendly_crash
+
 WIN = sys.platform.startswith("win")
 MAC = sys.platform == "darwin"
 LINUX = not (WIN or MAC)
@@ -28,7 +46,16 @@ def fail(msg, code=1):
     sys.exit(code)
 
 
+SAFE_SCHEMES = ("http", "https", "mailto", "tel", "sms", "whatsapp")
+
+
 def open_url(url):
+    """Open a web address in the default browser. Only safe link types are allowed, so a bad saved
+    link (file:, javascript:, a program path) can never launch anything else."""
+    url = str(url).strip()
+    scheme = urllib.parse.urlsplit(url).scheme.lower()
+    if scheme not in SAFE_SCHEMES or any(c in url for c in "\r\n\0"):
+        fail("Refusing to open that link: only http, https, mailto, tel, sms and whatsapp links are allowed.")
     if not webbrowser.open(url):
         fail(f"Could not open a browser for {url}")
 
@@ -163,4 +190,10 @@ def data_dir():
         new, old = Path.home() / ".jeeg", Path.home() / ".taskrunner"
         p = old if (old.exists() and not new.exists()) else new
     p.mkdir(parents=True, exist_ok=True)
+    if os.name == "posix":                      # your notes, journal and expenses are private to you
+        try:
+            if (p.stat().st_mode & 0o077) and p.stat().st_uid == os.getuid():
+                p.chmod(0o700)
+        except OSError:
+            pass
     return p
