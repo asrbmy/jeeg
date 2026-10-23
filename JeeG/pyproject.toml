@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "jeeg"
+dynamic = ["version"]
+description = "Type a task in plain words and it runs. No AI model, no account, no cloud: 400+ everyday tasks that work offline."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "asrbmy" }]
+keywords = ["automation", "cli", "productivity", "offline", "privacy", "india"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Environment :: Console",
+  "Topic :: Utilities",
+]
+dependencies = []
+
+[project.optional-dependencies]
+extras = ["pypdf", "pillow", "qrcode[pil]", "psutil"]
+
+[project.urls]
+Homepage = "https://github.com/asrbmy/jeeg"
+Issues = "https://github.com/asrbmy/jeeg/issues"
+
+[project.scripts]
+jeeg = "jeeg:cli"
+
+[tool.setuptools]
+py-modules = ["jeeg", "jeeg_cmds"]
+packages = ["jeeg_scripts"]
+package-dir = { "jeeg_scripts" = "scripts" }
+
+[tool.setuptools.dynamic]
+version = { attr = "jeeg.__version__" }
+
+[tool.setuptools.package-data]
+jeeg_scripts = ["*.py", "*.whl"]

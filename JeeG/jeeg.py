@@ -14,6 +14,9 @@ Commands (interactive or one-shot):
     alias add wa = send whatsapp to     your own short words (alias list / alias remove wa)
     explain <words>   show which tasks match and why        misses   phrases it could not match
     stats             what you use most                     doctor   check this computer
+    update [now]      check GitHub for a newer version      setup    first-run wizard
+    plugin new|install|export|remove|list   your own tasks    web   a local page in your browser
+    completion bash|zsh|powershell          tab completion
     tips              suggest a task you have not used      pack list / pack off <category> / pack on <category>
     exit              quit
 
@@ -49,7 +52,7 @@ import sys
 import time
 from pathlib import Path
 
-__version__ = "2.4.1"
+__version__ = "2.5.0"
 
 HERE = Path(__file__).resolve().parent
 def _state_dir() -> Path:
@@ -168,7 +171,7 @@ def make_entry(path: Path) -> dict:
 def script_dirs(cli_dirs: list[str]) -> list[Path]:
     cands = list(cli_dirs)
     cands += [d for d in os.environ.get("TASK_SCRIPTS_DIR", "").split(os.pathsep) if d]
-    cands += [str(HERE / "scripts")]
+    cands += [str(HERE / "scripts"), str(HERE / "jeeg_scripts")]      # jeeg_scripts: the pip-installed copy
     cands += [str(STATE / "plugins")]
     seen, out = set(), []
     for c in cands:
@@ -362,7 +365,8 @@ def resolve(query: str, entries: list[dict]):
 
 # ------------------------------------------------- your data: aliases, logs
 RESERVED = {"list", "help", "history", "again", "repeat", "redo", "reindex", "selftest", "exit", "quit", "alias",
-            "explain", "misses", "stats", "doctor", "tasks", "pack", "tips", "tip", "plugins", "plugin"}
+            "explain", "misses", "stats", "doctor", "tasks", "pack", "tips", "tip", "plugins", "plugin", "update", "setup",
+            "web", "ui", "completion"}
 
 
 def _load_json(name: str, default):
@@ -674,8 +678,20 @@ def cmd_doctor(dirs, entries: list[dict]) -> int:
 
 def did_you_mean(query: str, entries: list[dict]) -> list[str]:
     import difflib
+    out = []
+    vocab = sorted({t for e in entries for t in e["name_t"] + e["kw_t"] if len(t) > 2})
+    words = query.lower().split()
+    vs = set(vocab)
+    fixed = [w if (norm(w) in vs or not w.isalpha() or len(w) < 3)
+             else (difflib.get_close_matches(norm(w), vocab, n=1, cutoff=0.8) or [w])[0] for w in words]
+    if fixed != words and all(norm(w) in vs or not w.isalpha() or len(w) < 3 for w in fixed):   # "opne youtub" -> "open youtube"
+        cand = " ".join(fixed)
+        st, hit = resolve(cand, entries)
+        if st == "ok":
+            out.append(cand)
     names = [e["name"].replace("_", " ") for e in entries]
-    return difflib.get_close_matches(query.lower().strip(), names, n=3, cutoff=0.6)
+    out += [n for n in difflib.get_close_matches(query.lower().strip(), names, n=3, cutoff=0.6) if n not in out]
+    return out[:3]
 
 
 # ----------------------------------------------------------------- execution
@@ -903,8 +919,27 @@ def handle(line: str, dirs, opt) -> int | None:
         return cmd_pack(q, all_entries)
     if low in {"tips", "tip"}:
         return cmd_tips(entries)
-    if low in {"plugins", "plugin"}:
-        return cmd_plugins(all_entries)
+    if low.startswith(("plugin ", "plugins ")) or low in {"plugins", "plugin"}:
+        import jeeg_cmds
+        return jeeg_cmds.cmd_plugin(q.split(None, 1)[1] if " " in q else "list", STATE / "plugins", all_entries, parse_header,
+                                    opt.get("yes", False))
+    if re.fullmatch(r"(?:(?:jeeg\s+)?(?:update|upgrade)(?:\s+jeeg)?(?:\s+now)?|(?:update|upgrade)\s+now)", low):
+        import jeeg_cmds
+        return jeeg_cmds.cmd_update(low, HERE, __version__, opt.get("yes", False))
+    if low in {"setup", "setup jeeg", "jeeg setup", "setup wizard", "first run"}:
+        import jeeg_cmds
+        return jeeg_cmds.cmd_setup(HERE, STATE, all_entries, opt.get("yes", False))
+    if low.startswith("completion"):
+        import jeeg_cmds
+        parts = low.split()
+        if len(parts) == 1:
+            print(jeeg_cmds.COMPLETION_HELP)
+            return 0
+        return jeeg_cmds.cmd_completion(parts[1], all_entries)
+    m = re.fullmatch(r"(?:web|ui|web page|web ui)(?:\s+(\d{4,5}))?", low)
+    if m:
+        import jeeg_cmds
+        return jeeg_cmds.serve(HERE, STATE, int(m.group(1) or 8765))
     if low == "alias" or low.startswith("alias "):
         return cmd_alias(q, entries)
     if low == "explain" or low.startswith("explain "):
@@ -996,5 +1031,19 @@ def main(argv: list[str]) -> int:
             return 0
 
 
+def cli() -> None:
+    """Entry point for the pip-installed 'jeeg' command."""
+    try:
+        code = main(sys.argv[1:])
+        sys.stdout.flush()
+    except BrokenPipeError:                          # e.g.  jeeg list | head
+        try:
+            os.dup2(os.open(os.devnull, os.O_WRONLY), sys.stdout.fileno())
+        except OSError:
+            pass
+        code = 0
+    sys.exit(code)
+
+
 if __name__ == "__main__":
-    sys.exit(main(sys.argv[1:]))
+    cli()

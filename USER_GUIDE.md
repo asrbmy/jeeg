@@ -26,7 +26,7 @@ Contents
 
 - A small launcher written in Python (standard library only). It has no background service and does not need an account.
 - It reads every script in `scripts/`, matches your words to a script, and runs it. A script is just a file you can open and edit.
-- 417 tasks are included across apps, websites, files, system, network, reminders, personal records, money calculators, text tools, developer tools and quick searches.
+- 421 tasks are included across apps, websites, files, system, network, reminders, personal records, money calculators, text tools, developer tools and quick searches.
 - It runs on Windows, macOS and Linux. Python 3.9 or newer is required.
 - It is quick (about 56 ms per command including Python start-up, measured on Linux) and light (about 16 MB while a command runs; nothing stays in memory between commands, except reminders and alarms you set).
 
@@ -335,6 +335,15 @@ Most accept text after the task name or use your clipboard if you give none, and
 - **Plugins:** drop extra task scripts into the `plugins` folder inside your JeeG data folder (type `plugins` to see where). They use the same header lines as the built-in tasks. Plugins are ordinary programs that run with your permissions, so only add ones you trust.
 - Timings: `stats` already shows the average run time of each task and which ones fail.
 
+### 8.17 New in version 2.5
+- **Install with pip:** `pip install jeeg` gives you the `jeeg` command on Windows, macOS and Linux (the folder install still works). `setup` (or `jeeg setup`) is a one-minute wizard that checks Python, installs the command if needed and shows how to turn on tab completion.
+- **Update:** `update` (also `update jeeg`) checks GitHub for a newer release and prints the exact command; `update now` runs it after asking (`git pull` for a clone, `pip install --upgrade jeeg` for a pip install; for a zip it gives the download link). It only contacts GitHub when you ask, and never sends any of your data.
+- **Plugins:** `plugin new tea_timer` writes a starter task; `plugin install file.py` (or an https link) adds one after showing what it says it does, how big it is, and a quick scan for risky features such as `subprocess` or `socket`; `plugin export <name>` copies it out to share; `plugin remove <name>`; `plugin list`. A plugin cannot take the name of a built-in task and files over 200 KB are refused. Plugins are normal programs that run with your permissions: read them first and install only ones you trust.
+- **Typos:** if nothing matches, JeeG now repairs mistyped words (`opn gmial` becomes `open gmail`) and asks before running it.
+- **Tab completion:** `completion bash`, `completion zsh` or `completion powershell` prints a snippet for your shell's start-up file.
+- **Web page:** `web` (or `web 8800`) opens a small page on your own computer, for people who prefer a text box to a terminal. It listens only on 127.0.0.1, rejects other hosts and sites, needs a random token created at start-up, and declines tasks that ask for confirmation (use the terminal for those). Press Ctrl+C in the terminal to stop it.
+- **New tasks:** `invoice Ravi Traders: 3 pens at 10, 2 books at 150 gst 18` makes a printable invoice page in `Documents/JeeG-invoices` (set your shop name once with `invoice seller Sharma Stationers`); `rd 5000 6.5 2 years` for recurring-deposit maturity (quarterly compounding, as Indian banks do); `save clipboard`, `clipboard history`, `clipboard history 2` (copies item 2 back) and `clear clipboard history` keep a private list of things you copied (JeeG does not watch your clipboard in the background, so you save the ones you want).
+
 ## 9. Teaching and checking JeeG
 
 **Aliases: your own short words**
@@ -482,12 +491,13 @@ Run the checks yourself any time:
     python tests/test_parsers.py
     python tests/test_engine.py
     python tests/test_security.py
+    python tests/test_cmds.py
 
 ---
 
 ## 15. Appendix: every task
 
-417 tasks. In the Usage column, `<...>` is something you fill in and `[...]` is optional. A star means the task asks before running.
+421 tasks. In the Usage column, `<...>` is something you fill in and `[...]` is optional. A star means the task asks before running.
 
 
 ### ai
@@ -552,7 +562,9 @@ Run the checks yourself any time:
 | Task | Usage | What it does |
 |---|---|---|
 | clear clipboard |  | Clear the clipboard |
+| clipboard history | `clipboard history [number \| clear]` | List saved clipboard items, or copy one back (clipboard history, clipboard history 2, clear clipboard history) |
 | copy to clipboard | `copy to clipboard <text>` | Copy text to the clipboard (copy hello world) |
+| save clipboard | `save clipboard` | Keep what is on the clipboard in your private clipboard history (save clipboard) |
 | show clipboard |  | Show what is on the clipboard |
 | speak text | `speak <text>` | Read text aloud (speak hello there) |
 
@@ -824,7 +836,9 @@ Run the checks yourself any time:
 | expense total | `expense total [month]` | Spending totals by category (expense total, expense total last month) |
 | fuel cost | `fuel cost <km> km <mileage> kmpl <price>` | Trip fuel cost from distance, mileage and price (fuel cost 250 km 18 kmpl 105 per litre) |
 | gst amount | `gst <amount> [rate] [inclusive]` | GST add or remove (gst 1000 18, gst 1180 18 inclusive) |
+| make invoice | `invoice <customer>: <qty> <item> at <rate>, ... [gst 18]` | Make a simple GST invoice page (invoice Ravi Traders: 3 pens at 10, 2 books at 150 gst 18) |
 | percentage change | `percentage change <old> to <new>` | Percentage change between two numbers (percentage change 80 to 100) |
+| rd maturity | `rd <monthly amount> <rate %> <years>` | Recurring deposit maturity (rd 5000 a month 6.5% 2 years) |
 | remove bill | `remove bill <name>` | Delete a saved bill (remove bill electricity) |
 | remove budget | `remove budget <category>` | Remove a category budget (remove budget food) |
 | set budget | `set budget <category> <amount>` | Set a monthly spending limit for a category (set budget food 5000) |

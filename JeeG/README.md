@@ -1,16 +1,17 @@
-# JeeG 2.4.1 - How It Works
+# JeeG 2.5.0 - How It Works
 
 You type what you want in plain words ("open youtube", "set timer 10 minutes", "send whatsapp to mom hi").
 JeeG finds the matching script in the `scripts` folder and runs it.
 
 - Pure Python 3.9+, nothing to install. Works on Windows, macOS and Linux.
 - Light: about 16 MB of memory, about 65 ms per command, nothing running in the background (except reminders and alarms you set yourself).
-- 417 ready-made tasks. You can add your own by dropping in a file.
+- 421 ready-made tasks. You can add your own by dropping in a file.
 
 ---
 
 ## 1. Quick start
 
+0. Easiest: `pip install jeeg`, then `jeeg setup`. (Or use the folder, below.)
 1. Install Python 3.9 or newer (python.org). Unzip this folder anywhere.
 2. Open a terminal in the folder and run:
 
@@ -212,6 +213,15 @@ Optional extras for a few of these: `pip install pyzipper pyyaml`.
 | Files and data | `large folders downloads`, `csv summary data.csv`, `text diff a.txt b.txt`, `json minify`, `url encode`, `url decode` |
 | Engine | `plugins`: extra task scripts placed in the `plugins` folder of your data folder are found automatically |
 
+### New in version 2.5
+
+| Area | Examples |
+|---|---|
+| Install and update | `pip install jeeg`, `setup` (wizard), `update` / `update now` |
+| Plugins | `plugin new tea_timer`, `plugin install file.py`, `plugin export`, `plugin remove`, `plugin list` |
+| Easier to use | typo repair (`opn gmial` -> `open gmail`), `completion bash\|zsh\|powershell`, `web` (a private page on your own computer) |
+| New tasks | `invoice Ravi Traders: 3 pens at 10 gst 18`, `rd 5000 6.5 2 years`, `save clipboard`, `clipboard history` |
+
 ## 6. Adding your own task
 
 1. Create a file in `scripts/` named after the task, for example `open_notes_app.py`. The file name is what people will say ("open notes app"), so use words, joined by underscores.
@@ -256,7 +266,7 @@ Helpers you can use inside Python scripts (from `_lib.py`): `args_text()` (the w
 - Critical system processes cannot be killed with `kill process`.
 - No task sends your files or personal data anywhere. Web tasks only open a page in your browser.
 
-Security notes (version 2.4.1): only safe link types are opened, archives cannot write outside their folder, backups are validated before import, your data folder is private to you on Mac/Linux, over-long or control-character input is refused, and unexpected errors show one plain line (`JEEG_DEBUG=1` for details). Plugins and `--dir` folders run with your permissions, so only use ones you trust.
+Security notes (version 2.5.0): only safe link types are opened, archives cannot write outside their folder, backups are validated before import, your data folder is private to you on Mac/Linux, over-long or control-character input is refused, and unexpected errors show one plain line (`JEEG_DEBUG=1` for details). Plugins and `--dir` folders run with your permissions, so only use ones you trust.
 
 ## 8. Troubleshooting
 
@@ -279,8 +289,9 @@ Optional extras: `pip install pillow psutil pypdf qrcode[pil]` (screenshots, pro
     python tests/test_parsers.py         the online tasks against sample API replies (no internet needed)
     python tests/test_engine.py          aliases, explain, did-you-mean, logs, installer, undo, budgets, plugins
     python tests/test_security.py        unsafe links, archives, backups, long or odd input, private data folder
+    python tests/test_cmds.py            update, plugins, setup, completion, the local web page, new tasks
 
-The folder includes `.github/workflows/test.yml`. If you put this project on GitHub, it runs all five test files on Windows, macOS and Linux with Python 3.9 and 3.12 on every change, which is the easiest way to find problems on systems you do not have at hand.
+The folder includes `.github/workflows/test.yml`. If you put this project on GitHub, it runs all five test files, and builds and installs the pip package, on Windows, macOS and Linux with Python 3.9 and 3.12 on every change, which is the easiest way to find problems on systems you do not have at hand.
 
 ## 10. What was and was not tested
 
