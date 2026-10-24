@@ -49,6 +49,9 @@ def spark(items, top):
     if not items: return "<p class=m>Nothing logged in this period.</p>"
     mx = max(top, max(v for _, v in items))
     return "<div class=sp>" + "".join(f"<u style='height:{max(3, 100 * v / mx):.0f}%' title='{k}: {v:g}'></u>" for k, v in items[-40:]) + "</div>"
+weight = [(k, v) for k, v in load("weight.json", {}).items() if not k.startswith("_") and inside(k)]
+weight.sort()
+wtxt = f"{weight[-1][1]:g} kg now ({weight[-1][1] - weight[0][1]:+.1f} kg in this period)" if len(weight) > 1 else (f"{weight[0][1]:g} kg" if weight else "")
 wavg = f"{sum(v for _, v in water) / len(water):,.0f} ml a day" if water else ""
 savg = f"{sum(v for _, v in sleep) / len(sleep):.1f} h a night" if sleep else ""
 todos = load("todos.json", [])
@@ -73,6 +76,7 @@ section{{background:var(--c);border:1px solid var(--l);border-radius:14px;paddin
 <section><h2>Habits, last 12 weeks</h2>{heat}</section>
 <section><h2>Water {('&middot; ' + wavg) if wavg else ''}</h2>{spark(water, 2500)}</section>
 <section><h2>Sleep {('&middot; ' + savg) if savg else ''}</h2>{spark(sleep, 9)}</section>
+{('<section><h2>Weight &middot; ' + wtxt + '</h2>' + spark(weight, max(v for _, v in weight)) + '</section>') if weight else ''}
 <section class=k><div><b>{open_n}</b>to-dos open</div><div><b>{done_n}</b>to-dos done</div><div><b>{jn}</b>journal entries</div></section></main>"""
 out = output_dir("JeeG-reports")
 fn = out / f"life-report-{today.isoformat()}.html"

@@ -26,6 +26,13 @@ for c in load("countdowns.json", []):
     try: k = (datetime.date.fromisoformat(c["date"]) - today).days
     except (KeyError, ValueError): continue
     if 0 <= k <= 3: items.append(f"{c['name']}: {'today' if k == 0 else str(k) + ' day(s) to go'}")
+try:
+    from _dues import due_soon
+    for store, label, within in (("warranties.json", "Warranty ends", 14), ("vehicle_dues.json", "Vehicle due", 14), ("vaccines.json", "Vaccine due", 7)):
+        for n, k in due_soon(store, within):
+            items.append(f"{label}: {n} " + ("(overdue)" if k < 0 else "today" if k == 0 else f"in {k} day(s)"))
+except Exception:
+    pass
 now = datetime.datetime.now().strftime("%H:%M")
 for n, v in load("medicines.json", {}).items():
     miss = [x for x in v["times"] if x <= now and x not in v["taken"].get(today.isoformat(), [])]

@@ -27,6 +27,8 @@ Options:
     --dir PATH   extra scripts folder (repeatable; also TASK_SCRIPTS_DIR)
     -y, --yes    do not ask before risky tasks
     --dry-run    show what would run, run nothing
+    --json       print the result as JSON (task, exit code, output) for other programs
+    --output F   save what the task prints to a new file F (never overwrites)
     --timeout S  stop a script after S seconds
 
 Script header (first 15 lines of any script, comment style of that language):
@@ -55,7 +57,7 @@ import sys
 import time
 from pathlib import Path
 
-__version__ = "2.6.0"
+__version__ = "2.7.0"
 
 HERE = Path(__file__).resolve().parent
 def _state_dir() -> Path:
@@ -633,16 +635,38 @@ def log_miss(query: str, why: str) -> None:
     _append_line("misses.log", f"{time.strftime('%Y-%m-%d %H:%M')}\t{why}\t{query}", keep=200, limit=100_000)
 
 
-def cmd_misses() -> int:
+def cmd_misses(sub: str = "") -> int:
+    f = STATE / "misses.log"
+    if sub == "clear":
+        try:
+            f.unlink()
+        except OSError:
+            pass
+        print("Cleared the list of missed phrases.")
+        return 0
     try:
-        lines = (STATE / "misses.log").read_text(encoding="utf-8").splitlines()[-20:]
+        lines = f.read_text(encoding="utf-8").splitlines()
     except OSError:
         lines = []
+    if sub == "export":
+        if not lines:
+            print("Nothing missed so far, so there is nothing to export.")
+            return 1
+        dst = Path.cwd() / "jeeg-misses.txt"
+        if dst.exists():
+            print(f"{dst} already exists; move it first.")
+            return 1
+        rows = [l.split("\t")[-1] for l in lines[-100:]]
+        dst.write_text("Phrases JeeG did not understand (newest last).\nREAD AND EDIT BEFORE SHARING: remove anything personal such as names or numbers.\n"
+                       "Share them as a GitHub issue ('A phrase JeeG did not understand') so they can be taught.\n\n" + "\n".join(rows) + "\n", encoding="utf-8")
+        print(f"Wrote {len(rows)} phrase(s) to {dst}. Nothing was sent anywhere; check the file, then share what you are comfortable with.")
+        return 0
     if not lines:
         print("Nothing missed so far.")
         return 0
     print("Phrases that matched nothing (or were ambiguous). Teach one with:  alias add <short> = <task words>")
-    for l in lines:
+    print("To help improve JeeG: 'misses export' writes them to a file you can review and share; 'misses clear' empties the list.")
+    for l in lines[-20:]:
         print("  " + l.replace("\t", "  "))
     return 0
 
@@ -844,12 +868,27 @@ def run_entry(e: dict, args: list[str], opt: dict) -> int:
         return 0
     safe_preview = any(a.lower() in {"preview", "dry-run", "dryrun"} for a in args)
     if e["confirm"] and not opt["yes"] and not safe_preview:
-        if not sys.stdin.isatty():
+        if not sys.stdin.isatty() or opt.get("quiet"):
             print(f"!! '{label}' needs confirmation; re-run with --yes.")
             return 3
         if input(f"Run '{label}'? [y/N] ").strip().lower() not in {"y", "yes"}:
             print("Cancelled.")
             return 3
+    if opt.get("quiet"):                      # --json / --output: capture what the task prints, no headers
+        t0 = time.perf_counter()
+        try:
+            r = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace",
+                               timeout=opt["timeout"], stdin=subprocess.DEVNULL)
+            rc, text = r.returncode, (r.stdout or "") + (r.stderr or "")
+        except subprocess.TimeoutExpired:
+            rc, text = 1, f"{label} timed out after {opt['timeout']}s.\n"
+        except OSError as ex:
+            rc, text = 1, f"could not start {label}: {ex}\n"
+        dt = time.perf_counter() - t0
+        log_run(e, rc, dt)
+        opt.setdefault("_tasks", []).append({"name": e["name"], "args": list(args), "exit": rc, "seconds": round(dt, 3)})
+        sys.stdout.write(text if text.endswith("\n") or not text else text + "\n")
+        return 0 if rc == 0 else 1
     print(f">> {label}" + (f"  ({' '.join(args)})" if args else ""))
     t0 = time.perf_counter()
     try:
@@ -934,7 +973,7 @@ def run_query(query: str, entries: list[dict], opt: dict) -> int:
                 return run_query(alt, entries, opt)
         near = did_you_mean(query, entries)
         log_miss(query, "no match")
-        if near and sys.stdin.isatty():
+        if near and sys.stdin.isatty() and not opt.get("quiet"):
             ans = input(f"No exact match. Did you mean '{near[0]}'? [y/N] ").strip().lower()
             if ans in {"y", "yes"}:
                 if len(query.split()) <= 3 and query.lower() not in RESERVED:
@@ -1084,8 +1123,8 @@ def handle(line: str, dirs, opt) -> int | None:
         return cmd_explain(q, entries)
     if low in {"privacy", "what goes online", "network tasks"}:
         return cmd_privacy(entries)
-    if low == "misses":
-        return cmd_misses()
+    if low in {"misses", "misses export", "misses clear"}:
+        return cmd_misses(low.split()[1] if " " in low else "")
     if low == "stats":
         return cmd_stats()
     if low == "doctor":
@@ -1115,8 +1154,55 @@ def handle(line: str, dirs, opt) -> int | None:
     return run_query(expand_alias(q), entries, opt)
 
 
+def offer_tour(dirs, opt) -> None:
+    """The very first time JeeG starts in a terminal, offer the guided tour once."""
+    marker = STATE / ".toured"
+    try:
+        if marker.exists() or not (sys.stdin.isatty() and sys.stdout.isatty()):
+            return
+        _ensure_state()
+        marker.write_text("1", encoding="utf-8")                    # ask only once, whatever the answer
+        ans = input("First time here? Take the 1-minute tour? [Y/n] ").strip().lower()
+        if ans in {"", "y", "yes"}:
+            handle("learn", dirs, opt)
+    except (OSError, EOFError, KeyboardInterrupt):
+        print()
+
+
+def run_captured(line: str, dirs, opt) -> int:
+    """--json / --output: run one line, collect the text, and write it as JSON or to a file."""
+    import contextlib
+    import io
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        rc = handle(line, dirs, opt)
+    rc = 0 if rc is None else rc
+    text = buf.getvalue()
+    if opt["json"]:
+        text = json.dumps({"jeeg": __version__, "input": line, "tasks": opt.get("_tasks", []), "exit": rc, "output": text.rstrip("\n")},
+                          indent=2, ensure_ascii=False) + "\n"
+    if opt["out"]:
+        dest = Path(opt["out"]).expanduser()
+        try:
+            if "\0" in str(dest) or dest.is_dir() or not dest.parent.is_dir():
+                raise OSError("that is not a usable file path")
+            if dest.exists():
+                raise OSError(f"{dest} already exists (JeeG never overwrites; choose another name)")
+            if len(text) > 5_000_000:
+                raise OSError("the output is too large")
+            with open(dest, "x", encoding="utf-8", newline="\n") as fh:
+                fh.write(text)
+        except OSError as ex:
+            print(f"Could not save the output: {ex}")
+            return 1
+        print(f"Saved to {dest}")
+    else:
+        sys.stdout.write(text)
+    return rc
+
+
 def main(argv: list[str]) -> int:
-    opt = {"yes": False, "dry": False, "timeout": None}
+    opt = {"yes": False, "dry": False, "timeout": None, "json": False, "out": None, "quiet": False}
     cli_dirs, words, i = [], [], 0
     while i < len(argv):
         a = argv[i]
@@ -1124,6 +1210,12 @@ def main(argv: list[str]) -> int:
             opt["yes"] = True
         elif a == "--dry-run":
             opt["dry"] = True
+        elif a == "--json":
+            opt["json"] = opt["quiet"] = True
+        elif a == "--output" and i + 1 < len(argv):
+            i += 1
+            opt["out"] = argv[i]
+            opt["quiet"] = True
         elif a == "--dir" and i + 1 < len(argv):
             i += 1
             cli_dirs.append(argv[i])
@@ -1151,8 +1243,13 @@ def main(argv: list[str]) -> int:
         return 1
 
     if words:
+        if opt["quiet"]:
+            return run_captured(" ".join(words), dirs, opt)
         rc = handle(" ".join(words), dirs, opt)
         return 0 if rc is None else rc
+    if opt["quiet"]:
+        print("--json and --output need a task, for example:  jeeg --json gst 2500 18")
+        return 1
 
     try:
         import readline  # noqa: F401  (arrow-key history where available)
@@ -1160,6 +1257,7 @@ def main(argv: list[str]) -> int:
         pass
     n = len(load_index(dirs))
     print(f"JeeG {__version__} - {n} tasks. Say what to do ('list' for help, 'exit' to quit).")
+    offer_tour(dirs, opt)
     nudge_backup()
     while True:
         try:

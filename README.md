@@ -1,4 +1,4 @@
-# JeeG 2.6.0 - How It Works
+# JeeG 2.7.0 - How It Works
 
 ![JeeG in a terminal](docs/demo.gif)
 
@@ -7,13 +7,13 @@ JeeG finds the matching script in the `scripts` folder and runs it.
 
 - Pure Python 3.9+, nothing to install. Works on Windows, macOS and Linux.
 - Light: about 16 MB of memory, about 65 ms per command, nothing running in the background (except reminders and alarms you set yourself).
-- 431 ready-made tasks. You can add your own by dropping in a file.
+- 440 ready-made tasks. You can add your own by dropping in a file.
 
 ---
 
 ## 1. Quick start
 
-0. Easiest: `pip install jeeg`, then `jeeg setup`. (Or use the folder, below.)
+0. Easiest: `pipx install jeeg` (or `pip install jeeg`), then `jeeg setup`. (Or use the folder, below.)
 1. Install Python 3.9 or newer (python.org). Unzip this folder anywhere.
 2. Open a terminal in the folder and run:
 
@@ -235,6 +235,16 @@ Optional extras for a few of these: `pip install pyzipper pyyaml`.
 | Help yourself | `learn` (tour), `doctor fix`, short forms like `pwd` and `mail` |
 | Privacy | `privacy` lists the few tasks that can go online; see `PRIVACY.md` and `SECURITY.md` |
 
+### New in version 2.7
+
+| Area | Examples |
+|---|---|
+| For other programs | `jeeg --json gst 2500 18`, `jeeg --output result.txt gst 2500 18` |
+| First run | the tour is offered once; `misses export` shares what JeeG did not understand |
+| Money | `lend 500 to ravi`, `borrow 300 from asha`, `ledger`, `settle ravi` |
+| Dates | `add warranty laptop 12 mar 2027`, `add vehicle due insurance bike 15 dec 2026`, `add vaccine asha polio 12 nov 2026`, `what is due` |
+| Personal | `weight 72.5 kg`, `add book Atomic Habits`, `books` |
+
 ## 6. Adding your own task
 
 1. Create a file in `scripts/` named after the task, for example `open_notes_app.py`. The file name is what people will say ("open notes app"), so use words, joined by underscores.
@@ -270,6 +280,15 @@ Helpers you can use inside Python scripts (from `_lib.py`): `args_text()` (the w
 
 ---
 
+## Share a plugin
+
+A plugin is one `.py` file. Make a starter with `jeeg plugin new my_task`, edit it, and try it. To share it:
+
+1. Keep it to the standard library, one file, under 200 KB, and make it say honestly what it does in `# desc:`.
+2. Put it in `library/`, run `python tools/make_library_index.py`, and open a pull request (or use the "Share a plugin" issue template and paste the file).
+3. Others can then add it with `jeeg plugin get my_task`. JeeG checks the fingerprint and shows what the plugin says it does before installing.
+
+
 ## 7. Safety summary
 
 - Dangerous tasks always ask first (see step 6).
@@ -279,7 +298,7 @@ Helpers you can use inside Python scripts (from `_lib.py`): `args_text()` (the w
 - Critical system processes cannot be killed with `kill process`.
 - No task sends your files or personal data anywhere. Web tasks only open a page in your browser.
 
-Security notes (version 2.6.0): only safe link types are opened, archives cannot write outside their folder, backups are validated before import, your data folder is private to you on Mac/Linux, over-long or control-character input is refused, and unexpected errors show one plain line (`JEEG_DEBUG=1` for details). Plugins and `--dir` folders run with your permissions, so only use ones you trust.
+Security notes (version 2.7.0): only safe link types are opened, archives cannot write outside their folder, backups are validated before import, your data folder is private to you on Mac/Linux, over-long or control-character input is refused, and unexpected errors show one plain line (`JEEG_DEBUG=1` for details). Plugins and `--dir` folders run with your permissions, so only use ones you trust.
 
 ## 8. Troubleshooting
 
@@ -305,8 +324,9 @@ Optional extras: `pip install pillow psutil pypdf qrcode[pil]` (screenshots, pro
     python tests/test_cmds.py            update, plugins, setup, completion, the local web page, new tasks
     python tests/test_v26.py             plugin library, sharing, tracking, file tasks, doctor fix, tour
     python tests/test_privacy.py         which files can use the network, documented addresses
+    python tests/test_v27.py             --json/--output, first-run tour, new tasks, speed guard
 
-The folder includes `.github/workflows/test.yml`. If you put this project on GitHub, it runs all seven test files, and builds and installs the pip package, on Windows, macOS and Linux with Python 3.9 and 3.12 on every change, which is the easiest way to find problems on systems you do not have at hand.
+The folder includes `.github/workflows/test.yml`. If you put this project on GitHub, it runs all eight test files, and builds and installs the pip package, on Windows, macOS and Linux with Python 3.9 and 3.12 on every change, which is the easiest way to find problems on systems you do not have at hand.
 
 ## 10. What was and was not tested
 

@@ -91,7 +91,7 @@ if os.name == "posix":
     r = subprocess.run(f'"{sys.executable}" "{ROOT / "jeeg.py"}" list | head -1', shell=True, capture_output=True, text=True, env=env)
     check("no traceback when piped to head", "Traceback" not in r.stderr, r.stderr)
 r = task("--version")
-check("version 2.6", "2.6." in r.stdout)
+check("version is 2.x", "JeeG 2." in r.stdout)
 
 # ---------------------------------------------------------- typo suggestions
 import jeeg

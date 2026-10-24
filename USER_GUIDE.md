@@ -26,7 +26,7 @@ Contents
 
 - A small launcher written in Python (standard library only). It has no background service and does not need an account.
 - It reads every script in `scripts/`, matches your words to a script, and runs it. A script is just a file you can open and edit.
-- 431 tasks are included across apps, websites, files, system, network, reminders, personal records, money calculators, text tools, developer tools and quick searches.
+- 440 tasks are included across apps, websites, files, system, network, reminders, personal records, money calculators, text tools, developer tools and quick searches.
 - It runs on Windows, macOS and Linux. Python 3.9 or newer is required.
 - It is quick (about 56 ms per command including Python start-up, measured on Linux) and light (about 16 MB while a command runs; nothing stays in memory between commands, except reminders and alarms you set).
 
@@ -356,6 +356,15 @@ Most accept text after the task name or use your clipboard if you give none, and
 - **Short forms:** when nothing matches, JeeG also tries common short forms (`mail` for `email`, `pwd` for `password`, `pic` for `picture`) and tells you what it understood.
 - **Privacy:** `privacy` lists which tasks can use the internet (marked `[online]` in `list`); everything else never touches the network. See `PRIVACY.md`.
 
+### 8.19 New in version 2.7
+- **Use JeeG from other programs:** `jeeg --json gst 2500 18` prints one JSON object with the task that ran, its exit code and its output (nothing is ever asked on the terminal in this mode; tasks that need confirmation report exit code 3 unless you add `-y`). `jeeg --output result.txt gst 2500 18` saves what the task prints to a new file (it never overwrites). You can combine both flags.
+- **First run:** the first time you start JeeG in a terminal it offers the 1-minute tour once (say `learn` any time to see it again).
+- **Help improve JeeG:** `misses export` writes the phrases JeeG did not understand to `jeeg-misses.txt` so you can review and share them (nothing is sent anywhere; remove anything personal first). `misses clear` empties the list.
+- **Who owes whom:** `lend 500 to ravi for lunch`, `borrow 300 from asha`, `ledger` (or `who owes me`), `ledger ravi` for one person's history, `settle ravi` or `settle ravi 200` for a part payment. These are private: they are not written to your command history.
+- **Dates you should not miss:** `add warranty laptop 12 mar 2027` / `warranties`, `add vehicle due insurance bike 15 dec 2026` / `vehicle dues`, `add vaccine asha polio 12 nov 2026` / `vaccines` (each also takes `remove ...`). `what is due` includes them, and entries that are overdue are flagged.
+- **Weight:** `weight 72.5 kg` (or lb), `weight history`, `weight goal 70`; `life report` draws the trend.
+- **Reading list:** `add book Atomic Habits`, `books`, `finished book atomic habits`, `remove book ...`.
+
 ## 9. Teaching and checking JeeG
 
 **Aliases: your own short words**
@@ -506,12 +515,13 @@ Run the checks yourself any time:
     python tests/test_cmds.py
     python tests/test_v26.py
     python tests/test_privacy.py
+    python tests/test_v27.py
 
 ---
 
 ## 15. Appendix: every task
 
-431 tasks. In the Usage column, `<...>` is something you fill in and `[...]` is optional. A star means the task asks before running; "online" means it can use the internet.
+440 tasks. In the Usage column, `<...>` is something you fill in and `[...]` is optional. A star means the task asks before running; "online" means it can use the internet.
 
 
 ### ai
@@ -763,7 +773,16 @@ Run the checks yourself any time:
 | calorie calculator | `calorie calculator <male\|female> <age> years <kg> kg <cm> cm [activity]` | Estimate daily calories you burn (calorie calculator male 30 years 70 kg 175 cm moderate) |
 | medicine today | `medicine today \| medicine taken <name> \| medicine remind \| remove medicine <name>` | Today's medicine list; tick one off, or get alerts for the rest of today (medicine today, medicine taken metformin, medicine remind, remove medicine metformin) |
 | sleep log | `sleep log <hours> \| sleep show` | Log how long you slept and see your recent average (sleep log 7.5 hours, sleep show) |
+| vaccine tracker | `add vaccine <person> <name> <date> \| vaccines \| remove vaccine <person> <name>` | Keep vaccine due dates for the family (add vaccine asha polio 12 nov 2026, vaccines, remove vaccine asha polio) |
 | water log | `water log <amount> [ml\|glasses\|bottles] \| water today \| water goal <ml>` | Log water you drank and see today's total (water log 500 ml, water log 2 glasses, water today, water goal 3000) |
+| weight log | `weight <kg> \| weight history \| weight goal <kg>` | Log your weight and see the trend (weight 72.5 kg, weight history, weight goal 70) |
+
+### home
+
+| Task | Usage | What it does |
+|---|---|---|
+| vehicle dues | `add vehicle due <what> <date> \| vehicle dues \| remove vehicle due <what>` | Track insurance, pollution certificate and service dates (add vehicle due insurance bike 15 dec 2026, vehicle dues) |
+| warranty tracker | `add warranty <item> <date> \| warranties \| remove warranty <item>` | Keep warranty end dates and see what expires soon (add warranty laptop 12 mar 2027, warranties, remove warranty laptop) |
 
 ### info
 
@@ -847,6 +866,7 @@ Run the checks yourself any time:
 |---|---|---|
 | add bill | `add bill <name> <day> [amount]` | Remember a monthly bill's due day (add bill electricity 15 1200) |
 | add expense | `add expense <amount> <category> [note]` | Record spending (spent 450 on groceries, add expense 200 food lunch) |
+| borrow money | `borrow <amount> from <name>` | Note money you borrowed from someone (borrow 300 from asha) |
 | budget report | `budget report` | Show this month's spending against your budgets (budget report) |
 | compound interest | `compound interest <amount> <rate%> <years>` | Compound interest (compound interest 10000 7 3 years [monthly]) |
 | crypto price (online) | `crypto price <coin>` | Live cryptocurrency price (crypto price bitcoin) (needs internet) |
@@ -857,13 +877,16 @@ Run the checks yourself any time:
 | expense total | `expense total [month]` | Spending totals by category (expense total, expense total last month) |
 | fuel cost | `fuel cost <km> km <mileage> kmpl <price>` | Trip fuel cost from distance, mileage and price (fuel cost 250 km 18 kmpl 105 per litre) |
 | gst amount | `gst <amount> [rate] [inclusive]` | GST add or remove (gst 1000 18, gst 1180 18 inclusive) |
+| lend money | `lend <amount> to <name> [note]` | Note money you lent to someone (lend 500 to ravi for lunch) |
 | make invoice | `invoice <customer>: <qty> <item> at <rate>, ... [gst 18]` | Make a simple GST invoice page (invoice Ravi Traders: 3 pens at 10, 2 books at 150 gst 18) |
 | percentage change | `percentage change <old> to <new>` | Percentage change between two numbers (percentage change 80 to 100) |
 | rd maturity | `rd <monthly amount> <rate %> <years>` | Recurring deposit maturity (rd 5000 a month 6.5% 2 years) |
 | remove bill | `remove bill <name>` | Delete a saved bill (remove bill electricity) |
 | remove budget | `remove budget <category>` | Remove a category budget (remove budget food) |
 | set budget | `set budget <category> <amount>` | Set a monthly spending limit for a category (set budget food 5000) |
+| settle ledger | `settle <name> [amount]` | Mark a debt as paid (settle ravi, settle ravi 200 for a part payment) |
 | show expenses | `show expenses [category] [month]` | List expenses (show expenses, show expenses food, show expenses last month) |
+| show ledger | `ledger [name]` | See who owes you and who you owe (ledger, who owes me, show ledger ravi) |
 | sip growth | `sip <monthly> <return%> <years>` | SIP growth (sip 5000 12 10 years: monthly amount, yearly return %, years) |
 | split bill | `split bill <amount> among <n> [tip %]` | Split a bill (split bill 2400 among 4 tip 10%) |
 | tip calculator | `tip <bill> [percent%] [split <people>]` | Work out a tip and split the bill (tip 1200 10%, tip 2450 12% split 4) |
@@ -888,6 +911,12 @@ Run the checks yourself any time:
 | show ip (online) |  | Show your local and public IP address |
 | trace route (online) | `trace route <host>` | Trace the network route to a host |
 | wifi info |  | Show the Wi-Fi network you are connected to |
+
+### personal
+
+| Task | Usage | What it does |
+|---|---|---|
+| reading list | `add book <title> \| books \| finished book <title> \| remove book <title>` | Keep a list of books to read and finished (add book Atomic Habits, books, finished book atomic habits) |
 
 ### power
 
