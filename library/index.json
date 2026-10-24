@@ -1,0 +1,25 @@
+{
+ "version": 1,
+ "plugins": {
+  "goal_planner": {
+   "desc": "Monthly saving needed to reach a goal (goal planner 10 lakh in 5 years at 12%)",
+   "tags": "money",
+   "sha256": "2a7a56238b33a84a4f2d6255e2fe195573252d0c796aa3a3466545b155109dbd"
+  },
+  "loan_prepay": {
+   "desc": "How much interest and time an extra monthly payment saves (loan prepay 5 lakh 8.5 5 years extra 2000)",
+   "tags": "money",
+   "sha256": "eb8d5c032c4e2c8d1d316da39f5fe001e585a40ee77d29dabb4d80e13ef3564b"
+  },
+  "packing_list": {
+   "desc": "A packing checklist for a trip (packing list beach 4 days, packing list trek 3 days)",
+   "tags": "personal",
+   "sha256": "eff6871f2c2cd335d11e5f6486d48e625fd41c0f58f8d04a36516abe49a409de"
+  },
+  "rent_receipt": {
+   "desc": "Make monthly rent receipts for HRA as one printable page (rent receipt Asha Rao 15000 landlord Mohan Das from april 2026 for 12 months)",
+   "tags": "money",
+   "sha256": "e55638e02fee4a68702f594385e5f01e341e1965eee91dd1624ac3355a1e8a82"
+  }
+ }
+}

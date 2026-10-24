@@ -120,9 +120,13 @@ def cmd_plugin(args: str, plugin_dir: Path, entries: list[dict], parse_header, a
     builtin = {e["name"] for e in entries if Path(e["path"]).resolve().parent != plugin_dir.resolve()}
     mine = sorted(p for p in plugin_dir.glob("*.py")) if plugin_dir.is_dir() else []
 
+    if sub in {"search", "library", "browse", "get"}:
+        return cmd_library("get" if sub == "get" else "search", rest, plugin_dir, entries, parse_header, assume_yes)
+
     if sub == "list":
         print(f"Plugin folder: {plugin_dir}")
         print("A plugin is one .py file with a header (keywords, desc, category). Commands:")
+        print("  plugin search <word>        find shared plugins    plugin get <name>   add one from the library")
         print("  plugin new <name>           make a starter file    plugin install <file or https link>")
         print("  plugin export <name>        copy one to share      plugin remove <name>")
         print("Plugins are ordinary programs that run with your permissions: only install ones you trust.")
@@ -179,7 +183,7 @@ def cmd_plugin(args: str, plugin_dir: Path, entries: list[dict], parse_header, a
         force = "force" in [w.lower() for w in rest]
         rest = [w for w in rest if w.lower() != "force"]
         if not rest:
-            print("Usage: plugin install <file.py or https://link/file.py> [force]")
+            print("Usage: plugin install <file.py or https address> [force]")
             return 1
         src = rest[0]
         if re.match(r"(?i)https?://", src):
@@ -243,7 +247,7 @@ def cmd_plugin(args: str, plugin_dir: Path, entries: list[dict], parse_header, a
         print(f"Installed. Say 'reindex' to refresh, then try: {meta['keywords'].split(',')[0].strip()}")
         return 0
 
-    print("Unknown plugin command. Try: plugin list | new | install | export | remove")
+    print("Unknown plugin command. Try: plugin list | search | get | new | install | export | remove")
     return 1
 
 
@@ -401,4 +405,219 @@ def serve(here: Path, state: Path, port: int = 8765, open_browser: bool = True) 
         print("\nStopped.")
     finally:
         httpd.server_close()
+    return 0
+
+
+# ============================================================ plugin library
+import hashlib
+
+LIBRARY_URL = "https://raw.githubusercontent.com/asrbmy/jeeg/main/library"
+LIB_MAX_INDEX = 500_000
+
+
+def _library_base() -> str:
+    return os.environ.get("JEEG_LIBRARY", "").strip() or LIBRARY_URL
+
+
+def _lib_read(base: str, rel: str, limit: int) -> bytes:
+    """Read one file of the library from a folder or an https address."""
+    if re.match(r"(?i)https?://", base):
+        if not base.lower().startswith("https://"):
+            raise OSError("the library address must use https")
+        try:
+            req = urllib.request.Request(base.rstrip("/") + "/" + rel, headers={"User-Agent": "JeeG-library"})
+            with urllib.request.urlopen(req, timeout=15) as r:
+                return r.read(limit + 1)
+        except urllib.error.HTTPError as ex:
+            raise OSError(f"the library answered {ex.code}")
+        except (urllib.error.URLError, TimeoutError, ValueError) as ex:
+            raise OSError("could not reach the library (are you online?)") from ex
+    p = Path(base).expanduser() / rel
+    try:
+        return p.read_bytes()[:limit + 1]
+    except OSError as ex:
+        raise OSError(f"could not read {p}") from ex
+
+
+def library_index(base: str | None = None) -> dict:
+    base = base or _library_base()
+    raw = _lib_read(base, "index.json", LIB_MAX_INDEX)
+    if len(raw) > LIB_MAX_INDEX:
+        raise OSError("the library index is too large")
+    try:
+        data = json.loads(raw.decode("utf-8"))
+        plugins = data["plugins"]
+        assert isinstance(plugins, dict)
+    except (ValueError, KeyError, AssertionError, UnicodeDecodeError):
+        raise OSError("the library index is not valid")
+    good = {}
+    for k, v in plugins.items():
+        if (NAME_RE.fullmatch(str(k)) and isinstance(v, dict) and re.fullmatch(r"[0-9a-f]{64}", str(v.get("sha256", "")))
+                and isinstance(v.get("desc"), str)):
+            good[k] = v
+    return good
+
+
+def cmd_library(sub: str, rest: list[str], plugin_dir: Path, entries: list[dict], parse_header, assume_yes: bool = False) -> int:
+    base = _library_base()
+    try:
+        idx = library_index(base)
+    except OSError as ex:
+        print(f"Could not open the plugin library: {ex}.")
+        return 1
+    if sub in {"search", "library", "browse"}:
+        q = [w.lower() for w in rest]
+        hits = {k: v for k, v in idx.items() if all(w in (k + " " + v["desc"] + " " + str(v.get("tags", ""))).lower() for w in q)}
+        if not hits:
+            print("Nothing in the library matches that. See everything with:  plugin library")
+            return 1
+        for k, v in sorted(hits.items()):
+            print(f"  {k:<20}{v['desc'][:80]}")
+        print("Add one with:  plugin get <name>")
+        return 0
+    name = _plugin_name(rest[0]) if rest else None           # sub == "get"
+    if not name or name not in idx:
+        print("Usage: plugin get <name>   (find names with: plugin search <word>)")
+        return 1
+    meta = idx[name]
+    if name in {e["name"] for e in entries if Path(e["path"]).resolve().parent != plugin_dir.resolve()}:
+        print(f"'{name}' clashes with a built-in task name.")
+        return 1
+    try:
+        data = _lib_read(base, f"{name}.py", MAX_PLUGIN_BYTES)
+    except OSError as ex:
+        print(f"Could not download it: {ex}.")
+        return 1
+    if len(data) > MAX_PLUGIN_BYTES:
+        print("That plugin is too large.")
+        return 1
+    if hashlib.sha256(data).hexdigest() != meta["sha256"]:
+        print("The downloaded file does not match the fingerprint in the library index, so it was NOT installed.")
+        return 1
+    tmp = plugin_dir.parent / f".lib_{name}.py"
+    plugin_dir.parent.mkdir(parents=True, exist_ok=True)
+    tmp.write_bytes(data)
+    try:
+        return _install_local(tmp, name, plugin_dir, entries, parse_header, assume_yes)
+    finally:
+        try:
+            tmp.unlink()
+        except OSError:
+            pass
+
+
+def _install_local(tmp: Path, name: str, plugin_dir: Path, entries, parse_header, assume_yes: bool) -> int:
+    """Install an already-verified file under the library name (the temp file has a different name)."""
+    text = tmp.read_text(encoding="utf-8")
+    meta = parse_header(tmp)
+    if not meta.get("keywords") or not meta.get("desc"):
+        print("That plugin has no keywords/desc header, so it was not installed.")
+        return 1
+    print(f"Plugin: {name}  (from the JeeG plugin library, fingerprint checked)\nDoes:   {meta['desc']}\nSays:   {meta['keywords']}\nSize:   {len(text.splitlines())} lines")
+    hits = [r for r in RISKY if r in text]
+    print("Uses:   " + (", ".join(hits) if hits else "nothing unusual found") + "   (a quick scan, not a guarantee)")
+    target = plugin_dir / f"{name}.py"
+    if not _ask(f"Install '{name}'" + (" (replaces your current copy)" if target.exists() else "") + "?", assume_yes):
+        return 3
+    plugin_dir.mkdir(parents=True, exist_ok=True)
+    target.write_text(text, encoding="utf-8", newline="\n")
+    print(f"Installed. Say 'reindex' to refresh, then try: {meta['keywords'].split(',')[0].strip()}")
+    return 0
+
+
+# ====================================================== routines export / import
+def _validate_routines(data) -> dict:
+    if not isinstance(data, dict) or data.get("kind") != "routines" or not isinstance(data.get("routines"), dict):
+        raise ValueError("this is not a JeeG routines file")
+    out = {}
+    for k, steps in data["routines"].items():
+        if not re.fullmatch(r"[a-z0-9][a-z0-9 _-]{0,39}", str(k)):
+            raise ValueError(f"routine name '{str(k)[:30]}' is not allowed")
+        if not isinstance(steps, list) or not 1 <= len(steps) <= 50 or not all(isinstance(s, str) and 0 < len(s) <= 200 for s in steps):
+            raise ValueError(f"routine '{k}' must be 1-50 short text steps")
+        if any(re.search(r"[\x00-\x08\x0b-\x1f\x7f]", s) for s in steps):
+            raise ValueError(f"routine '{k}' contains control characters")
+        out[str(k)] = steps
+    if not out or len(out) > 50:
+        raise ValueError("a routines file needs 1-50 routines")
+    return out
+
+
+def cmd_routines_io(args: str, state: Path, assume_yes: bool = False) -> int:
+    words = args.split()
+    sub = words[0].lower() if words else ""
+    f = state / "routines.json"
+    if sub == "export":
+        try:
+            mine = json.loads(f.read_text(encoding="utf-8")) if f.exists() else {}
+        except (OSError, ValueError):
+            mine = {}
+        mine = {k: v for k, v in mine.items() if isinstance(v, list)}
+        if not mine:
+            print("You have no routines of your own yet. Create one with:  edit routines")
+            return 1
+        dst = Path.cwd() / "jeeg-routines.json"
+        if dst.exists():
+            print(f"{dst} already exists; move it first.")
+            return 1
+        dst.write_text(json.dumps({"jeeg": 1, "kind": "routines", "routines": mine}, indent=2, ensure_ascii=False), encoding="utf-8")
+        print(f"Wrote {len(mine)} routine(s) to {dst}. Share it, and others can add it with:  routines import jeeg-routines.json")
+        return 0
+    if sub == "import" and len(words) > 1:
+        src = Path(" ".join(words[1:]).strip("\"'")).expanduser()
+        try:
+            if not src.is_file() or src.stat().st_size > 200_000:
+                raise ValueError("that file was not found or is too large")
+            new = _validate_routines(json.loads(src.read_text(encoding="utf-8")))
+        except (OSError, ValueError, UnicodeDecodeError) as ex:
+            print(f"Could not import: {ex}.")
+            return 1
+        try:
+            cur = json.loads(f.read_text(encoding="utf-8")) if f.exists() else {}
+        except (OSError, ValueError):
+            cur = {}
+        for k, steps in new.items():
+            print(f"  {k}{' (replaces yours)' if k in cur else ''}: " + " | ".join(steps[:6]) + (" ..." if len(steps) > 6 else ""))
+        print("Routines run JeeG tasks one after another; steps that ask for confirmation will still ask.")
+        if not _ask(f"Add {len(new)} routine(s)?", assume_yes):
+            return 3
+        cur.update(new)
+        state.mkdir(parents=True, exist_ok=True)
+        f.write_text(json.dumps(cur, indent=2, ensure_ascii=False), encoding="utf-8")
+        print("Done. Run one with:  run routine <name>")
+        return 0
+    print("Usage: routines export | routines import <file>")
+    return 1
+
+
+# ============================================================ guided tour
+TOUR = [
+    ("Say what you want", "JeeG matches your words to a small script and runs it. Try a calculator task:", "gst 2500 18"),
+    ("Several tasks at once", "Join tasks with 'and'. This only shows the plan; nothing is opened:", "--dry-run open gmail and open calendar"),
+    ("See why it chose that", "'explain' shows which tasks matched and their scores:", "explain open youtube"),
+    ("Keep a to-do", "Your data stays in a private folder on this computer:", "add todo finish the JeeG tour"),
+    ("Look at it again", "", "todo list"),
+    ("Browse everything", "Tasks are grouped by category:", "list money"),
+    ("Get a suggestion", "JeeG can point out a task you have not used:", "tips"),
+]
+
+
+def cmd_learn(run_line, interactive: bool) -> int:
+    print("JeeG tour: 7 short steps. Press Enter to run each example, or type s to skip it, q to stop.\n" if interactive
+          else "JeeG tour (run it in a terminal to try each step):\n")
+    for i, (title, text, cmd) in enumerate(TOUR, 1):
+        print(f"{i}. {title}")
+        if text:
+            print(f"   {text}")
+        print(f"   try:  {cmd}")
+        if interactive:
+            ans = input("   [Enter = run, s = skip, q = quit] ").strip().lower()
+            if ans == "q":
+                print("Stopped. Come back any time with:  learn")
+                return 0
+            if ans != "s":
+                print()
+                run_line(cmd)
+        print()
+    print("That is the whole idea. Next: 'list' for every task, 'plugin search' for extra ones, 'alias add' for your own short words.")
     return 0

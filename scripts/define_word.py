@@ -1,6 +1,7 @@
 # keywords: meaning, dictionary, definition, define, means, word meaning, what does, synonym
 # desc: Dictionary meaning in the terminal (meaning of ephemeral); opens Google if offline
 # category: info
+# network: yes
 # usage: meaning of <word>
 # rawargs: yes
 import webbrowser, urllib.parse

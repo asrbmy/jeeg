@@ -1,6 +1,7 @@
 # keywords: pincode, pin code, postal code, zip, post office, postcode, area code
 # desc: Look up an Indian PIN code (pincode 110001) (needs internet)
 # category: info
+# network: yes
 # usage: pincode <PIN>
 # rawargs: yes
 import re

@@ -6,7 +6,7 @@
 # patterns: \b(make|create|generate|write|new)\s+(an?\s+)?(gst\s+|tax\s+)?invoice\b ;; ^\s*(gst\s+|tax\s+)?invoice\b
 # priority: 1
 import datetime, html, re
-from _lib import args_text, fail, open_path, user_dir
+from _lib import args_text, fail, open_path, output_dir
 from _money import inr
 from _store import load, save
 t = args_text()
@@ -59,8 +59,7 @@ table{{width:100%;border-collapse:collapse;margin-top:20px}}th,td{{padding:8px;b
 <tr><td colspan=3 class=r>Subtotal</td><td class=r>{inr(sub)}</td></tr>{tax}
 <tr class=tot><td colspan=3 class=r>Total (INR)</td><td class=r>{inr(sub + gst)}</td></tr></table>
 <p class=m>Computer generated. Print this page (Ctrl+P) to save it as a PDF.</p>"""
-out = user_dir("Documents", "Desktop") / "JeeG-invoices"
-out.mkdir(exist_ok=True)
+out = output_dir("JeeG-invoices")
 f = out / f"{no}-{re.sub(r'[^A-Za-z0-9]+', '-', cust).strip('-')[:30] or 'customer'}.html"
 f.write_text(page, encoding="utf-8")
 print(f"{no} for {cust}: total {inr(sub + gst)}" + (f" (GST {inr(gst)} included)" if rate else ""))

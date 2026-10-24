@@ -1,6 +1,7 @@
 # keywords: exchange rates, rupee rate, forex rates, dollar rate, currency rates, rupee vs dollar, usd to inr rate, today's rates, rate table
 # desc: Table of today's exchange rates against the rupee (exchange rates, exchange rates eur)
 # category: money
+# network: yes
 # usage: exchange rates [base currency]
 # rawargs: yes
 import re

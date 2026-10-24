@@ -1,6 +1,7 @@
 # keywords: pip, install, pip install, python package, install package, install library, install module
 # desc: Install Python packages (pip install requests)
 # category: developer
+# network: yes
 # usage: pip install <packages>
 # confirm: yes
 import re, subprocess, sys

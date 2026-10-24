@@ -1,6 +1,7 @@
 # keywords: website, site, up, down, status, is down, http, response, website status, uptime check
 # desc: Check if a website is up (check website github.com)
 # category: network
+# network: yes
 # usage: check website <url>
 import time, urllib.request, urllib.error
 from _lib import args_text, fail

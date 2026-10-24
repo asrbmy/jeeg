@@ -1,6 +1,7 @@
 # keywords: ping, latency, reachable, ping test, response time, is up
 # desc: Ping a host (ping google.com)
 # category: network
+# network: yes
 # usage: ping host <name or ip>
 import subprocess
 from _lib import WIN, args_text, call, fail

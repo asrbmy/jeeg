@@ -1,6 +1,7 @@
 # keywords: briefing, brief me, agenda, summary, overview
 # desc: Daily briefing (say: morning briefing): date, weather, to-dos, birthdays, reminders
 # category: routines
+# network: yes
 # usage: daily briefing [city]
 import json, time
 from _lib import args_text, data_dir

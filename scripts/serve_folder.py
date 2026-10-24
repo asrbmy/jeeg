@@ -1,6 +1,7 @@
 # keywords: serve, http server, local server, web server, host folder, localhost server, preview site
 # desc: Serve the current folder at http://localhost:8000
 # category: developer
+# network: yes
 # usage: serve folder [port]
 import functools, http.server, re, socketserver, threading, webbrowser
 from _lib import args_text, fail

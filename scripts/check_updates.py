@@ -1,6 +1,7 @@
 # keywords: check updates, software updates, windows update, available updates, pending updates, upgradable packages, outdated software, any updates
 # desc: Check which programs and system updates are waiting (does not install)
 # category: system
+# network: yes
 # confirm: yes
 import shutil
 from _lib import WIN, MAC, call, fail

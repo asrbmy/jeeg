@@ -1,6 +1,7 @@
 # keywords: port, open port, tcp, listening, reachable port, connect
 # desc: Check if a port is open (port check example.com 443)
 # category: network
+# network: yes
 # usage: port check <host> <port>
 import re, socket, time
 from _lib import args_text, fail

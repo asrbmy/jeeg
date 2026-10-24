@@ -1,6 +1,7 @@
 # keywords: currency, exchange rate, forex, dollar, euro, rupee, usd, inr, convert currency, exchange, money exchange, rate today, dollar rate
 # desc: Live currency conversion (currency 100 usd to inr) (needs internet)
 # category: money
+# network: yes
 # usage: currency <amount> <from> to <to>
 # rawargs: yes
 from _lib import args_text, fail

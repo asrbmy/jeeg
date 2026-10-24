@@ -1,6 +1,7 @@
 # keywords: git clone, clone, download repo, clone repo, clone repository, copy repo
 # desc: Clone a repository (git clone https://github.com/user/repo)
 # category: developer
+# network: yes
 # usage: git clone <url>
 import re
 from _lib import args_text, call, fail

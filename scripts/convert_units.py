@@ -1,6 +1,7 @@
 # keywords: convert, conversion, converter, unit, units, currency, exchange, how many, in miles, in km, kg to lb, celsius, fahrenheit
 # desc: Convert units offline (convert 5 km to miles, 100 f to c); falls back to Google for currency
 # category: utility
+# network: yes
 # usage: convert <n> <unit> to <unit>
 # rawargs: yes
 import re, urllib.parse, webbrowser

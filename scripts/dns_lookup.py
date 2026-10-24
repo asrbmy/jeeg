@@ -1,6 +1,7 @@
 # keywords: dns, lookup, resolve, domain, nslookup, ip of, ip address of website
 # desc: Look up the IP addresses of a domain
 # category: network
+# network: yes
 # usage: dns lookup <domain>
 import socket
 from _lib import args_text, fail

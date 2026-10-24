@@ -1,6 +1,7 @@
 # keywords: news, headlines, latest, top stories, breaking, today news, current affairs, what is happening
 # desc: Top news headlines in the terminal (news headlines, news cricket) (needs internet)
 # category: info
+# network: yes
 # usage: news headlines [topic]
 # rawargs: yes
 # priority: 1

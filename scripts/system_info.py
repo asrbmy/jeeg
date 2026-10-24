@@ -1,6 +1,7 @@
 # keywords: system, info, computer, specs, pc, hardware, configuration, about, details
 # desc: Show OS, CPU, memory, disk and uptime
 # category: system
+# network: yes
 import os, platform, shutil, socket
 from _lib import human
 from _sys import mem_info, uptime_seconds

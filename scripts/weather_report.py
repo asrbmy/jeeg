@@ -1,6 +1,7 @@
 # keywords: weather report, forecast, text weather, weather today, temperature, rain chance, humidity
 # desc: Weather as text in the terminal (weather report mumbai) (needs internet)
 # category: info
+# network: yes
 # usage: weather report [city]
 # rawargs: yes
 from _lib import args_text, fail

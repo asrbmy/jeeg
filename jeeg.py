@@ -15,6 +15,9 @@ Commands (interactive or one-shot):
     explain <words>   show which tasks match and why        misses   phrases it could not match
     stats             what you use most                     doctor   check this computer
     update [now]      check GitHub for a newer version      setup    first-run wizard
+    learn             a 7-step guided tour                  doctor fix   repair common problems
+    routines export|import <file>    alias export|import <file>   share your setup
+    plugin search|get <name>          shared plugin library
     plugin new|install|export|remove|list   your own tasks    web   a local page in your browser
     completion bash|zsh|powershell          tab completion
     tips              suggest a task you have not used      pack list / pack off <category> / pack on <category>
@@ -52,7 +55,7 @@ import sys
 import time
 from pathlib import Path
 
-__version__ = "2.5.0"
+__version__ = "2.6.0"
 
 HERE = Path(__file__).resolve().parent
 def _state_dir() -> Path:
@@ -104,7 +107,7 @@ HEADER_RE = re.compile(r"^\s*(?:#|//|::|REM\b)\s*(\w+)\s*:\s*(.*?)\s*$", re.I)
 SPLIT_RE = re.compile(r"\s*(?:&|;|\band then\b|\bthen\b|\band\b)\s*", re.I)
 SPLIT_MIN_SCORE = 1.2   # every part must clearly name a task
 
-INDEX_VERSION = 8    # bump when index format / tokenising changes
+INDEX_VERSION = 9    # bump when index format / tokenising changes
 MIN_SCORE = 0.7      # below this a script is not considered a match
 TIE_MARGIN = 0.04    # scores this close count as a tie
 MENU_MAX = 8
@@ -163,6 +166,7 @@ def make_entry(path: Path) -> dict:
         "usage": meta.get("usage", ""),
         "raw": 2 if meta.get("rawargs", "").lower() == "full" else int(meta.get("rawargs", "").lower() in {"yes", "true", "1", "y"}),
         "private": meta.get("private", "").lower() in {"yes", "true", "1", "y"},
+        "net": meta.get("network", "").lower() in {"yes", "true", "1", "y"},
         "pat": [x.strip() for x in meta.get("patterns", "").split(";;") if x.strip()],
         "prio": int(meta["priority"]) if meta.get("priority", "").lstrip("-").isdigit() else 0,
     }
@@ -366,7 +370,7 @@ def resolve(query: str, entries: list[dict]):
 # ------------------------------------------------- your data: aliases, logs
 RESERVED = {"list", "help", "history", "again", "repeat", "redo", "reindex", "selftest", "exit", "quit", "alias",
             "explain", "misses", "stats", "doctor", "tasks", "pack", "tips", "tip", "plugins", "plugin", "update", "setup",
-            "web", "ui", "completion"}
+            "web", "ui", "completion", "learn", "tour", "routines", "privacy"}
 
 
 def _load_json(name: str, default):
@@ -420,6 +424,40 @@ def cmd_alias(q: str, entries: list[dict]) -> int:
         for k, v in sorted(al.items()):
             print(f"  {k:<14} = {v}")
         return 0
+    if low == "export":
+        if not al:
+            print("You have no aliases yet.")
+            return 1
+        dst = Path.cwd() / "jeeg-aliases.json"
+        if dst.exists():
+            print(f"{dst} already exists; move it first.")
+            return 1
+        dst.write_text(json.dumps({"jeeg": 1, "kind": "aliases", "aliases": al}, indent=2, ensure_ascii=False), encoding="utf-8")
+        print(f"Wrote {len(al)} alias(es) to {dst}. Others can add them with:  alias import jeeg-aliases.json")
+        return 0
+    if low.startswith("import "):
+        src = Path(rest[7:].strip().strip("\"'")).expanduser()
+        try:
+            if not src.is_file() or src.stat().st_size > 100_000:
+                raise ValueError("file not found or too large")
+            data = json.loads(src.read_text(encoding="utf-8"))
+            if data.get("kind") != "aliases" or not isinstance(data.get("aliases"), dict):
+                raise ValueError("not a JeeG aliases file")
+        except (OSError, ValueError, UnicodeDecodeError, AttributeError) as ex:
+            print(f"Could not import: {ex}.")
+            return 1
+        added, skipped = 0, []
+        for k, v in list(data["aliases"].items())[:200]:
+            k2, v2 = " ".join(str(k).lower().split()), " ".join(str(v).split())
+            if (not k2 or not v2 or len(k2.split()) > 3 or len(v2) > 200 or k2 in RESERVED or k2.split()[0] in RESERVED
+                    or re.search(r"[\x00-\x1f\x7f]", k2 + v2) or resolve(v2, entries)[0] == "none"):
+                skipped.append(k2 or "?")
+                continue
+            al[k2] = v2
+            added += 1
+        _save_json("aliases.json", al)
+        print(f"Added {added} alias(es)." + (f" Skipped {len(skipped)} that were not valid here: {', '.join(skipped[:8])}." if skipped else ""))
+        return 0
     if low.startswith(("remove ", "delete ", "del ")):
         key = " ".join(rest.split()[1:]).lower()
         if key in al:
@@ -450,7 +488,7 @@ def cmd_alias(q: str, entries: list[dict]) -> int:
         _save_json("aliases.json", al)
         print(f"Saved: '{key}' now means '{val}'.")
         return 0
-    print("Usage: alias add <short> = <task words> | alias list | alias remove <short>")
+    print("Usage: alias add <short> = <task words> | alias list | alias remove <short> | alias export | alias import <file>")
     return 1
 
 
@@ -676,6 +714,78 @@ def cmd_doctor(dirs, entries: list[dict]) -> int:
     return 0 if ok else 1
 
 
+SYNONYMS = {"mail": "email", "mails": "email", "gmail": "gmail", "pic": "picture", "pics": "picture", "img": "image", "imgs": "image",
+            "vid": "video", "vids": "video", "pwd": "password", "passwd": "password", "pass": "password", "calc": "calculator",
+            "bday": "birthday", "bdays": "birthday", "txt": "text", "msg": "message", "msgs": "message", "doc": "document",
+            "docs": "documents", "cal": "calendar", "mins": "minutes", "min": "minutes", "hrs": "hours", "temp": "temperature",
+            "info": "information", "config": "settings", "wifi": "wifi", "wi-fi": "wifi", "ip": "ip", "sys": "system",
+            "mem": "memory", "ram": "memory", "dl": "downloads", "dls": "downloads", "app": "app", "apps": "programs",
+            "shot": "screenshot", "ss": "screenshot", "snap": "screenshot", "notes": "note", "remember": "remind",
+            "alarm": "alarm", "tv": "video", "tablet": "medicine", "pill": "medicine", "pills": "medicine"}
+
+
+def apply_synonyms(query: str) -> str:
+    """Last-chance rewrite of short forms ('mail' -> 'email'); only used when nothing matched at all."""
+    return " ".join(SYNONYMS.get(w, w) for w in query.lower().split())
+
+
+def cmd_doctor_fix(dirs) -> int:
+    """Repair the usual problems: damaged data files, stray temp files, dead reminders, open permissions, stale index."""
+    fixed = 0
+    _ensure_state()
+    for f in sorted(STATE.glob("*.json")):
+        try:
+            json.loads(f.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            bad = f.with_suffix(".json.bad")
+            n = 1
+            while bad.exists():
+                bad = f.with_suffix(f".json.bad{n}")
+                n += 1
+            f.rename(bad)
+            print(f"  fixed  {f.name} was damaged; moved to {bad.name} so JeeG can start fresh")
+            fixed += 1
+    for f in list(STATE.glob("*.tmp")) + list(STATE.glob(".lib_*.py")):
+        try:
+            f.unlink()
+            print(f"  fixed  removed leftover file {f.name}")
+            fixed += 1
+        except OSError:
+            pass
+    try:
+        rem = json.loads((STATE / "reminders.json").read_text(encoding="utf-8"))
+        live = []
+        for r in rem:
+            try:
+                os.kill(int(r["pid"]), 0) if os.name == "posix" else None
+                live.append(r)
+            except (OSError, KeyError, ValueError, TypeError):
+                pass
+        if len(live) != len(rem):
+            (STATE / "reminders.json").write_text(json.dumps(live), encoding="utf-8")
+            print(f"  fixed  removed {len(rem) - len(live)} finished reminder(s) from the list")
+            fixed += 1
+    except (OSError, ValueError, TypeError):
+        pass
+    if os.name == "posix":
+        try:
+            if STATE.stat().st_mode & 0o077:
+                STATE.chmod(0o700)
+                print("  fixed  made your data folder private to you")
+                fixed += 1
+        except OSError:
+            pass
+    try:
+        (STATE / "index.json").unlink()
+        print("  fixed  rebuilt the task index")
+        fixed += 1
+    except OSError:
+        pass
+    load_index(dirs, rebuild=True)
+    print(f"Done. {fixed} thing(s) repaired." if fixed else "Nothing needed repairing.")
+    return 0
+
+
 def did_you_mean(query: str, entries: list[dict]) -> list[str]:
     import difflib
     out = []
@@ -816,6 +926,12 @@ def run_query(query: str, entries: list[dict], opt: dict) -> int:
         if fb and len(words) >= 2 and words[0].lower() in {"open", "launch", "start", "run"}:
             history_add(query, fb["name"])      # "open vlc" -> try launching an installed app
             return run_entry(fb, words[1:], opt)
+        alt = apply_synonyms(query)
+        if alt != query.lower().strip():
+            st2, hit2 = resolve(alt, entries)
+            if st2 == "ok":
+                print(f"(understood as: {alt})")
+                return run_query(alt, entries, opt)
         near = did_you_mean(query, entries)
         log_miss(query, "no match")
         if near and sys.stdin.isatty():
@@ -866,10 +982,21 @@ def cmd_list(entries: list[dict], cat: str = "") -> None:
     for c in sorted(groups):
         print(f"\n[{c}]")
         for e in groups[c]:
-            flag = " *" if e["confirm"] else ""
+            flag = (" *" if e["confirm"] else "") + (" [online]" if e.get("net") else "")
             d = f"  {e['desc']}" if e["desc"] else ""
             print(f"  {e['name'].replace('_', ' '):<24}{d}{flag}")
-    print(f"\n{len(entries)} tasks. (* asks before running)")
+    print(f"\n{len(entries)} tasks. (* asks before running, [online] can use the internet; see 'privacy')")
+
+
+def cmd_privacy(entries: list[dict]) -> int:
+    online = sorted((e for e in entries if e.get("net")), key=lambda e: e["name"])
+    print(f"Your data lives only in {STATE} (readable only by you). JeeG has no account and no telemetry, and nothing runs in the background except reminders you set yourself.")
+    print(f"{len(entries) - len(online)} of {len(entries)} tasks never touch the network. These {len(online)} can, and only when you run them:")
+    for e in online:
+        print(f"  {e['name'].replace('_', ' '):<22}{e['desc'][:70]}")
+    print("Tasks named 'open <site>' only ask your own browser to open that site; JeeG itself sends nothing.")
+    print("Tasks from plugins are not covered by this list: read a plugin before you install it.")
+    return 0
 
 
 def cmd_selftest(entries: list[dict]) -> int:
@@ -929,6 +1056,17 @@ def handle(line: str, dirs, opt) -> int | None:
     if low in {"setup", "setup jeeg", "jeeg setup", "setup wizard", "first run"}:
         import jeeg_cmds
         return jeeg_cmds.cmd_setup(HERE, STATE, all_entries, opt.get("yes", False))
+    if low in {"learn", "tour", "tutorial", "jeeg tour", "learn jeeg"}:
+        import jeeg_cmds
+        def _run(cmd_line: str) -> None:
+            import shlex
+            subprocess.run([sys.executable, str(HERE / "jeeg.py")] + shlex.split(cmd_line), env=dict(os.environ, JEEG_HOME=str(STATE)))
+        return jeeg_cmds.cmd_learn(_run, sys.stdin.isatty() and sys.stdout.isatty())
+    if re.match(r"routines\s+(export|import)\b", low):
+        import jeeg_cmds
+        return jeeg_cmds.cmd_routines_io(q.split(None, 1)[1], STATE, opt.get("yes", False))
+    if low == "doctor fix" or low == "doctor --fix":
+        return cmd_doctor_fix(dirs)
     if low.startswith("completion"):
         import jeeg_cmds
         parts = low.split()
@@ -944,6 +1082,8 @@ def handle(line: str, dirs, opt) -> int | None:
         return cmd_alias(q, entries)
     if low == "explain" or low.startswith("explain "):
         return cmd_explain(q, entries)
+    if low in {"privacy", "what goes online", "network tasks"}:
+        return cmd_privacy(entries)
     if low == "misses":
         return cmd_misses()
     if low == "stats":

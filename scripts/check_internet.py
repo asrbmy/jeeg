@@ -1,6 +1,7 @@
 # keywords: internet, connection, online, connected, offline, network, wifi working, net
 # desc: Check whether the internet is working
 # category: network
+# network: yes
 import socket, time
 from _lib import fail
 for host, port in (("1.1.1.1", 443), ("8.8.8.8", 53), ("9.9.9.9", 53)):

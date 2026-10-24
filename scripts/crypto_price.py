@@ -1,6 +1,7 @@
 # keywords: crypto, bitcoin, btc, ethereum, eth, cryptocurrency, coin price, dogecoin, solana, coin, token price
 # desc: Live cryptocurrency price (crypto price bitcoin) (needs internet)
 # category: money
+# network: yes
 # usage: crypto price <coin>
 # rawargs: yes
 import re

@@ -1,11 +1,13 @@
-# JeeG 2.5.0 - How It Works
+# JeeG 2.6.0 - How It Works
+
+![JeeG in a terminal](docs/demo.gif)
 
 You type what you want in plain words ("open youtube", "set timer 10 minutes", "send whatsapp to mom hi").
 JeeG finds the matching script in the `scripts` folder and runs it.
 
 - Pure Python 3.9+, nothing to install. Works on Windows, macOS and Linux.
 - Light: about 16 MB of memory, about 65 ms per command, nothing running in the background (except reminders and alarms you set yourself).
-- 421 ready-made tasks. You can add your own by dropping in a file.
+- 431 ready-made tasks. You can add your own by dropping in a file.
 
 ---
 
@@ -222,6 +224,17 @@ Optional extras for a few of these: `pip install pyzipper pyyaml`.
 | Easier to use | typo repair (`opn gmial` -> `open gmail`), `completion bash\|zsh\|powershell`, `web` (a private page on your own computer) |
 | New tasks | `invoice Ravi Traders: 3 pens at 10 gst 18`, `rd 5000 6.5 2 years`, `save clipboard`, `clipboard history` |
 
+### New in version 2.6
+
+| Area | Examples |
+|---|---|
+| Files | `pdf to text report.pdf`, `read text from scan.png`, `compress pictures downloads`, `rename files in trip as holiday_{n}.{ext} apply` |
+| Tracking | `life report` (visual page), `study log maths 45 min`, `add medicine metformin at 8am`, `what is due`, `journal prompt` |
+| Plugin library | `plugin search loan`, `plugin get loan_prepay` (fingerprint-checked) |
+| Sharing | `routines export`, `routines import file`, `alias export`, `alias import file` |
+| Help yourself | `learn` (tour), `doctor fix`, short forms like `pwd` and `mail` |
+| Privacy | `privacy` lists the few tasks that can go online; see `PRIVACY.md` and `SECURITY.md` |
+
 ## 6. Adding your own task
 
 1. Create a file in `scripts/` named after the task, for example `open_notes_app.py`. The file name is what people will say ("open notes app"), so use words, joined by underscores.
@@ -266,7 +279,7 @@ Helpers you can use inside Python scripts (from `_lib.py`): `args_text()` (the w
 - Critical system processes cannot be killed with `kill process`.
 - No task sends your files or personal data anywhere. Web tasks only open a page in your browser.
 
-Security notes (version 2.5.0): only safe link types are opened, archives cannot write outside their folder, backups are validated before import, your data folder is private to you on Mac/Linux, over-long or control-character input is refused, and unexpected errors show one plain line (`JEEG_DEBUG=1` for details). Plugins and `--dir` folders run with your permissions, so only use ones you trust.
+Security notes (version 2.6.0): only safe link types are opened, archives cannot write outside their folder, backups are validated before import, your data folder is private to you on Mac/Linux, over-long or control-character input is refused, and unexpected errors show one plain line (`JEEG_DEBUG=1` for details). Plugins and `--dir` folders run with your permissions, so only use ones you trust.
 
 ## 8. Troubleshooting
 
@@ -290,8 +303,10 @@ Optional extras: `pip install pillow psutil pypdf qrcode[pil]` (screenshots, pro
     python tests/test_engine.py          aliases, explain, did-you-mean, logs, installer, undo, budgets, plugins
     python tests/test_security.py        unsafe links, archives, backups, long or odd input, private data folder
     python tests/test_cmds.py            update, plugins, setup, completion, the local web page, new tasks
+    python tests/test_v26.py             plugin library, sharing, tracking, file tasks, doctor fix, tour
+    python tests/test_privacy.py         which files can use the network, documented addresses
 
-The folder includes `.github/workflows/test.yml`. If you put this project on GitHub, it runs all five test files, and builds and installs the pip package, on Windows, macOS and Linux with Python 3.9 and 3.12 on every change, which is the easiest way to find problems on systems you do not have at hand.
+The folder includes `.github/workflows/test.yml`. If you put this project on GitHub, it runs all seven test files, and builds and installs the pip package, on Windows, macOS and Linux with Python 3.9 and 3.12 on every change, which is the easiest way to find problems on systems you do not have at hand.
 
 ## 10. What was and was not tested
 

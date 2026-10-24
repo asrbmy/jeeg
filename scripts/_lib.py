@@ -92,6 +92,14 @@ def user_dir(*names):
     fail(f"Folder not found in your home directory: {names[0]}")
 
 
+def output_dir(name):
+    """A folder for files JeeG makes for you: <Documents or Desktop or home>/<name>. Created if needed."""
+    base = next((Path.home() / n for n in ("Documents", "Desktop") if (Path.home() / n).is_dir()), Path.home())
+    out = base / name
+    out.mkdir(exist_ok=True)
+    return out
+
+
 def spawn(cmd, **kw):
     """Start a program without waiting for it."""
     if WIN:

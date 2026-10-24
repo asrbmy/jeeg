@@ -1,6 +1,7 @@
 # keywords: wiki, wikipedia, summary, who is, what is, tell me about, about, encyclopedia, explain
 # desc: Short Wikipedia summary (wiki summary einstein) (needs internet)
 # category: info
+# network: yes
 # usage: wiki summary <topic>
 # rawargs: yes
 from _lib import args_text, fail

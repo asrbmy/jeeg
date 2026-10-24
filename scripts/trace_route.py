@@ -1,6 +1,7 @@
 # keywords: traceroute, tracert, route, hops, path to, trace
 # desc: Trace the network route to a host
 # category: network
+# network: yes
 # usage: trace route <host>
 import subprocess
 from _lib import WIN, args_text, call, fail

@@ -1,6 +1,7 @@
 # keywords: http get, http request, fetch url, curl, call api, test api, get request, check api response, fetch page, api test
 # desc: Fetch a URL and show status, headers and the start of the body (http get https://example.com)
 # category: developer
+# network: yes
 # usage: http get <url>
 # rawargs: yes
 import re, urllib.error, urllib.request

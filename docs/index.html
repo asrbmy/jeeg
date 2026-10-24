@@ -1,0 +1,330 @@
+<title>JeeG</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one narrow column, hairline dividers instead of boxes, the chat demo as the only raised surface. */
+:root{
+  --bg:#FAF9F5; --surface:#FFFFFF; --ink:#2B2822; --muted:#6D685C; --line:#E8E4D8; --soft:#F1EEE4;
+  --accent:#C15F3C; --accent-hover:#A94E2E; --on-accent:#FFFFFF; --err:#B3261E; --good:#2F7D55;
+  --shadow:0 1px 2px rgba(43,40,34,.05),0 8px 28px rgba(43,40,34,.06);
+  --f-serif:"Source Serif 4",Georgia,"Times New Roman",serif;
+  --f-body:"DM Sans","Segoe UI",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#262624; --surface:#30302E; --ink:#EDEBE3; --muted:#AAA597; --line:#44433F; --soft:#3A3A37;
+  --accent:#D97757; --accent-hover:#E48A6B; --on-accent:#1F1612; --err:#F2A19B; --good:#6CCB98;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 28px rgba(0,0,0,.25); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#262624; --surface:#30302E; --ink:#EDEBE3; --muted:#AAA597; --line:#44433F; --soft:#3A3A37;
+  --accent:#D97757; --accent-hover:#E48A6B; --on-accent:#1F1612; --err:#F2A19B; --good:#6CCB98;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 28px rgba(0,0,0,.25); color-scheme:dark}
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--ink);font:16px/1.65 var(--f-body);margin:0;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0}
+.wrap{max-width:760px;margin:0 auto}
+h1,h2,h3{font-family:var(--f-serif);font-weight:500;line-height:1.15;margin:0;text-wrap:balance;letter-spacing:-.015em}
+h1{font-size:clamp(2.2rem,6vw,3.4rem)}
+h2{font-size:clamp(1.45rem,3.2vw,1.8rem)}
+h3{font-size:1.05rem;font-family:var(--f-body);font-weight:600;letter-spacing:0}
+p{margin:0}
+a{color:var(--accent)}
+code{font-family:var(--f-mono)}
+.label{font:500 .75rem/1 var(--f-body);letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.muted{color:var(--muted)}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px;border-radius:6px}
+
+/* top bar */
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-block:20px}
+.brand{display:flex;align-items:center;gap:10px;font:500 1.4rem var(--f-serif);letter-spacing:-.02em}
+.mark{width:26px;height:26px;border-radius:8px;background:var(--accent);color:var(--on-accent);display:grid;place-items:center;font:600 .9rem var(--f-serif)}
+.right{display:flex;align-items:center;gap:4px}
+.nav{display:flex;gap:2px}
+.nav a,.theme{color:var(--muted);text-decoration:none;font:500 .9rem var(--f-body);padding:7px 11px;border-radius:8px;background:none;border:0;cursor:pointer}
+.nav a:hover,.theme:hover{background:var(--soft);color:var(--ink)}
+
+/* hero + demo */
+.hero{padding-block:36px 56px}
+.hero .lead{color:var(--muted);font-size:1.1rem;max-width:44ch;margin-top:14px}
+.chat{margin-top:32px;background:var(--surface);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);overflow:hidden;min-width:0}
+.msgs{height:300px;overflow:auto;padding:20px 20px 4px;display:grid;gap:16px;align-content:start}
+.msg{display:flex;gap:12px;min-width:0}
+.msg.user{justify-content:flex-end}
+.msg.user .bubble{background:var(--soft);border-radius:14px 14px 4px 14px;padding:9px 15px;max-width:88%;overflow-wrap:anywhere;font-size:.95rem}
+.avatar{flex:none;width:26px;height:26px;border-radius:8px;background:var(--accent);color:var(--on-accent);display:grid;place-items:center;font:600 .85rem var(--f-serif);margin-top:2px}
+.reply{min-width:0;flex:1}
+.reply .route{font-size:.8rem;color:var(--muted);margin-bottom:6px}
+.reply .route b{color:var(--accent);font-weight:500}
+.reply pre{margin:0;background:var(--soft);border-radius:12px;padding:12px 14px;font:400 .8rem/1.6 var(--f-mono);white-space:pre-wrap;overflow-wrap:anywhere}
+.reply p{color:var(--muted);font-size:.92rem}
+.composer{margin:8px 14px 14px;border:1px solid var(--line);border-radius:14px;padding:8px 8px 8px 16px;display:flex;gap:10px;align-items:center;background:var(--bg)}
+.composer:focus-within{border-color:var(--accent)}
+.composer input{flex:1;min-width:0;background:transparent;border:0;color:var(--ink);font:400 .95rem var(--f-body);padding:6px 0}
+.composer input:focus{outline:none}
+.composer input::placeholder{color:var(--muted)}
+.btn{flex:none;background:var(--accent);border:0;color:var(--on-accent);border-radius:10px;padding:10px 18px;font:600 .9rem var(--f-body);cursor:pointer;text-decoration:none;display:inline-block}
+.btn:hover{background:var(--accent-hover)}
+.btn.ghost{background:none;color:var(--ink);border:1px solid var(--line)}
+.btn.ghost:hover{border-color:var(--accent);color:var(--accent);background:none}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.chip{font:400 .8rem var(--f-body);color:var(--muted);background:none;border:1px solid var(--line);border-radius:999px;padding:6px 12px;cursor:pointer}
+.chip:hover{border-color:var(--accent);color:var(--accent)}
+.note{font-size:.85rem;color:var(--muted);margin-top:12px}
+
+/* sections */
+section{padding-block:56px;border-top:1px solid var(--line)}
+.sec-head{display:grid;gap:10px;margin-bottom:26px}
+.sec-head p{color:var(--muted);max-width:56ch}
+
+.rows{display:grid;gap:0}
+.row{display:grid;grid-template-columns:150px minmax(0,1fr);gap:8px 24px;padding-block:16px;border-top:1px solid var(--line)}
+.row:first-child{border-top:0;padding-top:0}
+.row code{display:inline-block;font-size:.8rem;color:var(--muted);overflow-wrap:anywhere;margin:0 12px 4px 0}
+.row p{color:var(--muted);font-size:.95rem}
+
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:20px 28px}
+.fact b{display:block;font:500 1.9rem/1.1 var(--f-serif)}
+.fact span{color:var(--muted);font-size:.85rem}
+
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:32px}
+.cols ul{margin:10px 0 0;padding-left:1.1em;display:grid;gap:8px;color:var(--muted);font-size:.95rem}
+
+.line{display:flex;gap:12px;align-items:center;justify-content:space-between;background:var(--soft);border-radius:10px;padding:8px 8px 8px 14px;min-width:0;margin-top:8px}
+.line code{font-size:.85rem;overflow-x:auto;white-space:nowrap;min-width:0}
+.line button{flex:none;font:500 .8rem var(--f-body);background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:6px 12px;cursor:pointer}
+.line button:hover{border-color:var(--accent);color:var(--accent)}
+.install .label{display:block;margin-top:20px}
+
+/* contact form */
+.form{display:grid;gap:16px;max-width:560px}
+.field{display:grid;gap:6px;min-width:0}
+.field label{font-size:.85rem;font-weight:500}
+.field input,.field select,.field textarea{width:100%;font:400 1rem var(--f-body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.field textarea{min-height:120px;resize:vertical}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--accent)}
+.field .err{color:var(--err);font-size:.82rem;min-height:1em}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.result{display:grid;gap:10px;background:var(--soft);border-radius:12px;padding:16px;max-width:560px;margin-top:20px}
+.result pre{margin:0;white-space:pre-wrap;overflow-wrap:anywhere;font:400 .85rem/1.6 var(--f-mono)}
+.result .row2{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+
+footer{padding-block:28px 48px;border-top:1px solid var(--line);color:var(--muted);font-size:.88rem;display:flex;gap:12px;justify-content:space-between;flex-wrap:wrap}
+
+@media (max-width:640px){
+  .nav a.opt{display:none}
+  .msgs{height:280px;padding:16px 14px 4px}
+  .row{grid-template-columns:minmax(0,1fr);gap:4px}
+  .two{grid-template-columns:minmax(0,1fr)}
+  section{padding-block:44px}
+}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand"><span class="mark" aria-hidden="true">G</span>JeeG</div>
+    <div class="right">
+      <nav class="nav" aria-label="Sections">
+        <a class="opt" href="#does">What it does</a><a class="opt" href="#how">How it works</a><a href="#install">Install</a><a href="#contact">Contact</a>
+      </nav>
+      <button class="theme" id="theme" type="button" aria-label="Switch colour theme">Theme</button>
+    </div>
+  </header>
+
+  <main>
+    <div class="hero">
+      <h1>Say the task. It runs.</h1>
+      <p class="lead">Type what you want in plain words. JeeG finds the matching script on your computer and runs it.</p>
+
+      <div class="chat" role="region" aria-label="JeeG demo">
+        <div class="msgs" id="out" aria-live="polite"></div>
+        <form class="composer" id="form" autocomplete="off">
+          <input id="q" type="text" placeholder="Try: emi loan 25 lakh 8.5% 20 years" aria-label="Type a task">
+          <button class="btn" type="submit">Run</button>
+        </form>
+      </div>
+      <div class="chips" id="chips"></div>
+      <p class="note">The demo shows recorded examples. The real JeeG runs on your own computer and knows all 431 tasks.</p>
+    </div>
+
+    <section aria-label="Key facts">
+      <div class="facts">
+        <div class="fact"><b>431</b><span>tasks included</span></div>
+        <div class="fact"><b>65 ms</b><span>typical start time</span></div>
+        <div class="fact"><b>16 MB</b><span>memory in use</span></div>
+        <div class="fact"><b>0</b><span>packages for the core</span></div>
+      </div>
+    </section>
+
+    <section id="does">
+      <div class="sec-head"><span class="label">What it does</span><h2>One folder of small scripts</h2>
+        <p>Money amounts use Indian grouping (lakh and crore). Ten-digit phone numbers are read as +91.</p></div>
+      <div class="rows">
+        <div class="row"><h3>Money</h3><p><code>emi loan 25 lakh 8.5% 20 years</code><code>gst amount 1000 18%</code><code>set budget food 5000</code></p></div>
+        <div class="row"><h3>Daily life</h3><p><code>remind me in 20 minutes to call mom</code><code>add bill electricity 15 1200</code><code>sunrise delhi</code></p></div>
+        <div class="row"><h3>Files</h3><p><code>large folders downloads</code><code>rename photos by date pics</code><code>undo</code></p></div>
+        <div class="row"><h3>Apps and web</h3><p><code>open youtube</code><code>send whatsapp to mom hi</code><code>weather in pune</code></p></div>
+        <div class="row"><h3>System</h3><p><code>battery status</code><code>who uses port 3000</code><code>keep awake 2 hours</code></p></div>
+        <div class="row"><h3>Developer</h3><p><code>git status</code><code>run tests</code><code>csv summary data.csv</code><code>text diff a.txt b.txt</code></p></div>
+      </div>
+    </section>
+
+    <section id="how">
+      <div class="sec-head"><span class="label">How it works</span><h2>No model, no cloud</h2>
+        <p>Each script starts with a few header lines. JeeG scores your words against them and runs the best match. Nothing runs in the background.</p></div>
+      <div class="rows">
+        <div class="row"><h3>1. You type</h3><p>Plain words in any order. A typo or two is fine.</p></div>
+        <div class="row"><h3>2. It matches</h3><p>Names, keywords and patterns are scored. If two tasks fit, a short menu appears.</p></div>
+        <div class="row"><h3>3. It checks</h3><p>Anything that can lose data asks first. Preview mode shows what would happen.</p></div>
+        <div class="row"><h3>4. It runs</h3><p>The script gets your leftover words, does one job and prints the answer.</p></div>
+      </div>
+    </section>
+
+    <section id="safe">
+      <div class="sec-head"><span class="label">Safety</span><h2>Careful with your files</h2></div>
+      <div class="cols">
+        <div><h3>What it protects</h3>
+          <ul>
+            <li>Risky tasks ask first. Deletes move files to a holding folder.</li>
+            <li><b>undo</b> restores your last move or rename and never overwrites.</li>
+            <li>Only safe link types open. Archives cannot write outside their folder.</li>
+            <li>Your data folder is private on Mac and Linux. Password tasks are never saved to history.</li>
+          </ul></div>
+        <div><h3>What it does not do</h3>
+          <ul>
+            <li>It never sends your files or personal data anywhere.</li>
+            <li>No voice mode and no pop-up window yet.</li>
+            <li>Online tasks were tested on recorded replies, not live services.</li>
+            <li>Tested on Linux. Windows and macOS parts are not yet run on real machines.</li>
+          </ul></div>
+      </div>
+    </section>
+
+    <section id="install" class="install">
+      <div class="sec-head"><span class="label">Install</span><h2>Two commands</h2>
+        <p>Needs Python 3.9 or newer. Works on Windows, macOS and Linux.</p></div>
+      <span class="label">Install</span>
+      <div class="line"><code>pip install jeeg</code><button type="button" data-copy="pip install jeeg">Copy</button></div>
+      <span class="label">First-run setup, then start it</span>
+      <div class="line"><code>jeeg setup</code><button type="button" data-copy="jeeg setup">Copy</button></div>
+      <p class="note">No pip? Download the folder from <a href="https://github.com/asrbmy/jeeg">GitHub</a>, open a terminal inside it and run <code>python install.py</code>.</p>
+      <span class="label">Or run one task directly</span>
+      <div class="line"><code>jeeg emi loan 25 lakh 8.5% 20 years</code><button type="button" data-copy="jeeg emi loan 25 lakh 8.5% 20 years">Copy</button></div>
+      <span class="label">Check everything works</span>
+      <div class="line"><code>jeeg selftest</code><button type="button" data-copy="jeeg selftest">Copy</button></div>
+    </section>
+
+    <section id="contact">
+      <div class="sec-head"><span class="label">Contact</span><h2>Questions, bugs or ideas</h2>
+        <p>Write your message here and copy it to send. This page cannot send messages itself, so nothing is stored or transmitted.</p></div>
+      <form class="form" id="cform" novalidate>
+        <div class="two">
+          <div class="field"><label for="c-name">Your name</label><input id="c-name" type="text" autocomplete="name"><span class="err" id="e-name" aria-live="polite"></span></div>
+          <div class="field"><label for="c-topic">Topic</label>
+            <select id="c-topic"><option>Question</option><option>Bug report</option><option>Feature idea</option><option>Other</option></select><span class="err"></span></div>
+        </div>
+        <div class="field"><label for="c-msg">Message</label><textarea id="c-msg" placeholder="For a bug, include the exact words you typed and what you saw."></textarea><span class="err" id="e-msg" aria-live="polite"></span></div>
+        <div><button class="btn" type="submit">Prepare message</button></div>
+      </form>
+      <div class="result" id="result" hidden>
+        <span class="label">Your message</span>
+        <pre id="rtext"></pre>
+        <div class="row2"><button class="btn ghost" type="button" id="rcopy">Copy message</button></div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <span><b>JeeG</b> version 2.6.0</span>
+    <span>One folder of scripts. Your computer, your data. &middot; <a href="https://github.com/asrbmy/jeeg">GitHub</a></span>
+  </footer>
+</div>
+
+<script>
+(function(){
+  // Recorded outputs from the real tool (sample data folder).
+  var DEMO=[
+    {cmd:"emi loan 25 lakh 8.5% 20 years",task:"emi calculator",keys:["emi"],out:
+"Loan 25,00,000.00 (25.00 lakh) at 8.5% for 240 months (20 years)\n  Monthly EMI    : 21,695.58\n  Total interest : 27,06,939.40\n  Total payment  : 52,06,939.40\n  First month    : interest 17,708.33, principal 3,987.25"},
+    {cmd:"gst amount 1000 18%",task:"gst calculator",keys:["gst"],out:
+"Add GST at 18%\n  Base price : 1,000.00\n  GST        : 180.00   (CGST 90.00 + SGST 90.00)\n  Total      : 1,180.00"},
+    {cmd:"sip growth 5000 12% 15 years",task:"sip calculator",keys:["sip"],out:
+"SIP 5,000.00/month for 15 years at 12% a year\n  Invested     : 9,00,000.00 (9.00 lakh)\n  Estimated gain: 16,22,880.00\n  Final value  : 25,22,880.00 (25.23 lakh)\n  (an estimate: real returns vary and are not guaranteed)"},
+    {cmd:"number to words 1234567",task:"number to words",keys:["words","number to"],out:
+"12,34,567  (Indian grouping)\nIndian:        twelve lakh thirty-four thousand five hundred sixty-seven\nInternational: one million two hundred thirty-four thousand five hundred sixty-seven"},
+    {cmd:"unit price 500g 45 vs 1kg 80",task:"unit price",keys:["unit price"],out:
+"  1 kg for Rs 80               -> Rs 80.00 per kg\n  500 g for Rs 45              -> Rs 90.00 per kg\nCheapest: 1 kg for Rs 80 (saves 11% per kg vs the dearest)"},
+    {cmd:"days between 1 jan 2027 and 25 dec 2027",task:"date difference",keys:["days between","between"],out:
+"01 Jan 2027 -> 25 Dec 2027\n  358 days  (51 weeks 1 days)  =  0 years 11 months\n  256 working days (Mon-Fri, public holidays not excluded)"},
+    {cmd:"bmi 70 kg 175 cm",task:"bmi calculator",keys:["bmi"],out:
+"BMI 22.9  ->  normal range (WHO adult categories)   [70.0 kg, 175 cm]\nHealthy weight range for this height (BMI 18.5-24.9): 56.7 - 76.3 kg\nNote: Asian and Indian health guidelines use lower cut-offs (overweight from 23). BMI is a rough screen, not a diagnosis."},
+    {cmd:"fuel cost 250 km 18 kmpl 105",task:"fuel cost",keys:["fuel"],out:
+"250 km at 18 km/l uses 13.89 litres.\nFuel cost at Rs 105/litre: Rs 1,458.33   (Rs 5.83 per km)\nRound trip: Rs 2,916.67"},
+    {cmd:"calculate 15% of 200",task:"calculate",keys:["calculate","calc"],out:"15% of 200 = 30"},
+    {cmd:"moon phase",task:"moon phase",keys:["moon"],out:
+"Waxing gibbous: about 82% lit, 10.7 days into the cycle\nNext full moon: about Mon 26 Oct 2026\n(simple calculation, correct to within about a day)"},
+    {cmd:"open youtube",task:"open youtube",keys:["youtube"],out:"Opened YouTube in your browser."}
+  ];
+  var $=function(id){return document.getElementById(id);};
+  var out=$("out"),form=$("form"),q=$("q"),chips=$("chips");
+  function norm(s){return s.toLowerCase().replace(/\s+/g," ").trim();}
+  function find(text){
+    var t=norm(text);if(!t)return null;
+    for(var i=0;i<DEMO.length;i++){if(norm(DEMO[i].cmd)===t)return DEMO[i];}
+    for(var j=0;j<DEMO.length;j++){for(var k=0;k<DEMO[j].keys.length;k++){if(t.indexOf(DEMO[j].keys[k])===0)return DEMO[j];}}
+    return null;
+  }
+  function el(tag,cls,text){var e=document.createElement(tag);if(cls)e.className=cls;if(text!==undefined)e.textContent=text;return e;}
+  function run(text){
+    var u=el("div","msg user");u.appendChild(el("div","bubble",text));out.appendChild(u);
+    var a=el("div","msg"),av=el("div","avatar","G"),rep=el("div","reply");av.setAttribute("aria-hidden","true");
+    var m=find(text);
+    if(m){
+      var r=el("div","route");r.appendChild(document.createTextNode("Ran the "));r.appendChild(el("b",null,m.task));r.appendChild(document.createTextNode(" task"));
+      rep.appendChild(r);rep.appendChild(el("pre",null,m.out));
+    }else{
+      rep.appendChild(el("p",null,"This demo only knows its recorded examples (use the buttons below). The real JeeG matches all 431 tasks and shows the closest ones when it is unsure."));
+    }
+    a.appendChild(av);a.appendChild(rep);out.appendChild(a);out.scrollTop=out.scrollHeight;
+  }
+  DEMO.slice(0,6).forEach(function(d){
+    var b=el("button","chip",d.cmd);b.type="button";
+    b.addEventListener("click",function(){run(d.cmd);});chips.appendChild(b);
+  });
+  form.addEventListener("submit",function(e){e.preventDefault();var v=q.value.trim();if(v){run(v);q.value="";}});
+  run(DEMO[0].cmd);
+
+  function flash(btn,msg){var o=btn.textContent;btn.textContent=msg;setTimeout(function(){btn.textContent=o;},1400);}
+  function selectNode(node){var r=document.createRange();r.selectNodeContents(node);var s=getSelection();s.removeAllRanges();s.addRange(r);}
+  function copy(text,node,btn){
+    try{navigator.clipboard.writeText(text).then(function(){flash(btn,"Copied");},function(){selectNode(node);flash(btn,"Press copy");});}
+    catch(x){selectNode(node);flash(btn,"Press copy");}
+  }
+  document.querySelectorAll("[data-copy]").forEach(function(btn){
+    btn.addEventListener("click",function(){copy(btn.getAttribute("data-copy"),btn.previousElementSibling,btn);});
+  });
+
+  // Contact: builds a message to copy. Nothing is sent or stored.
+  var cform=$("cform"),result=$("result");
+  cform.addEventListener("submit",function(e){
+    e.preventDefault();
+    var name=$("c-name").value.trim(),msg=$("c-msg").value.trim(),ok=true;
+    $("e-name").textContent="";$("e-msg").textContent="";
+    if(!name){$("e-name").textContent="Please enter your name.";ok=false;}
+    if(msg.length<10){$("e-msg").textContent="Please write at least a sentence.";ok=false;}
+    if(!ok){result.hidden=true;return;}
+    $("rtext").textContent="JeeG "+$("c-topic").value.toLowerCase()+" from "+name+"\n\n"+msg;
+    result.hidden=false;
+  });
+  $("rcopy").addEventListener("click",function(){copy($("rtext").textContent,$("rtext"),$("rcopy"));});
+
+  var root=document.documentElement;
+  $("theme").addEventListener("click",function(){
+    var cur=root.getAttribute("data-theme");
+    if(!cur)cur=matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";
+    root.setAttribute("data-theme",cur==="dark"?"light":"dark");
+  });
+})();
+</script>

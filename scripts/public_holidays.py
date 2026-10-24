@@ -1,6 +1,7 @@
 # keywords: public holidays, holidays, national holidays, bank holidays, holiday list, holiday calendar, next holiday, is it a holiday, government holidays
 # desc: Public holidays for a country and year (public holidays india 2026, holidays in us)
 # category: info
+# network: yes
 # usage: public holidays [country] [year] | next holiday
 # rawargs: yes
 import datetime, re

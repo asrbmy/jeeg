@@ -1,6 +1,7 @@
 # keywords: breach check, pwned, have i been pwned, password leaked, password breach, leaked password, was my password hacked, data breach password, check leaked password
 # desc: Check if a password has appeared in known data leaks (only a 5-character hash prefix is sent)
 # category: security
+# network: yes
 # usage: breach check "<password>"
 # rawargs: full
 # private: yes
