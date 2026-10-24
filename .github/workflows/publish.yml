@@ -1,0 +1,74 @@
+name: publish
+# Runs when you publish a GitHub release: tests, build, signed provenance, files attached to the release.
+# Uploading to PyPI is switched on separately (see the pypi job below).
+on:
+  release:
+    types: [published]
+permissions:
+  contents: write
+  id-token: write
+  attestations: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Check the tag matches the version in the code
+        run: |
+          V=$(python -c "import re;print(re.search(r'__version__ = \"([^\"]+)\"', open('jeeg.py').read()).group(1))")
+          [ "v$V" = "${GITHUB_REF_NAME}" ] || { echo "Tag ${GITHUB_REF_NAME} does not match version $V"; exit 1; }
+      - name: Run the tests
+        run: |
+          python jeeg.py selftest
+          python tests/test_routing.py
+          python tests/test_parsers.py
+          python tests/test_engine.py
+          python tests/test_cmds.py
+          python tests/test_v26.py
+          python tests/test_privacy.py
+          python tests/test_security.py
+      - name: Build
+        run: |
+          python -m pip install build
+          python -m build
+          cd dist && sha256sum * > SHA256SUMS.txt
+      - name: Sign the build (provenance)
+        uses: actions/attest-build-provenance@v1
+        with:
+          subject-path: "dist/*.whl, dist/*.tar.gz"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+  assets:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - name: Attach files to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: gh release upload "${{ github.event.release.tag_name }}" dist/* --clobber
+  pypi:
+    if: vars.PUBLISH_PYPI == 'true'
+    needs: build
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist/
+          skip-existing: true
