@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.8.0
+- **Use JeeG from Python:** `import jeeg`, then `jeeg.run("gst 2500 18")`, `jeeg.gst_amount(1000, 18)`, `jeeg.find(...)`, `jeeg.tasks()`, and `jeeg.JeeG(home=...)` for your own data folder. Results carry `.ok`, `.output`, `.exit`, `.task`. Calls never prompt, are not added to history, and are thread-safe.
+- `jeeg.run_many([...])` for several phrases at once and `await jeeg.arun(...)` for asyncio programs.
+- 6 new tasks (446 in all): `cgpa`, `marks` percentage, `study plan`, `heart rate zones`, `macros`, `trip budget`.
+- New `examples/` folder and `tests/test_api.py`.
+
 ## 2.7.0
 - `--json` and `--output FILE` for use from other programs; the tour is offered once on first run; `misses export` / `misses clear`.
 - Money ledger (`lend`, `borrow`, `ledger`, `settle`); warranty, vehicle and vaccine due dates (included in `what is due`); weight log (and a trend in `life report`); reading list.

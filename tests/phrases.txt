@@ -384,3 +384,12 @@ finished book atomic habits => reading_list
 bmi 70 kg 175 cm => bmi_calculator
 split bill 1200 4 => split_bill
 shopping list => shopping_list
+# ---- v2.8 study / health / travel
+cgpa 8.2 => cgpa_to_percentage | 8.2
+convert cgpa to percentage => cgpa_to_percentage | convert to
+marks 432 out of 500 => marks_percentage | 432 out of 500
+percentage of marks => marks_percentage | of
+study plan 5 subjects 20 days 6 hours => study_planner | plan 5 subjects 20 days 6 hours
+heart rate zones age 30 => heart_rate_zones | age 30
+macros 2000 calories => macro_split | 2000 calories
+trip budget 4 days 2 people 3000 a day => trip_budget | 4 days 2 people 3000 a day

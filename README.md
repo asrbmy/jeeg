@@ -1,4 +1,4 @@
-# JeeG 2.7.0 - How It Works
+# JeeG 2.8.0 - How It Works
 
 ![JeeG in a terminal](docs/demo.gif)
 
@@ -7,7 +7,7 @@ JeeG finds the matching script in the `scripts` folder and runs it.
 
 - Pure Python 3.9+, nothing to install. Works on Windows, macOS and Linux.
 - Light: about 16 MB of memory, about 65 ms per command, nothing running in the background (except reminders and alarms you set yourself).
-- 440 ready-made tasks. You can add your own by dropping in a file.
+- 446 ready-made tasks. You can add your own by dropping in a file.
 
 ---
 
@@ -298,7 +298,34 @@ A plugin is one `.py` file. Make a starter with `jeeg plugin new my_task`, edit 
 - Critical system processes cannot be killed with `kill process`.
 - No task sends your files or personal data anywhere. Web tasks only open a page in your browser.
 
-Security notes (version 2.7.0): only safe link types are opened, archives cannot write outside their folder, backups are validated before import, your data folder is private to you on Mac/Linux, over-long or control-character input is refused, and unexpected errors show one plain line (`JEEG_DEBUG=1` for details). Plugins and `--dir` folders run with your permissions, so only use ones you trust.
+## Use JeeG from your own Python programs (full guide: PYTHON_GUIDE.md)
+
+JeeG is also a library. After `pip install jeeg`:
+
+```python
+import jeeg
+
+r = jeeg.run("gst 2500 18")        # say it in words, like at the prompt
+print(r.output)                     # what the task printed
+if r.ok: ...                        # True when the exit code is 0
+
+jeeg.gst_amount(1000, 18).output    # or call a task by name, with arguments
+jeeg.find("open youtube")           # which task would run (runs nothing)
+jeeg.tasks(category="money")        # list what exists; jeeg.categories(), jeeg.task_info("gst_amount")
+
+j = jeeg.JeeG(home="my-data", timeout=30)   # your own data folder and settings
+j("add expense 250 food lunch")
+```
+
+- A `Result` has `.ok`, `.exit`, `.output`, `.lines`, `.task`, `.runs`, `.needs_confirmation`, `.ambiguous`, `.candidates`, `.json()`. Pass `check=True` to raise `JeeGError` on failure.
+- Calls never prompt. Tasks that ask for confirmation return exit code 3 unless you pass `yes=True`.
+- Library calls are not added to your command history (`history=True` to include them).
+- `run_task("name", args...)` skips word matching, so it is the predictable choice inside programs.
+- `jeeg.run_many(["gst 100 5", "disk space"])` runs several phrases; `await jeeg.arun("...")` is the asyncio version.
+- Terminal-only commands (`web`, `setup`, `update`, `plugin`, ...) are refused from Python.
+- Thread-safe: calls run one at a time. Standard library only, local only. Examples are in `examples/`.
+
+Security notes (version 2.8.0): only safe link types are opened, archives cannot write outside their folder, backups are validated before import, your data folder is private to you on Mac/Linux, over-long or control-character input is refused, and unexpected errors show one plain line (`JEEG_DEBUG=1` for details). Plugins and `--dir` folders run with your permissions, so only use ones you trust.
 
 ## 8. Troubleshooting
 

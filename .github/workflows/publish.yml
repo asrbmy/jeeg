@@ -29,10 +29,8 @@ jobs:
           python tests/test_cmds.py
           python tests/test_v26.py
           python tests/test_privacy.py
-<<<<<<< HEAD
           python tests/test_v27.py
-=======
->>>>>>> b6ca018939ef07b7c0d54a977f52d7a52d099c3b
+          python tests/test_api.py
           python tests/test_security.py
       - name: Build
         run: |
@@ -48,10 +46,7 @@ jobs:
           name: dist
           path: dist/
   assets:
-<<<<<<< HEAD
     # Attaches the built files and their checksums to the GitHub release page.
-=======
->>>>>>> b6ca018939ef07b7c0d54a977f52d7a52d099c3b
     needs: build
     runs-on: ubuntu-latest
     steps:
@@ -65,11 +60,8 @@ jobs:
           GH_REPO: ${{ github.repository }}
         run: gh release upload "${{ github.event.release.tag_name }}" dist/* --clobber
   pypi:
-<<<<<<< HEAD
     # Only runs when you add a repository variable PUBLISH_PYPI = true (Settings > Secrets and variables > Actions > Variables)
     # after setting up the PyPI trusted publisher. Re-uploading an existing version is skipped, not an error.
-=======
->>>>>>> b6ca018939ef07b7c0d54a977f52d7a52d099c3b
     if: vars.PUBLISH_PYPI == 'true'
     needs: build
     runs-on: ubuntu-latest

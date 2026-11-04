@@ -26,7 +26,7 @@ Contents
 
 - A small launcher written in Python (standard library only). It has no background service and does not need an account.
 - It reads every script in `scripts/`, matches your words to a script, and runs it. A script is just a file you can open and edit.
-- 440 tasks are included across apps, websites, files, system, network, reminders, personal records, money calculators, text tools, developer tools and quick searches.
+- 446 tasks are included across apps, websites, files, system, network, reminders, personal records, money calculators, text tools, developer tools and quick searches.
 - It runs on Windows, macOS and Linux. Python 3.9 or newer is required.
 - It is quick (about 56 ms per command including Python start-up, measured on Linux) and light (about 16 MB while a command runs; nothing stays in memory between commands, except reminders and alarms you set).
 
@@ -521,7 +521,7 @@ Run the checks yourself any time:
 
 ## 15. Appendix: every task
 
-440 tasks. In the Usage column, `<...>` is something you fill in and `[...]` is optional. A star means the task asks before running; "online" means it can use the internet.
+446 tasks. In the Usage column, `<...>` is something you fill in and `[...]` is optional. A star means the task asks before running; "online" means it can use the internet.
 
 
 ### ai
@@ -1193,3 +1193,30 @@ Run the checks yourself any time:
 | open teams |  | Open Microsoft Teams |
 | open trello |  | Open Trello |
 | open zoom |  | Open Zoom |
+
+### 8.20 Use JeeG from your own Python programs
+
+JeeG is also a library. After `pip install jeeg`:
+
+```python
+import jeeg
+
+r = jeeg.run("gst 2500 18")        # say it in words, like at the prompt
+print(r.output)                     # what the task printed
+if r.ok: ...                        # True when the exit code is 0
+
+jeeg.gst_amount(1000, 18).output    # or call a task by name, with arguments
+jeeg.find("open youtube")           # which task would run (runs nothing)
+jeeg.tasks(category="money")        # list what exists; jeeg.categories(), jeeg.task_info("gst_amount")
+
+j = jeeg.JeeG(home="my-data", timeout=30)   # your own data folder and settings
+j("add expense 250 food lunch")
+```
+
+- A `Result` has `.ok`, `.exit`, `.output`, `.lines`, `.task`, `.runs`, `.needs_confirmation`, `.ambiguous`, `.candidates`, `.json()`. Pass `check=True` to raise `JeeGError` on failure.
+- Calls never prompt. Tasks that ask for confirmation return exit code 3 unless you pass `yes=True`.
+- Library calls are not added to your command history (`history=True` to include them).
+- `run_task("name", args...)` skips word matching, so it is the predictable choice inside programs.
+- Terminal-only commands (`web`, `setup`, `update`, `plugin`, ...) are refused from Python.
+- Thread-safe: calls run one at a time. Standard library only, local only. Examples are in `examples/`.
+

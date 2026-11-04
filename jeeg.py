@@ -57,7 +57,7 @@ import sys
 import time
 from pathlib import Path
 
-__version__ = "2.7.0"
+__version__ = "2.8.0"
 
 HERE = Path(__file__).resolve().parent
 def _state_dir() -> Path:
@@ -70,6 +70,7 @@ def _state_dir() -> Path:
 
 
 STATE = _state_dir()
+NOLOG = False      # set by the Python API (jeeg_api) so library calls do not fill your history, stats or misses
 
 
 def _ensure_state() -> None:
@@ -628,10 +629,14 @@ def nudge_backup() -> None:
 
 
 def log_run(e: dict, rc: int, dt: float) -> None:
+    if NOLOG:
+        return
     _append_line("log.jsonl", json.dumps({"t": int(time.time()), "s": e["name"], "rc": rc, "dt": round(dt, 2)}))
 
 
 def log_miss(query: str, why: str) -> None:
+    if NOLOG:
+        return
     _append_line("misses.log", f"{time.strftime('%Y-%m-%d %H:%M')}\t{why}\t{query}", keep=200, limit=100_000)
 
 
@@ -830,6 +835,8 @@ def did_you_mean(query: str, entries: list[dict]) -> list[str]:
 
 # ----------------------------------------------------------------- execution
 def history_add(query: str, name: str, private: bool = False) -> None:
+    if NOLOG:
+        return
     try:
         _ensure_state()
         f = STATE / "history.jsonl"
@@ -1267,6 +1274,33 @@ def main(argv: list[str]) -> int:
             return 0
         if handle(line, dirs, opt) is None:
             return 0
+
+
+# ------------------------------------------------- use JeeG from Python (import jeeg)
+_API_NAMES = frozenset({"run", "run_many", "arun", "run_task", "find", "tasks", "categories", "task_info", "JeeG", "Result", "TaskRun", "TaskInfo",
+                        "Match", "JeeGError", "UnknownTaskError"})
+__all__ = ["run", "run_many", "arun", "run_task", "find", "tasks", "categories", "task_info", "JeeG", "Result", "JeeGError", "UnknownTaskError",
+           "__version__"]
+
+
+def __getattr__(name: str):
+    """jeeg.run("gst 2500 18"), jeeg.find(...), jeeg.tasks(), jeeg.JeeG(...), and every task by name: jeeg.gst_amount(2500, 18)."""
+    if name.startswith("_"):
+        raise AttributeError(name)
+    import jeeg_api
+    if name in _API_NAMES:
+        return getattr(jeeg_api, name)
+    return jeeg_api.task_function(name)          # raises AttributeError when there is no such task
+
+
+def __dir__():
+    names = set(globals()) | _API_NAMES
+    try:
+        import jeeg_api
+        names |= {t.name for t in jeeg_api.tasks()}
+    except Exception:
+        pass
+    return sorted(names)
 
 
 def cli() -> None:

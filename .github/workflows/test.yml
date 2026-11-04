@@ -27,6 +27,8 @@ jobs:
         run: python tests/test_v26.py
       - name: v2.7 tests (json, tour, new tasks, speed)
         run: python tests/test_v27.py
+      - name: Python library tests (import jeeg)
+        run: python tests/test_api.py
       - name: Privacy checks
         run: python tests/test_privacy.py
       - name: Security tests
