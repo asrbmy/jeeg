@@ -28,6 +28,9 @@ Options:
     -y, --yes    do not ask before risky tasks
     --dry-run    show what would run, run nothing
     --json       print the result as JSON (task, exit code, output) for other programs
+    --serve-api [PORT]  local JSON API for other programs (token protected)   --stdio  JSON lines   --mcp  MCP server
+                 (with these: --only money,text  --except files,system  --log  --allow-confirm)
+    --list-json  print every task as JSON (for programs in other languages)
     --output F   save what the task prints to a new file F (never overwrites)
     --timeout S  stop a script after S seconds
 
@@ -346,7 +349,7 @@ def rank(query: str, entries: list[dict]):
         while args and (norm(args[0]) in lead or not norm(args[0])):
             args.pop(0)
         if e.get("raw"):                     # free text (messages, timers): only drop politeness at the end
-            while args and (norm(args[-1]) in POLITE or not norm(args[-1])):
+            while args and (norm(args[-1]) in POLITE or (not norm(args[-1]) and not full)):   # full keeps symbols such as the * in cron
                 args.pop()
         else:
             while args and ((norm(args[-1]) in FILLER and norm(args[-1]) not in KEEP_END) or not norm(args[-1])):
@@ -1211,6 +1214,7 @@ def run_captured(line: str, dirs, opt) -> int:
 def main(argv: list[str]) -> int:
     opt = {"yes": False, "dry": False, "timeout": None, "json": False, "out": None, "quiet": False}
     cli_dirs, words, i = [], [], 0
+    bridge, bridge_port, allow_confirm, bridge_log, bridge_only, bridge_deny = None, None, False, False, [], []
     while i < len(argv):
         a = argv[i]
         if a in {"-y", "--yes"}:
@@ -1239,9 +1243,33 @@ def main(argv: list[str]) -> int:
         elif a == "--version":
             print(f"JeeG {__version__}")
             return 0
+        elif a in {"--serve-api", "--stdio", "--mcp", "--api-token"}:
+            bridge = a
+            if a == "--serve-api" and i + 1 < len(argv) and argv[i + 1].isdigit():
+                i += 1
+                bridge_port = int(argv[i])
+        elif a == "--allow-confirm":
+            allow_confirm = True
+        elif a == "--log":
+            bridge_log = True
+        elif a in {"--only", "--except"} and i + 1 < len(argv):
+            i += 1
+            (bridge_only if a == "--only" else bridge_deny).extend(x for x in argv[i].replace(",", " ").split() if x)
+        elif a == "--list-json":
+            ents = active(load_index(script_dirs(cli_dirs)))
+            print(json.dumps([{"name": e["name"], "description": e["desc"], "category": e["cat"], "usage": e["usage"],
+                               "online": bool(e.get("net")), "confirm": bool(e["confirm"])} for e in ents], indent=2))
+            return 0
         else:
             words.append(a)
         i += 1
+
+    if bridge:
+        if bridge_port is not None and not 1024 <= bridge_port <= 65535:
+            print("Choose a port between 1024 and 65535.")
+            return 1
+        import jeeg_bridge
+        return jeeg_bridge.main(bridge, bridge_port, allow_confirm, cli_dirs, bridge_only, bridge_deny, bridge_log)
 
     dirs = script_dirs(cli_dirs)
     if not dirs:
@@ -1277,9 +1305,9 @@ def main(argv: list[str]) -> int:
 
 
 # ------------------------------------------------- use JeeG from Python (import jeeg)
-_API_NAMES = frozenset({"run", "run_many", "arun", "run_task", "find", "tasks", "categories", "task_info", "JeeG", "Result", "TaskRun", "TaskInfo",
+_API_NAMES = frozenset({"run", "run_many", "arun", "watch", "on", "off", "run_task", "find", "tasks", "categories", "task_info", "JeeG", "Result", "TaskRun", "TaskInfo",
                         "Match", "JeeGError", "UnknownTaskError"})
-__all__ = ["run", "run_many", "arun", "run_task", "find", "tasks", "categories", "task_info", "JeeG", "Result", "JeeGError", "UnknownTaskError",
+__all__ = ["run", "run_many", "arun", "watch", "on", "off", "run_task", "find", "tasks", "categories", "task_info", "JeeG", "Result", "JeeGError", "UnknownTaskError",
            "__version__"]
 
 

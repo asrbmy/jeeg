@@ -7,7 +7,7 @@ JeeG finds the matching script in the `scripts` folder and runs it.
 
 - Pure Python 3.9+, nothing to install. Works on Windows, macOS and Linux.
 - Light: about 16 MB of memory, about 65 ms per command, nothing running in the background (except reminders and alarms you set yourself).
-- 446 ready-made tasks. You can add your own by dropping in a file.
+- 455 ready-made tasks. You can add your own by dropping in a file.
 
 ---
 
@@ -322,8 +322,17 @@ j("add expense 250 food lunch")
 - Library calls are not added to your command history (`history=True` to include them).
 - `run_task("name", args...)` skips word matching, so it is the predictable choice inside programs.
 - `jeeg.run_many(["gst 100 5", "disk space"])` runs several phrases; `await jeeg.arun("...")` is the asyncio version.
+- `jeeg.on("after", fn)` hooks and `jeeg.watch("check internet", every=300, callback=print)` to repeat a phrase. `jeeg --list-json` prints every task as JSON for other languages.
 - Terminal-only commands (`web`, `setup`, `update`, `plugin`, ...) are refused from Python.
 - Thread-safe: calls run one at a time. Standard library only, local only. Examples are in `examples/`.
+
+## Use JeeG from other programs and apps
+
+- Any language: `jeeg --json <phrase>`, `jeeg --stdio` (JSON lines), `jeeg --serve-api` (local HTTP with a token).
+- Apps that support MCP (for example Claude Desktop): `jeeg --mcp`.
+- Everything stays on your computer; the API listens on 127.0.0.1 only and refuses web pages. Tasks that ask for confirmation are refused unless you start with `--allow-confirm`.
+- Limit what a program may do: `--only money,text` or `--except files,system`; `--log` keeps a private call log.
+- Full guide: INTEGRATIONS.md. Examples for Node.js, curl and Python: `examples/other_languages/`.
 
 Security notes (version 2.8.0): only safe link types are opened, archives cannot write outside their folder, backups are validated before import, your data folder is private to you on Mac/Linux, over-long or control-character input is refused, and unexpected errors show one plain line (`JEEG_DEBUG=1` for details). Plugins and `--dir` folders run with your permissions, so only use ones you trust.
 

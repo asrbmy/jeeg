@@ -31,7 +31,7 @@ Issues = "https://github.com/asrbmy/jeeg/issues"
 jeeg = "jeeg:cli"
 
 [tool.setuptools]
-py-modules = ["jeeg", "jeeg_cmds", "jeeg_api"]
+py-modules = ["jeeg", "jeeg_cmds", "jeeg_api", "jeeg_bridge"]
 packages = ["jeeg_scripts"]
 package-dir = { "jeeg_scripts" = "scripts" }
 

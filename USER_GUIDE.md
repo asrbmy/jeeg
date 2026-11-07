@@ -26,7 +26,7 @@ Contents
 
 - A small launcher written in Python (standard library only). It has no background service and does not need an account.
 - It reads every script in `scripts/`, matches your words to a script, and runs it. A script is just a file you can open and edit.
-- 446 tasks are included across apps, websites, files, system, network, reminders, personal records, money calculators, text tools, developer tools and quick searches.
+- 455 tasks are included across apps, websites, files, system, network, reminders, personal records, money calculators, text tools, developer tools and quick searches.
 - It runs on Windows, macOS and Linux. Python 3.9 or newer is required.
 - It is quick (about 56 ms per command including Python start-up, measured on Linux) and light (about 16 MB while a command runs; nothing stays in memory between commands, except reminders and alarms you set).
 
@@ -521,7 +521,7 @@ Run the checks yourself any time:
 
 ## 15. Appendix: every task
 
-446 tasks. In the Usage column, `<...>` is something you fill in and `[...]` is optional. A star means the task asks before running; "online" means it can use the internet.
+455 tasks. In the Usage column, `<...>` is something you fill in and `[...]` is optional. A star means the task asks before running; "online" means it can use the internet.
 
 
 ### ai
@@ -1219,4 +1219,11 @@ j("add expense 250 food lunch")
 - `run_task("name", args...)` skips word matching, so it is the predictable choice inside programs.
 - Terminal-only commands (`web`, `setup`, `update`, `plugin`, ...) are refused from Python.
 - Thread-safe: calls run one at a time. Standard library only, local only. Examples are in `examples/`.
+
+### 8.21 Use JeeG from other programs and apps
+
+- Any language: `jeeg --json <phrase>`, `jeeg --stdio` (JSON lines), `jeeg --serve-api` (local HTTP with a token).
+- Apps that support MCP (for example Claude Desktop): `jeeg --mcp`.
+- Everything stays on your computer; the API listens on 127.0.0.1 only and refuses web pages. Tasks that ask for confirmation are refused unless you start with `--allow-confirm`.
+- Full guide: INTEGRATIONS.md. Examples for Node.js, curl and Python: `examples/other_languages/`.
 

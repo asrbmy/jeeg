@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "jeeg": {
+      "command": "jeeg",
+      "args": ["--mcp"]
+    }
+  }
+}

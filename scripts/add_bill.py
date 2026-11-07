@@ -3,6 +3,8 @@
 # category: money
 # usage: add bill <name> <day> [amount]
 # rawargs: yes
+# patterns: ^\s*(add|save|remember)\s+(a\s+)?bill\b
+# priority: 3
 import re
 from _lib import args_text, fail
 from _store import load, save

@@ -29,6 +29,8 @@ jobs:
         run: python tests/test_v27.py
       - name: Python library tests (import jeeg)
         run: python tests/test_api.py
+      - name: Bridge tests (local API, JSON lines, MCP)
+        run: python tests/test_bridge.py
       - name: Privacy checks
         run: python tests/test_privacy.py
       - name: Security tests

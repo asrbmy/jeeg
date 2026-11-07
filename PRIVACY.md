@@ -13,7 +13,7 @@ JeeG is built so that you can check these statements yourself.
 Only in the `.jeeg` folder in your home directory (or `JEEG_HOME`), readable only by you on Mac and Linux. Notes, expenses, journal, medicines, contacts and the rest are plain files you can open, copy or delete. Tasks marked private (passwords, medicines, clipboard) are not written to your command history.
 
 **When JeeG itself uses the internet**
-Only when you run a task that needs it. Say `privacy` to see the list; `list` marks those tasks with `[online]`. Today that is 29 of 446 tasks: weather, exchange rates, news, dictionary and Wikipedia look-ups, `check website`, `ping host`, `git pull` and similar. Everything else (calculators, files, notes, reminders, reports, invoices, medicines) works with the network cable unplugged.
+Only when you run a task that needs it. Say `privacy` to see the list; `list` marks those tasks with `[online]`. Today that is 29 of 455 tasks: weather, exchange rates, news, dictionary and Wikipedia look-ups, `check website`, `ping host`, `git pull` and similar. Everything else (calculators, files, notes, reminders, reports, invoices, medicines) works with the network cable unplugged.
 
 Besides tasks, the engine contacts these addresses, only when you type the matching command:
 
@@ -34,3 +34,7 @@ Plugins run as normal programs with your permissions, so they could do anything.
 **Check it yourself**
 - `python tests/test_privacy.py` checks which files can use the network and which web addresses appear in the engine.
 - The whole engine is two readable files (`jeeg.py`, `jeeg_cmds.py`) and a folder of small scripts.
+
+## The local API (`--serve-api`, `--stdio`, `--mcp`)
+
+These only run when you start them. The HTTP API listens on 127.0.0.1 (this computer only), needs a secret token kept in your JeeG data folder (readable only by you on Mac/Linux), refuses requests that come from web pages, and refuses tasks that ask for confirmation unless you start it with `--allow-confirm`. Nothing is sent anywhere by the API itself.

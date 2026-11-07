@@ -393,3 +393,14 @@ study plan 5 subjects 20 days 6 hours => study_planner | plan 5 subjects 20 days
 heart rate zones age 30 => heart_rate_zones | age 30
 macros 2000 calories => macro_split | 2000 calories
 trip budget 4 days 2 people 3000 a day => trip_budget | 4 days 2 people 3000 a day
+# ---- v2.8 money / study / home / developer
+income tax 12 lakh => income_tax | 12 lakh
+which regime is better for tax => income_tax | which regime is better for
+ppf 1.5 lakh a year => ppf_maturity | 1.5 lakh a year
+hra exemption => hra_exemption | hra exemption
+attendance 42 of 50 => attendance_percentage | 42 of 50
+electricity bill 250 units at 7 => electricity_bill | 250 units at 7
+add subscription netflix 15 dec 2026 => subscription_tracker | add subscription netflix 15 dec 2026
+json diff a.json b.json => json_diff | json diff a.json b.json
+jwt eyJhbGciOiJIUzI1NiJ9.e30.abc => jwt_decode | eyJhbGciOiJIUzI1NiJ9.e30.abc
+what is the date today => show_time | 

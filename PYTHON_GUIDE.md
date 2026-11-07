@@ -138,7 +138,19 @@ j("say hello")
 j.say_hello()
 ```
 
-## 10. Good to know
+## 10. Hooks and watching
+
+```python
+jeeg.on("after", lambda r: print("ran", r.task, "ok" if r.ok else "failed"))   # also "before"
+jeeg.off("after")                                                              # remove hooks
+
+# run a phrase every 5 minutes; stop after 12 runs (or call stop.set() from another thread)
+jeeg.watch("check internet", every=300, callback=lambda r: print(r.output), times=12, only_changes=True)
+```
+
+A hook that raises an error is ignored, so it can never break a task. From other languages, `jeeg --list-json` prints every task as JSON and `jeeg --json <phrase>` runs one.
+
+## 11. Good to know
 
 - **Safe by design:** control characters are removed from input, over 2,000 characters is refused, and `web`, `setup`, `update` and `plugin` are only available in the terminal.
 - **Threads:** you can call from several threads; calls run one at a time.
@@ -146,7 +158,7 @@ j.say_hello()
 - **Not in your history:** library calls do not fill your `history` or "misses" list.
 - **Examples:** see the `examples/` folder (`use_from_python.py`, `daily_report.py`).
 
-## 11. Quick cheat sheet
+## 12. Quick cheat sheet
 
 ```python
 import jeeg

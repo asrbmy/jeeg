@@ -33,7 +33,7 @@ from typing import Any, Iterable, Optional
 
 import jeeg as _engine
 
-__all__ = ["run", "run_many", "arun", "run_task", "find", "tasks", "categories", "task_info", "JeeG", "Result", "TaskRun", "TaskInfo", "Match",
+__all__ = ["run", "run_many", "arun", "watch", "on", "off", "run_task", "find", "tasks", "categories", "task_info", "JeeG", "Result", "TaskRun", "TaskInfo", "Match",
            "JeeGError", "UnknownTaskError"]
 
 MAX_LINE = 2000
@@ -113,6 +113,10 @@ class Result:
     @property
     def lines(self) -> list:
         return self.output.splitlines()
+
+    def to_dict(self) -> dict:
+        return {"query": self.query, "exit": self.exit, "ok": self.ok, "task": self.task, "output": self.output,
+                "needs_confirmation": self.needs_confirmation, "ambiguous": self.ambiguous, "candidates": list(self.candidates)}
 
     def json(self) -> Any:
         """The output parsed as JSON (for tasks that print JSON). Raises ValueError otherwise."""
@@ -201,6 +205,36 @@ def _result(query: str, rc: int, text: str, opt: dict, candidates=()) -> Result:
     return Result(query=query, exit=int(rc), output=text.rstrip("\n"), runs=runs, candidates=tuple(candidates))
 
 
+# ------------------------------------------------------------------ hooks
+_HOOKS: dict = {"before": [], "after": []}
+
+
+def on(event: str, fn):
+    """Call fn around every run/run_task.  jeeg.on("before", lambda query: ...)  /  jeeg.on("after", lambda result: ...).
+    A hook that raises is ignored (it can never break a task). Returns fn, so it works as a decorator."""
+    if event not in _HOOKS:
+        raise ValueError("event must be 'before' or 'after'")
+    if not callable(fn):
+        raise TypeError("hook must be callable")
+    _HOOKS[event].append(fn)
+    return fn
+
+
+def off(event: str, fn=None) -> None:
+    """Remove one hook, or all hooks for the event when fn is None."""
+    if event not in _HOOKS:
+        raise ValueError("event must be 'before' or 'after'")
+    _HOOKS[event][:] = [] if fn is None else [h for h in _HOOKS[event] if h is not fn]
+
+
+def _fire(event: str, arg) -> None:
+    for h in list(_HOOKS[event]):
+        try:
+            h(arg)
+        except Exception:
+            pass
+
+
 # ------------------------------------------------------------------ public functions
 def run(query: str, *, yes: bool = False, timeout: Optional[float] = 60, home=None, dirs: Iterable = (),
         history: bool = False, check: bool = False) -> Result:
@@ -214,6 +248,7 @@ def run(query: str, *, yes: bool = False, timeout: Optional[float] = 60, home=No
     check    raise JeeGError when the task did not finish.
     """
     q = _clean_text(query, "query")
+    _fire("before", q)
     words = q.lower().split()
     opt = _opt(yes, timeout)
     if not words:
@@ -236,9 +271,39 @@ def run(query: str, *, yes: bool = False, timeout: Optional[float] = 60, home=No
                 if ranked[0] == "ambiguous":
                     cands = [h[1]["name"] for h in ranked[1]]
         res = _result(q, rc, buf.getvalue(), opt, cands)
+    _fire("after", res)
     if check:
         res.raise_for_status()
     return res
+
+
+def watch(query: str, every: float = 60, callback=None, *, times: Optional[int] = None, only_changes: bool = False,
+          stop: Optional[threading.Event] = None, **kw) -> int:
+    """Run a phrase again and again: watch("check internet", every=300, callback=print, times=3).
+
+    callback(result) is called after each run; only_changes=True skips runs whose output matches the last one.
+    Stops after `times` runs (None = forever, until stop.set() or Ctrl+C). Returns how many runs happened.
+    Blocks, so start it in a thread (threading.Thread(target=jeeg.watch, ...)) to do other things meanwhile.
+    """
+    if not isinstance(every, (int, float)) or every < 0.01:
+        raise ValueError("every must be a number of seconds (at least 0.01)")
+    if times is not None and times < 1:
+        raise ValueError("times must be 1 or more")
+    stop = stop or threading.Event()
+    n, last = 0, None
+    try:
+        while not stop.is_set():
+            r = run(query, **kw)
+            n += 1
+            if callback and not (only_changes and last is not None and r.output == last):
+                callback(r)
+            last = r.output
+            if times is not None and n >= times:
+                break
+            stop.wait(every)
+    except KeyboardInterrupt:
+        pass
+    return n
 
 
 def run_many(queries: Iterable[str], *, stop_on_error: bool = False, **kw) -> list:
@@ -273,6 +338,7 @@ def run_task(name: str, *args: Any, yes: bool = False, timeout: Optional[float] 
     if sum(len(a) for a in argv) > MAX_LINE:
         raise ValueError(f"arguments are too long (over {MAX_LINE} characters in all)")
     opt = _opt(yes, timeout)
+    _fire("before", key)
     with _session(home, history):
         entries, _ = _entries(dirs)
         entry = next((e for e in entries if e["name"] == key), None)
@@ -283,6 +349,7 @@ def run_task(name: str, *args: Any, yes: bool = False, timeout: Optional[float] 
         with contextlib.redirect_stdout(buf), contextlib.redirect_stderr(buf), _redirect_stdin(io.StringIO("")):
             rc = _engine.run_entry(entry, argv, opt)
         res = _result(f"{entry['name']} {' '.join(argv)}".strip(), rc, buf.getvalue(), opt)
+    _fire("after", res)
     if check:
         res.raise_for_status()
     return res
@@ -295,6 +362,21 @@ def find(query: str, limit: int = 5, *, home=None, dirs: Iterable = ()) -> list:
         entries, _ = _entries(dirs)
         ranked = _engine.rank(_engine.expand_alias(q), entries) if q else []
     return [Match(e["name"], round(sc, 3), tuple(args), e["desc"]) for sc, e, args in ranked[:max(1, int(limit))]]
+
+
+def plan(query: str, *, home=None, dirs: Iterable = ()):
+    """Decide which ONE task a phrase means, without running it. Returns (name, args, category) or None when nothing
+    matches or several fit equally well. Used when callers are restricted to certain tasks."""
+    q = _clean_text(query, "query")
+    if not q:
+        return None
+    with _session(home, False):
+        entries, _ = _entries(dirs)
+        st, hit = _engine.resolve(_engine.expand_alias(q), entries)
+    if st != "ok":
+        return None
+    _, e, args = hit
+    return e["name"], tuple(args), e["cat"]
 
 
 def _info(e: dict) -> TaskInfo:

@@ -29,7 +29,7 @@ m = jeeg.find("open youtube", 3)
 ok(m and m[0].name == "open_youtube" and len(m) <= 3, "find")
 ok(jeeg.find("") == [], "find empty")
 ts = jeeg.tasks()
-ok(len(ts) >= 446 and jeeg.tasks(category="money") and all(t.category == "money" for t in jeeg.tasks(category="money")), "tasks")
+ok(len(ts) >= 455 and jeeg.tasks(category="money") and all(t.category == "money" for t in jeeg.tasks(category="money")), "tasks")
 ok(any(t.online for t in ts) and len(jeeg.tasks(online=True)) < len(ts) // 2, "online filter")
 ok(sum(jeeg.categories().values()) == len(ts), "categories")
 ok(jeeg.task_info("gst_amount").usage, "task_info")
@@ -84,6 +84,29 @@ async def _go():
     a, b = await asyncio.gather(jeeg.arun("gst 100 5"), jeeg.JeeG().arun("gst 200 5"))
     return a.ok and b.ok
 ok(asyncio.run(_go()), "arun")
+
+seen = []
+h1 = jeeg.on("before", lambda q: seen.append(("b", q)))
+h2 = jeeg.on("after", lambda r: seen.append(("a", r.ok)))
+jeeg.on("after", lambda r: 1 / 0)                    # a broken hook must not break the call
+ok(jeeg.run("gst 100 5").ok and ("a", True) in seen and any(k == "b" for k, _ in seen), "hooks fire")
+jeeg.off("before", h1); jeeg.off("after")
+n = len(seen); jeeg.run("gst 100 5")
+ok(len(seen) == n, "hooks removed")
+try: jeeg.on("during", print); ok(False, "bad event")
+except ValueError: ok(True, "bad event")
+got = []
+ok(jeeg.watch("gst 100 5", every=0.01, callback=got.append, times=3) == 3 and len(got) == 3, "watch times")
+got2 = []
+jeeg.watch("gst 100 5", every=0.01, callback=got2.append, times=3, only_changes=True)
+ok(len(got2) == 1, "watch only_changes")
+ev = threading.Event(); th = threading.Thread(target=jeeg.watch, args=("gst 100 5", 0.01), kwargs=dict(stop=ev)); th.start(); ev.set(); th.join(5)
+ok(not th.is_alive(), "watch stop event")
+try: jeeg.watch("x", every=0); ok(False, "watch every")
+except ValueError: ok(True, "watch every")
+import json, subprocess
+lj = json.loads(subprocess.run([sys.executable, str(Path(__file__).resolve().parent.parent / "jeeg.py"), "--list-json"], capture_output=True, text=True).stdout)
+ok(len(lj) == len(jeeg.tasks()) and {"name", "description", "category", "usage", "online", "confirm"} <= set(lj[0]), "--list-json")
 
 print(f"api tests: {P} passed, {F} failed")
 sys.exit(1 if F else 0)
