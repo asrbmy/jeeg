@@ -3,8 +3,8 @@
 # category: files
 # usage: pdf to text <file.pdf> [pages 2-4]
 # rawargs: full
-# patterns: \bpdf\s+(to|into)\s+(text|txt)\b ;; \b(text|words)\s+(from|out of)\s+(a\s+|the\s+|my\s+)?pdf\b ;; \bextract\s+text\b.*\bpdf\b ;; \btext\s+(from|in|of)\s+\S+\.pdf\b
-# priority: 1
+# patterns: ^\s*pdf\s+text\b ;; \bpdf\s+(to|into)\s+(text|txt)\b ;; \b(text|words)\s+(from|out of)\s+(a\s+|the\s+|my\s+)?pdf\b ;; \bextract\s+text\b.*\bpdf\b ;; \btext\s+(from|in|of)\s+\S+\.pdf\b
+# priority: 3
 import re
 from _lib import args_text, fail, need
 from _files import path_arg, unique_path

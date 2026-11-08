@@ -3,6 +3,8 @@
 # category: media
 # usage: split pdf <file> [pages 2-4]
 # rawargs: yes
+# patterns: \bsplit\s+(the\s+|a\s+|my\s+)?pdf\b ;; \bpdf\s+split\b ;; \bextract\s+pages\b ;; \btake\s+pages\s+from\b
+# priority: 2
 import re
 from _lib import args_text, fail, need
 from _files import path_arg, unique_path

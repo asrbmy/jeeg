@@ -4,8 +4,9 @@
 # usage: url decode <text>
 # rawargs: full
 # priority: 1
+# stdin: yes
 import re, urllib.parse
-from _lib import args_text, fail
-t = re.sub(r"^\s*(?:please\s+)?(?:url\s+)?(?:decode|unescape)\s+", "", args_text(), flags=re.I).strip("\"'")
+from _lib import args_or_stdin, fail
+t = re.sub(r"^\s*(?:please\s+)?(?:url\s+)?(?:decode|unescape)\s+", "", args_or_stdin(), flags=re.I).strip("\"'")
 if not t: fail("Usage: url decode <text>")
 print(urllib.parse.unquote(t))

@@ -2,10 +2,11 @@
 # desc: Read text aloud (speak hello there)
 # category: clipboard
 # usage: speak <text>
+# stdin: yes
 import os, shutil, subprocess
-from _lib import WIN, MAC, args_text, fail
+from _lib import WIN, MAC, args_or_stdin, fail
 from _sys import ps
-t = args_text()
+t = args_or_stdin()
 if not t:
     fail("Say what to speak: speak <text>")
 t = t[:2000]

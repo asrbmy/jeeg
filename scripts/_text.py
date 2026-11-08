@@ -2,7 +2,9 @@
 import re
 import sys
 
-from _lib import args_text, fail
+from _lib import args_text, fail, stdin_text
+
+PIPED = False                      # true when the text came from a pipe: then do not touch the clipboard
 
 ONES = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve",
         "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen"]
@@ -72,6 +74,11 @@ def get_text(strip_words=""):
     t = re.sub(r"\s+(?:to|in|into|as)\s*$", "", t, flags=re.I)
     if t.strip():
         return t
+    global PIPED
+    piped = stdin_text()
+    if piped.strip():
+        PIPED = True
+        return piped
     from _sys import clip_get
     try:
         t = clip_get()
@@ -87,6 +94,8 @@ def emit(result):
     import contextlib
     import io
     print(result)
+    if PIPED:
+        return
     try:
         from _sys import clip_set
         with contextlib.redirect_stdout(io.StringIO()):

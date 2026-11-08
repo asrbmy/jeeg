@@ -2,9 +2,10 @@
 # desc: Decode Base64 text
 # category: utility
 # usage: decode base64 <text>
+# stdin: yes
 import base64, binascii
-from _lib import args_text, fail
-t = args_text().strip()
+from _lib import args_or_stdin, fail
+t = args_or_stdin().strip()
 if not t: fail('Usage: decode base64 <text>')
 try:
     print(base64.b64decode(t + '=' * (-len(t) % 4), validate=True).decode('utf-8', 'replace'))

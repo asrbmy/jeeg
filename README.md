@@ -7,7 +7,7 @@ JeeG finds the matching script in the `scripts` folder and runs it.
 
 - Pure Python 3.9+, nothing to install. Works on Windows, macOS and Linux.
 - Light: about 16 MB of memory, about 65 ms per command, nothing running in the background (except reminders and alarms you set yourself).
-- 455 ready-made tasks. You can add your own by dropping in a file.
+- 478 ready-made tasks. You can add your own by dropping in a file.
 
 ---
 
@@ -297,6 +297,21 @@ A plugin is one `.py` file. Make a starter with `jeeg plugin new my_task`, edit 
 - Host names, ports and package names are checked before being passed to other programs.
 - Critical system processes cannot be killed with `kill process`.
 - No task sends your files or personal data anywhere. Web tasks only open a page in your browser.
+
+## What is new in 2.8
+
+- **Chain tasks:** `gst 2500 18 then save it to a note` (also `then copy it`, `then speak it`). The first task's answer is passed on; tasks that ask for confirmation are never chained.
+- **Pipe text in:** `type notes.txt | jeeg word count`, `cat list.txt | jeeg sort lines`, `type data.json | jeeg format json` (Windows `type`, Mac/Linux `cat`). Up to 1 MB; words you type win over piped text.
+- **Run things by themselves:** `autorun add "start work day" at 9:00 weekdays` sets up Task Scheduler (Windows) or cron (Mac/Linux). `autorun list`, `autorun remove 1`.
+- **Your habits:** `my habits` shows what you use most, what often fails, and phrases worth a shortcut. Local only.
+- **Better typo fixing:** `shutdwn pc` offers `shutdown pc`, trying every close spelling of each word.
+- **Plugins:** `plugin update` (and `plugin outdated`) refresh library plugins after checking their fingerprints; five new library plugins.
+- **22 new tasks:** salary breakup, interest tax, severance, credit card dues, savings goal (`sip goal`), PDF rotate / compress / watermark / to pictures (optional `pip install pypdf pypdfium2 Pillow`), GPA planner, citations, medicine stock, BP and sugar log, fasting timer, gas cylinder, milk and maid log, flatmate split, regex explainer, colour converter, `.env` checker, checksum verifier, HTTP header check.
+- **Python, other languages, apps:** `import jeeg`, `jeeg --serve-api`, `jeeg --stdio`, `jeeg --mcp` (see PYTHON_GUIDE.md and INTEGRATIONS.md). A starter VS Code extension is in `integrations/vscode/`.
+- **Find any task:** the searchable list is `docs/tasks.html` (on the project page under Tasks).
+
+![JeeG in the terminal](docs/img/terminal.svg)
+![Use JeeG from Python](docs/img/python.svg)
 
 ## Use JeeG from your own Python programs (full guide: PYTHON_GUIDE.md)
 

@@ -2,9 +2,10 @@
 # desc: Copy text to the clipboard (copy hello world)
 # category: clipboard
 # usage: copy to clipboard <text>
-from _lib import args_text, fail
+# stdin: yes
+from _lib import args_or_stdin, fail
 from _sys import clip_set
-t = args_text()
+t = args_or_stdin()
 if not t:
     fail("Say what to copy: copy to clipboard <text>")
 clip_set(t)

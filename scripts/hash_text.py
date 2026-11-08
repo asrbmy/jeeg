@@ -2,14 +2,15 @@
 # desc: SHA-256 / SHA-1 / MD5 of text or a file
 # category: utility
 # usage: hash text <text|file>
+# stdin: yes
 import hashlib, os
 from pathlib import Path
-from _lib import args_text, fail
-t = args_text()
+from _lib import args_or_stdin, fail, safe_is_file
+t = args_or_stdin()
 if not t:
     fail("Usage: hash text <text or file path>")
-p = Path(t.strip('"\'')).expanduser()
-if p.is_file():
+p = Path(t.strip('"\'')[:1000]).expanduser() if len(t) < 1000 else Path('.nofile')
+if safe_is_file(p):
     hs = {n: hashlib.new(n) for n in ("sha256", "sha1", "md5")}
     with open(p, "rb") as f:
         for chunk in iter(lambda: f.read(1 << 20), b""):

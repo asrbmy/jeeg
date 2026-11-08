@@ -58,7 +58,8 @@ def main(argv) -> int:
         print(f"{f} already exists and is not a JeeG launcher; choose another --name.")
         return 1
     d.mkdir(parents=True, exist_ok=True)
-    f.write_text(launcher_text(name), encoding="utf-8", newline="")
+    with open(f, "w", encoding="utf-8", newline="") as fh:
+        fh.write(launcher_text(name))
     if os.name != "nt":
         f.chmod(f.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
     print(f"Installed {f}\nTry:  {name} open youtube")

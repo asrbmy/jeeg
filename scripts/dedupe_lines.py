@@ -3,6 +3,7 @@
 # category: text
 # usage: remove duplicates <items>
 # rawargs: yes
+# stdin: yes
 from _text import get_text, emit, items
 seen, out = set(), []
 parts = items(get_text("remove|delete|duplicates?|duplicated|repeated|repeats?|unique|lines?|items?|from|in"))

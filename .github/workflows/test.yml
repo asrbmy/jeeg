@@ -31,6 +31,10 @@ jobs:
         run: python tests/test_api.py
       - name: Bridge tests (local API, JSON lines, MCP)
         run: python tests/test_bridge.py
+      - name: New in 2.8 and quality gates
+        run: |
+          python tests/test_v28.py
+          python tests/test_quality.py
       - name: Privacy checks
         run: python tests/test_privacy.py
       - name: Security tests

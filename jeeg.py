@@ -113,7 +113,7 @@ HEADER_RE = re.compile(r"^\s*(?:#|//|::|REM\b)\s*(\w+)\s*:\s*(.*?)\s*$", re.I)
 SPLIT_RE = re.compile(r"\s*(?:&|;|\band then\b|\bthen\b|\band\b)\s*", re.I)
 SPLIT_MIN_SCORE = 1.2   # every part must clearly name a task
 
-INDEX_VERSION = 9    # bump when index format / tokenising changes
+INDEX_VERSION = 10   # bump when index format / tokenising changes
 MIN_SCORE = 0.7      # below this a script is not considered a match
 TIE_MARGIN = 0.04    # scores this close count as a tie
 MENU_MAX = 8
@@ -172,6 +172,7 @@ def make_entry(path: Path) -> dict:
         "usage": meta.get("usage", ""),
         "raw": 2 if meta.get("rawargs", "").lower() == "full" else int(meta.get("rawargs", "").lower() in {"yes", "true", "1", "y"}),
         "private": meta.get("private", "").lower() in {"yes", "true", "1", "y"},
+        "stdin": meta.get("stdin", "").lower() in {"yes", "true", "1", "y"},
         "net": meta.get("network", "").lower() in {"yes", "true", "1", "y"},
         "pat": [x.strip() for x in meta.get("patterns", "").split(";;") if x.strip()],
         "prio": int(meta["priority"]) if meta.get("priority", "").lstrip("-").isdigit() else 0,
@@ -376,7 +377,7 @@ def resolve(query: str, entries: list[dict]):
 # ------------------------------------------------- your data: aliases, logs
 RESERVED = {"list", "help", "history", "again", "repeat", "redo", "reindex", "selftest", "exit", "quit", "alias",
             "explain", "misses", "stats", "doctor", "tasks", "pack", "tips", "tip", "plugins", "plugin", "update", "setup",
-            "web", "ui", "completion", "learn", "tour", "routines", "privacy"}
+            "web", "ui", "completion", "learn", "tour", "routines", "privacy", "autorun"}
 
 
 def _load_json(name: str, default):
@@ -820,16 +821,26 @@ def cmd_doctor_fix(dirs) -> int:
 
 def did_you_mean(query: str, entries: list[dict]) -> list[str]:
     import difflib
+    import itertools
     out = []
     vocab = sorted({t for e in entries for t in e["name_t"] + e["kw_t"] if len(t) > 2})
-    words = query.lower().split()
     vs = set(vocab)
-    fixed = [w if (norm(w) in vs or not w.isalpha() or len(w) < 3)
-             else (difflib.get_close_matches(norm(w), vocab, n=1, cutoff=0.8) or [w])[0] for w in words]
-    if fixed != words and all(norm(w) in vs or not w.isalpha() or len(w) < 3 for w in fixed):   # "opne youtub" -> "open youtube"
-        cand = " ".join(fixed)
+    words = query.lower().split()[:12]
+
+    def known(w):
+        return norm(w) in vs or not w.isalpha() or len(w) < 3
+    # every unknown word gets up to 3 close spellings; try the combinations and keep those that really match a task
+    options = [[w] if known(w) else (difflib.get_close_matches(norm(w), vocab, n=3, cutoff=0.7) or [w]) for w in words]
+    scored = []
+    for combo in itertools.islice(itertools.product(*options), 40):
+        if list(combo) == words or not all(known(w) for w in combo):
+            continue
+        cand = " ".join(combo)
         st, hit = resolve(cand, entries)
         if st == "ok":
+            scored.append((hit[0], cand))
+    for _, cand in sorted(scored, key=lambda x: -x[0]):
+        if cand not in out:
             out.append(cand)
     names = [e["name"].replace("_", " ") for e in entries]
     out += [n for n in difflib.get_close_matches(query.lower().strip(), names, n=3, cutoff=0.6) if n not in out]
@@ -888,7 +899,7 @@ def run_entry(e: dict, args: list[str], opt: dict) -> int:
         t0 = time.perf_counter()
         try:
             r = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace",
-                               timeout=opt["timeout"], stdin=subprocess.DEVNULL)
+                               timeout=opt["timeout"], stdin=None if e.get("stdin") else subprocess.DEVNULL)
             rc, text = r.returncode, (r.stdout or "") + (r.stderr or "")
         except subprocess.TimeoutExpired:
             rc, text = 1, f"{label} timed out after {opt['timeout']}s.\n"
@@ -940,7 +951,59 @@ def looks_like_math(q: str) -> bool:
     return bool(ops) and all(a in MATH_WORDS for a in alpha)
 
 
+# ---- chaining: "<task> then copy it" / "then save it to a note" / "then speak it"
+CHAIN_RE = re.compile(r"^(?P<a>.+?)\s*,?\s*(?:and\s+)?then\s+(?P<verb>copy|save|keep|speak|say|read(?:\s+out)?|note|remember|write\s+down|jot(?:\s+down)?)\b(?P<rest>.*)$", re.I)
+CHAIN_REF = re.compile(r"^\s*(?:(?:it|that|this|the\s+(?:result|answer|output))\b)?\s*(?:(?:to|in|into|as|on)\s+(?:a\s+|my\s+|the\s+)?(?P<dest>notes?|clipboard|journal))?\s*(?:aloud|out\s+loud)?\s*$", re.I)
+
+
+def run_chain(query: str, entries: list[dict], opt: dict):
+    """Run a task, then hand what it printed to copy / note / speak. Returns None when the sentence is not a chain."""
+    m = CHAIN_RE.match(query.strip())
+    if not m:
+        return None
+    ref = CHAIN_REF.match(m.group("rest"))
+    if not ref:
+        return None
+    verb, dest = m.group("verb").lower(), (ref.group("dest") or "").lower()
+    sink = "speak_text" if verb in {"speak", "say"} or verb.startswith("read") else \
+        "copy_to_clipboard" if verb == "copy" or dest == "clipboard" else "note_add"
+    se = next((e for e in entries if e["name"] == sink), None)
+    st, hit = resolve(m.group("a"), entries)
+    if se is None or st != "ok" or hit[1]["confirm"] or hit[1]["name"] == sink:
+        return None
+    _, first, args = hit
+    if opt["dry"]:
+        print(f"[dry-run] {first['name']} {' '.join(args)}  ->  then {sink}")
+        return 0
+    import contextlib
+    import io
+    was, buf = opt.get("quiet"), io.StringIO()
+    opt["quiet"] = True
+    try:
+        with contextlib.redirect_stdout(buf):
+            rc = run_entry(first, args, opt)
+    finally:
+        opt["quiet"] = was
+    text = buf.getvalue()
+    history_add(m.group("a"), first["name"], first.get("private"))
+    if not was:
+        print(f">> {first['name'].replace('_', ' ')}" + (f"  ({' '.join(args)})" if args else ""))
+    sys.stdout.write(text)
+    if rc != 0:
+        print(f"(not passing it on: {first['name'].replace('_', ' ')} did not finish)")
+        return rc
+    one = " | ".join(l.strip() for l in text.splitlines() if l.strip())[:1000]
+    if not one:
+        print("(nothing to pass on)")
+        return 1
+    history_add(f"then {verb}", sink)
+    return run_entry(se, one.split(), opt)
+
+
 def run_query(query: str, entries: list[dict], opt: dict) -> int:
+    chained = run_chain(query, entries, opt)
+    if chained is not None:
+        return chained
     parts = [p for p in SPLIT_RE.split(query) if p.strip()]
     if len(parts) > 1:                       # "open gmail and open calendar"
         plan = []
@@ -1114,6 +1177,9 @@ def handle(line: str, dirs, opt) -> int | None:
     if re.match(r"routines\s+(export|import)\b", low):
         import jeeg_cmds
         return jeeg_cmds.cmd_routines_io(q.split(None, 1)[1], STATE, opt.get("yes", False))
+    if low == "autorun" or low.startswith("autorun "):
+        import jeeg_autorun
+        return jeeg_autorun.cmd_autorun(q[7:], HERE, STATE, opt.get("dry", False))
     if low == "doctor fix" or low == "doctor --fix":
         return cmd_doctor_fix(dirs)
     if low.startswith("completion"):

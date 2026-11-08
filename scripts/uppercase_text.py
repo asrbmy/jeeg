@@ -3,5 +3,6 @@
 # category: text
 # usage: uppercase <text>
 # rawargs: yes
+# stdin: yes
 from _text import get_text, emit
 emit(get_text().upper())

@@ -3,6 +3,8 @@
 # category: media
 # usage: merge pdf <file> <file> ...
 # rawargs: yes
+# patterns: \b(merge|combine|join|append)\s+(the\s+|my\s+|these\s+|two\s+|all\s+)?pdfs?\b ;; \bpdf\s+merge\b ;; \bput\s+pdfs?\s+together\b
+# priority: 2
 from _lib import args_text, fail, need
 from _files import path_arg, tokens, unique_path
 need("pypdf")

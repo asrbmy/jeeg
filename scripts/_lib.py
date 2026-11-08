@@ -41,6 +41,42 @@ def args_text(default=""):
     return " ".join(sys.argv[1:]).strip() or default
 
 
+def safe_is_file(p):
+    """Path.is_file() that never raises, even when 'p' is really a long piece of text."""
+    try:
+        return len(str(p)) < 1000 and p.is_file()
+    except (OSError, ValueError):
+        return False
+
+
+def stdin_text(limit=1_000_000, wait=0.5):
+    """Text piped into JeeG (type notes.txt | jeeg word count), or "". Never blocks for long when nothing is piped."""
+    import threading
+    try:
+        if sys.stdin is None or sys.stdin.isatty():
+            return ""
+    except (AttributeError, ValueError, OSError):
+        return ""
+    box = []
+
+    def read():
+        try:
+            box.append(sys.stdin.read(limit + 1))
+        except (OSError, ValueError, UnicodeDecodeError):
+            box.append("")
+    th = threading.Thread(target=read, daemon=True)
+    th.start()
+    th.join(wait)
+    if th.is_alive() or not box:
+        return ""
+    return box[0][:limit].replace("\x00", "")
+
+
+def args_or_stdin(default=""):
+    """The words after the task name; when there are none, the piped-in text."""
+    return args_text() or stdin_text() or default
+
+
 def fail(msg, code=1):
     print(msg)
     sys.exit(code)

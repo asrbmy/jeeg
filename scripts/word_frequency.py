@@ -3,6 +3,7 @@
 # category: text
 # usage: word frequency <text|file>
 # rawargs: yes
+# stdin: yes
 import re
 from collections import Counter
 from pathlib import Path

@@ -63,6 +63,8 @@ jobs:
           python tests/test_v27.py
           python tests/test_api.py
           python tests/test_bridge.py
+          python tests/test_v28.py
+          python tests/test_quality.py
           python tests/test_privacy.py
           python tests/test_security.py
       - name: Build

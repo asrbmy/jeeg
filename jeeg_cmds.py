@@ -120,6 +120,9 @@ def cmd_plugin(args: str, plugin_dir: Path, entries: list[dict], parse_header, a
     builtin = {e["name"] for e in entries if Path(e["path"]).resolve().parent != plugin_dir.resolve()}
     mine = sorted(p for p in plugin_dir.glob("*.py")) if plugin_dir.is_dir() else []
 
+    if sub in {"update", "outdated", "upgrade"}:
+        return cmd_plugin_update(sub != "outdated", plugin_dir, assume_yes)
+
     if sub in {"search", "library", "browse", "get"}:
         return cmd_library("get" if sub == "get" else "search", rest, plugin_dir, entries, parse_header, assume_yes)
 
@@ -243,7 +246,8 @@ def cmd_plugin(args: str, plugin_dir: Path, entries: list[dict], parse_header, a
         if not _ask(f"Install '{name}'?", assume_yes):
             return 3
         plugin_dir.mkdir(parents=True, exist_ok=True)
-        target.write_text(text, encoding="utf-8", newline="\n")
+        with open(target, "w", encoding="utf-8", newline="\n") as fh:
+            fh.write(text)
         print(f"Installed. Say 'reindex' to refresh, then try: {meta['keywords'].split(',')[0].strip()}")
         return 0
 
@@ -458,6 +462,51 @@ def library_index(base: str | None = None) -> dict:
     return good
 
 
+def cmd_plugin_update(apply: bool, plugin_dir: Path, assume_yes: bool = False) -> int:
+    """Compare your installed plugins with the library and (optionally) replace the ones that have changed."""
+    base = _library_base()
+    try:
+        idx = library_index(base)
+    except OSError as ex:
+        print(f"Could not open the plugin library: {ex}.")
+        return 1
+    mine = sorted(plugin_dir.glob("*.py")) if plugin_dir.is_dir() else []
+    changed = []
+    for f in mine:
+        meta = idx.get(f.stem)
+        if meta and hashlib.sha256(f.read_bytes()).hexdigest() != meta["sha256"]:
+            changed.append((f, meta))
+    if not changed:
+        print(f"All {len([f for f in mine if f.stem in idx])} library plugin(s) you have are up to date." if mine else "You have no plugins installed.")
+        return 0
+    for f, meta in changed:
+        print(f"  {f.stem:<20}different from the library version  ({meta['desc'][:50]})")
+    if not apply:
+        print("Replace them with:  plugin update   (your copy is kept as <name>.py.bak)")
+        return 0
+    rc = 0
+    for f, meta in changed:
+        if not _ask(f"Replace {f.stem} with the library version? Any edits you made are kept in {f.name}.bak", assume_yes):
+            print(f"Kept {f.stem}.")
+            continue
+        try:
+            data = _lib_read(base, f"{f.stem}.py", MAX_PLUGIN_BYTES)
+        except OSError as ex:
+            print(f"Could not download {f.stem}: {ex}.")
+            rc = 1
+            continue
+        if len(data) > MAX_PLUGIN_BYTES or hashlib.sha256(data).hexdigest() != meta["sha256"]:
+            print(f"{f.stem}: the download does not match the fingerprint in the library index, so it was NOT changed.")
+            rc = 1
+            continue
+        shutil.copy2(f, f.with_suffix(".py.bak"))
+        tmp = f.with_suffix(".py.new")
+        tmp.write_bytes(data)
+        os.replace(tmp, f)
+        print(f"Updated {f.stem}.")
+    return rc
+
+
 def cmd_library(sub: str, rest: list[str], plugin_dir: Path, entries: list[dict], parse_header, assume_yes: bool = False) -> int:
     base = _library_base()
     try:
@@ -520,7 +569,8 @@ def _install_local(tmp: Path, name: str, plugin_dir: Path, entries, parse_header
     if not _ask(f"Install '{name}'" + (" (replaces your current copy)" if target.exists() else "") + "?", assume_yes):
         return 3
     plugin_dir.mkdir(parents=True, exist_ok=True)
-    target.write_text(text, encoding="utf-8", newline="\n")
+    with open(target, "w", encoding="utf-8", newline="\n") as fh:
+        fh.write(text)
     print(f"Installed. Say 'reindex' to refresh, then try: {meta['keywords'].split(',')[0].strip()}")
     return 0
 

@@ -3,6 +3,8 @@
 # category: media
 # usage: images to pdf <folder|files>
 # rawargs: full
+# patterns: \b(images?|photos?|pictures?|jpe?g|png|scans?)\s+(into|to)\s+(a\s+)?pdf\b ;; \bmake\s+(a\s+)?pdf\s+from\s+(images?|photos?|pictures?)\b ;; \bscan\s+to\s+pdf\b
+# priority: 2
 from _lib import args_text, fail, need
 from _files import path_arg, tokens, unique_path
 need("PIL", "pillow")

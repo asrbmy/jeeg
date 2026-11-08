@@ -3,10 +3,11 @@
 # category: text
 # usage: sort lines <items>
 # rawargs: yes
+# stdin: yes
 import re
-from _lib import args_text
+from _lib import args_or_stdin
 from _text import get_text, emit, items
-t = args_text()
+t = args_or_stdin()
 rev = bool(re.search(r"\b(reverse|descending|desc|z-a|backwards)\b", t, re.I))
 t = re.sub(r"\b(reverse|descending|desc|z-a|backwards|ascending|a-z)\b", " ", t, flags=re.I) if t.strip() else t
 parts = items(get_text() if not t.strip() else t)

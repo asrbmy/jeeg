@@ -29,3 +29,14 @@ def parse_date(text):
         except ValueError:
             pass
     return None
+
+
+def parse_past_date(text):
+    """Like parse_date, but a date with no year means the most recent one (for logs: 'maid absent 3 nov')."""
+    d = parse_date(text)
+    if d is not None and d > datetime.date.today() and not re.search(r"\d{4}", text):
+        try:
+            d = d.replace(year=d.year - 1)
+        except ValueError:                       # 29 Feb
+            d = d.replace(year=d.year - 1, day=28)
+    return d

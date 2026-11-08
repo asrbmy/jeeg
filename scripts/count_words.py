@@ -2,13 +2,14 @@
 # desc: Count words, lines and characters in text or a file
 # category: utility
 # usage: count words <text|file>
+# stdin: yes
 from pathlib import Path
-from _lib import args_text, fail
-t = args_text()
+from _lib import args_or_stdin, fail, safe_is_file
+t = args_or_stdin()
 if not t:
     fail("Usage: count words <text or file path>")
-p = Path(t.strip('"\'')).expanduser()
-if p.is_file():
+p = Path(t.strip('"\'')[:1000]).expanduser() if len(t) < 1000 else Path('.nofile')
+if safe_is_file(p):
     if p.stat().st_size > 50_000_000: fail("File is larger than 50 MB.")
     data = p.read_text(encoding="utf-8", errors="replace"); print(f"File: {p}")
 else:

@@ -26,7 +26,7 @@ Contents
 
 - A small launcher written in Python (standard library only). It has no background service and does not need an account.
 - It reads every script in `scripts/`, matches your words to a script, and runs it. A script is just a file you can open and edit.
-- 455 tasks are included across apps, websites, files, system, network, reminders, personal records, money calculators, text tools, developer tools and quick searches.
+- 478 tasks are included across apps, websites, files, system, network, reminders, personal records, money calculators, text tools, developer tools and quick searches.
 - It runs on Windows, macOS and Linux. Python 3.9 or newer is required.
 - It is quick (about 56 ms per command including Python start-up, measured on Linux) and light (about 16 MB while a command runs; nothing stays in memory between commands, except reminders and alarms you set).
 
@@ -521,7 +521,7 @@ Run the checks yourself any time:
 
 ## 15. Appendix: every task
 
-455 tasks. In the Usage column, `<...>` is something you fill in and `[...]` is optional. A star means the task asks before running; "online" means it can use the internet.
+478 tasks. In the Usage column, `<...>` is something you fill in and `[...]` is optional. A star means the task asks before running; "online" means it can use the internet.
 
 
 ### ai
@@ -1226,4 +1226,20 @@ j("add expense 250 food lunch")
 - Apps that support MCP (for example Claude Desktop): `jeeg --mcp`.
 - Everything stays on your computer; the API listens on 127.0.0.1 only and refuses web pages. Tasks that ask for confirmation are refused unless you start with `--allow-confirm`.
 - Full guide: INTEGRATIONS.md. Examples for Node.js, curl and Python: `examples/other_languages/`.
+
+### 8.22 What is new in 2.8
+
+- **Chain tasks:** `gst 2500 18 then save it to a note` (also `then copy it`, `then speak it`). The first task's answer is passed on; tasks that ask for confirmation are never chained.
+- **Pipe text in:** `type notes.txt | jeeg word count`, `cat list.txt | jeeg sort lines`, `type data.json | jeeg format json` (Windows `type`, Mac/Linux `cat`). Up to 1 MB; words you type win over piped text.
+- **Run things by themselves:** `autorun add "start work day" at 9:00 weekdays` sets up Task Scheduler (Windows) or cron (Mac/Linux). `autorun list`, `autorun remove 1`.
+- **Your habits:** `my habits` shows what you use most, what often fails, and phrases worth a shortcut. Local only.
+- **Better typo fixing:** `shutdwn pc` offers `shutdown pc`, trying every close spelling of each word.
+- **Plugins:** `plugin update` (and `plugin outdated`) refresh library plugins after checking their fingerprints; five new library plugins.
+- **22 new tasks:** salary breakup, interest tax, severance, credit card dues, savings goal (`sip goal`), PDF rotate / compress / watermark / to pictures (optional `pip install pypdf pypdfium2 Pillow`), GPA planner, citations, medicine stock, BP and sugar log, fasting timer, gas cylinder, milk and maid log, flatmate split, regex explainer, colour converter, `.env` checker, checksum verifier, HTTP header check.
+- **Python, other languages, apps:** `import jeeg`, `jeeg --serve-api`, `jeeg --stdio`, `jeeg --mcp` (see PYTHON_GUIDE.md and INTEGRATIONS.md). A starter VS Code extension is in `integrations/vscode/`.
+- **Find any task:** the searchable list is `docs/tasks.html` (on the project page under Tasks).
+
+![JeeG in the terminal](docs/img/terminal.svg)
+![Use JeeG from Python](docs/img/python.svg)
+
 

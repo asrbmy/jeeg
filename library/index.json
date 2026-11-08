@@ -1,6 +1,16 @@
 {
  "version": 1,
  "plugins": {
+  "allowance_split": {
+   "desc": "Split a child's pocket money into save, spend and give jars (allowance split 500; allowance split 20 save 50 give 10)",
+   "tags": "money",
+   "sha256": "232c3c00c687ae7533b05f426da3d32de7e4bb4d15b809624c83cb309859cb57"
+  },
+  "anagram_check": {
+   "desc": "Check whether two words or phrases are anagrams (anagram listen silent)",
+   "tags": "fun",
+   "sha256": "e9a34752d4ec851dac596715ff1f7b039386b0fc6c4f6ba0b1151108e2e3261e"
+  },
   "goal_planner": {
    "desc": "Monthly saving needed to reach a goal (goal planner 10 lakh in 5 years at 12%)",
    "tags": "money",
@@ -11,15 +21,30 @@
    "tags": "money",
    "sha256": "eb8d5c032c4e2c8d1d316da39f5fe001e585a40ee77d29dabb4d80e13ef3564b"
   },
+  "morse_code": {
+   "desc": "Translate text to Morse code and back (morse hello world; morse .... . .-.. .-.. ---)",
+   "tags": "fun",
+   "sha256": "d0f66a5b898e9403a1d40f2a8bc6e619400b8e20590820a824cc9d0fce2320bc"
+  },
   "packing_list": {
    "desc": "A packing checklist for a trip (packing list beach 4 days, packing list trek 3 days)",
    "tags": "personal",
    "sha256": "eff6871f2c2cd335d11e5f6486d48e625fd41c0f58f8d04a36516abe49a409de"
   },
+  "recipe_scale": {
+   "desc": "Scale ingredient amounts for a new number of servings (recipe scale 4 to 6: 2 cups flour, 1.5 tsp salt, 3 eggs)",
+   "tags": "personal",
+   "sha256": "07efa177a994243502b04348debbc9cdbcb13088bccdfc1f95dbeca45f7c487d"
+  },
   "rent_receipt": {
    "desc": "Make monthly rent receipts for HRA as one printable page (rent receipt Asha Rao 15000 landlord Mohan Das from april 2026 for 12 months)",
    "tags": "money",
    "sha256": "e55638e02fee4a68702f594385e5f01e341e1965eee91dd1624ac3355a1e8a82"
+  },
+  "workdays_between": {
+   "desc": "Count working days (Mon-Fri) between two dates (workdays 2026-11-01 to 2026-12-31)",
+   "tags": "time",
+   "sha256": "3a723c10c564bdc2b7e0a2931e80829ba8d118a178f1bdc4ea9ae4dcd3097bdd"
   }
  }
 }

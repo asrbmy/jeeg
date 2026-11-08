@@ -1,0 +1,26 @@
+{
+  "name": "jeeg-vscode",
+  "displayName": "JeeG",
+  "description": "Type a task in plain words and run it with JeeG, right inside VS Code. Everything stays on your computer.",
+  "version": "0.1.0",
+  "publisher": "jeeg",
+  "license": "MIT",
+  "engines": { "vscode": "^1.80.0" },
+  "categories": ["Other"],
+  "main": "./extension.js",
+  "activationEvents": [],
+  "contributes": {
+    "commands": [
+      { "command": "jeeg.run", "title": "JeeG: Run a task" },
+      { "command": "jeeg.runSelection", "title": "JeeG: Run the selected text as a task" },
+      { "command": "jeeg.pipeSelection", "title": "JeeG: Send the selected text to a task (word count, sort lines ...)" }
+    ],
+    "configuration": {
+      "title": "JeeG",
+      "properties": {
+        "jeeg.command": { "type": "string", "default": "jeeg", "description": "How to start JeeG (for example jeeg, or python -m jeeg). Use the full path if VS Code cannot find it." },
+        "jeeg.timeoutSeconds": { "type": "number", "default": 60, "description": "Stop a task after this many seconds." }
+      }
+    }
+  }
+}
