@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>JeeG</title>
+<style>
+:root{--bg:#faf9f5;--fg:#1f1e1d;--mut:#73726c;--card:#fff;--line:#e8e6dc;--acc:#c96442}
+@media(prefers-color-scheme:dark){:root{--bg:#262624;--fg:#f0eee6;--mut:#a09f97;--card:#30302e;--line:#444441;--acc:#d97757}}
+body{width:340px;margin:0;padding:12px;background:var(--bg);color:var(--fg);font:14px/1.45 system-ui,sans-serif}
+label{display:block;color:var(--mut);font-size:12px;margin:8px 0 3px}
+input,textarea{width:100%;box-sizing:border-box;padding:8px;font:inherit;color:inherit;background:var(--card);border:1px solid var(--line);border-radius:8px}
+textarea{height:70px}
+button{margin-top:10px;padding:8px 14px;border:0;border-radius:8px;background:var(--acc);color:#fff;font:inherit;cursor:pointer}
+pre{white-space:pre-wrap;word-wrap:break-word;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:8px;margin:10px 0 0;max-height:220px;overflow:auto;font:12px/1.4 ui-monospace,Consolas,monospace}
+a{color:var(--acc)}
+</style></head><body>
+<label for="task">Task (for example: word count, summarise, gst 18)</label>
+<input id="task" autocomplete="off" placeholder="word count">
+<label for="text">Text (filled from your selection)</label>
+<textarea id="text"></textarea>
+<button id="run">Run</button> <a href="options.html" target="_blank">Settings</a>
+<pre id="out" hidden></pre>
+<script src="popup.js"></script>
+</body></html>

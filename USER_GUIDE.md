@@ -26,7 +26,7 @@ Contents
 
 - A small launcher written in Python (standard library only). It has no background service and does not need an account.
 - It reads every script in `scripts/`, matches your words to a script, and runs it. A script is just a file you can open and edit.
-- 478 tasks are included across apps, websites, files, system, network, reminders, personal records, money calculators, text tools, developer tools and quick searches.
+- 488 tasks are included across apps, websites, files, system, network, reminders, personal records, money calculators, text tools, developer tools and quick searches.
 - It runs on Windows, macOS and Linux. Python 3.9 or newer is required.
 - It is quick (about 56 ms per command including Python start-up, measured on Linux) and light (about 16 MB while a command runs; nothing stays in memory between commands, except reminders and alarms you set).
 
@@ -365,6 +365,68 @@ Most accept text after the task name or use your clipboard if you give none, and
 - **Weight:** `weight 72.5 kg` (or lb), `weight history`, `weight goal 70`; `life report` draws the trend.
 - **Reading list:** `add book Atomic Habits`, `books`, `finished book atomic habits`, `remove book ...`.
 
+### 8.20 Use JeeG from your own Python programs
+
+JeeG is also a library. After `pip install jeeg`:
+
+```python
+import jeeg
+
+r = jeeg.run("gst 2500 18")        # say it in words, like at the prompt
+print(r.output)                     # what the task printed
+if r.ok: ...                        # True when the exit code is 0
+
+jeeg.gst_amount(1000, 18).output    # or call a task by name, with arguments
+jeeg.find("open youtube")           # which task would run (runs nothing)
+jeeg.tasks(category="money")        # list what exists; jeeg.categories(), jeeg.task_info("gst_amount")
+
+j = jeeg.JeeG(home="my-data", timeout=30)   # your own data folder and settings
+j("add expense 250 food lunch")
+```
+
+- A `Result` has `.ok`, `.exit`, `.output`, `.lines`, `.task`, `.runs`, `.needs_confirmation`, `.ambiguous`, `.candidates`, `.json()`. Pass `check=True` to raise `JeeGError` on failure.
+- Calls never prompt. Tasks that ask for confirmation return exit code 3 unless you pass `yes=True`.
+- Library calls are not added to your command history (`history=True` to include them).
+- `run_task("name", args...)` skips word matching, so it is the predictable choice inside programs.
+- Terminal-only commands (`web`, `setup`, `update`, `plugin`, ...) are refused from Python.
+- Thread-safe: calls run one at a time. Standard library only, local only. Examples are in `examples/`.
+
+### 8.21 Use JeeG from other programs and apps
+
+- Any language: `jeeg --json <phrase>`, `jeeg --stdio` (JSON lines), `jeeg --serve-api` (local HTTP with a token).
+- Apps that support MCP (for example Claude Desktop): `jeeg --mcp`.
+- Everything stays on your computer; the API listens on 127.0.0.1 only and refuses web pages. Tasks that ask for confirmation are refused unless you start with `--allow-confirm`.
+- Full guide: INTEGRATIONS.md. Examples for Node.js, curl and Python: `examples/other_languages/`.
+
+### 8.22 What is new in 2.8
+
+- **Chain tasks:** `gst 2500 18 then save it to a note` (also `then copy it`, `then speak it`). The first task's answer is passed on; tasks that ask for confirmation are never chained.
+- **Pipe text in:** `type notes.txt | jeeg word count`, `cat list.txt | jeeg sort lines`, `type data.json | jeeg format json` (Windows `type`, Mac/Linux `cat`). Up to 1 MB; words you type win over piped text.
+- **Run things by themselves:** `autorun add "start work day" at 9:00 weekdays` sets up Task Scheduler (Windows) or cron (Mac/Linux). `autorun list`, `autorun remove 1`.
+- **Your habits:** `my habits` shows what you use most, what often fails, and phrases worth a shortcut. Local only.
+- **Better typo fixing:** `shutdwn pc` offers `shutdown pc`, trying every close spelling of each word.
+- **Plugins:** `plugin update` (and `plugin outdated`) refresh library plugins after checking their fingerprints; five new library plugins.
+- **22 new tasks:** salary breakup, interest tax, severance, credit card dues, savings goal (`sip goal`), PDF rotate / compress / watermark / to pictures (optional `pip install pypdf pypdfium2 Pillow`), GPA planner, citations, medicine stock, BP and sugar log, fasting timer, gas cylinder, milk and maid log, flatmate split, regex explainer, colour converter, `.env` checker, checksum verifier, HTTP header check.
+- **Python, other languages, apps:** `import jeeg`, `jeeg --serve-api`, `jeeg --stdio`, `jeeg --mcp` (see PYTHON_GUIDE.md and INTEGRATIONS.md). A starter VS Code extension is in `integrations/vscode/`.
+- **Find any task:** the searchable list is `docs/tasks.html` (on the project page under Tasks).
+
+![JeeG in the terminal](docs/img/terminal.svg)
+![Use JeeG from Python](docs/img/python.svg)
+
+### 8.23 What is new in 2.9
+
+- **It remembers your choice.** When JeeG asks "More than one task fits" and you pick one, a short phrase (no numbers, up to 4 words) is saved as an alias, so next time it just runs. `alias remove <phrase>` undoes it.
+- **Routine variables.** In a routine step you can write `{today}`, `{date}`, `{month}`, `{year}`, `{weekday}`, `{week}`, `{time}`; they are filled in when the routine runs.
+- **Update the standalone program.** `update` checks GitHub; for the downloaded `.exe`/Mac/Linux program, `update now` downloads the new file, checks its SHA-256 and replaces the old one. Nothing is installed if the check fails.
+- **Bug report file.** `report` writes `jeeg-report.txt` (version, system, `doctor` result; your home folder and user name are hidden; none of your notes or typed phrases). You read it, then attach it to an issue.
+- **Share your setup.** `share plugin <name>`, `share routines`, `share aliases` each write one file you can send to a friend.
+- **Phone page.** `web lan` prints a secret link to open on a phone on the same Wi-Fi. It only runs everyday tasks (money, text, health, study, lists, reminders...), never anything that opens apps, changes files or controls the computer. Plain http: use it only on a network you trust.
+- **Browser extension** (`integrations/browser/`): select text on a page, pick a task, see the answer. Start the API with `jeeg --serve-api --allow-origin chrome-extension://<ID>`; browser extensions you name are the only web origin accepted.
+- **Send to JeeG** (`integrations/sendto/install.py`): right-click a file > Send to / Scripts > JeeG, type a task such as `hash` or `compress`. Windows, Linux (Nautilus, Nemo, Caja) and macOS (droplet app, built with `osacompile`).
+- **Raycast and Alfred** launchers (`integrations/raycast/`) and a Home Assistant example (`integrations/homeassistant/`, not tested here).
+- **Standalone program (no Python).** `python tools/build_exe.py`, or download `jeeg-windows-x64.exe`, `jeeg-macos`, `jeeg-linux-x64` from a GitHub release.
+- **10 new tasks:** `csv to json`, `chart csv` (an HTML bar chart, nothing uploaded), `readability` (Flesch score; accepts piped text), `replace in files <folder> "old" with "new"` (asks first; originals are saved), `strip exif <photo>` (needs Pillow), `profit margin`, `compare loans`, `freelance rate`, `toml to json` (Python 3.11+), `watch folder <folder> move <types> to <folder>` (asks first; add `once` for one pass).
+
 ## 9. Teaching and checking JeeG
 
 **Aliases: your own short words**
@@ -521,7 +583,7 @@ Run the checks yourself any time:
 
 ## 15. Appendix: every task
 
-478 tasks. In the Usage column, `<...>` is something you fill in and `[...]` is optional. A star means the task asks before running; "online" means it can use the internet.
+488 tasks. In the Usage column, `<...>` is something you fill in and `[...]` is optional. A star means the task asks before running; "online" means it can use the internet.
 
 
 ### ai
@@ -597,13 +659,16 @@ Run the checks yourself any time:
 | Task | Usage | What it does |
 |---|---|---|
 | check versions |  | Show installed versions of Python, Node, Git, Docker, Java |
+| color convert | `color <#hex \| rgb r g b \| hsl h s l>` | Convert colours between hex, RGB and HSL (color #ff8800; color rgb 255 136 0; color hsl 32 100 50) |
 | count lines of code | `lines of code [folder]` | Count lines of code by language in a folder (lines of code myproject) |
 | create gitignore | `create gitignore [python\|node\|java]` | Create or extend a .gitignore for a language (create gitignore python \| node \| java) |
 | create venv |  | Create a Python virtual environment (.venv) here |
+| cron explain | `cron <minute hour day month weekday>` | Explain a cron schedule in words (cron 30 9 * * 1-5) |
 | csv preview | `csv preview <file.csv>` | Show the first rows of a CSV file as a table (csv preview data.csv) |
 | csv summary | `csv summary <file.csv>` | Summarise a CSV: rows, columns, number totals and common values (csv summary data.csv) |
 | docker ps |  | List running Docker containers |
 | docker stop all * |  | Stop all running Docker containers |
+| env check | `env check [folder]` | Compare a .env file with .env.example and list missing keys, without showing secrets (env check; env check myapp) |
 | git branch |  | List git branches |
 | git checkout | `git checkout <branch> \| git checkout new <branch>` | Switch to a git branch, or create one (git switch main, git checkout new feature-x) |
 | git clone (online) | `git clone <url>` | Clone a repository (git clone https://github.com/user/repo) |
@@ -612,15 +677,17 @@ Run the checks yourself any time:
 | git diff |  | Summarise uncommitted git changes |
 | git log |  | Show the last 10 git commits |
 | git pull (online) |  | Pull the latest changes (fast-forward only) |
-| git push * (online) |  | Push commits to the remote |
+| git push (online) * |  | Push commits to the remote |
 | git recent changes | `git recent changes [days]` | What changed in this git project recently (git recent changes, git recent changes 14 days) |
 | git stash | `git stash [pop\|list\|save <note>]` | Stash or restore uncommitted changes (git stash, git stash pop, git stash list) |
 | git status |  | Show git status of the current folder |
 | git undo commit * |  | Undo the last commit but keep your changes (git undo last commit) |
 | http get (online) | `http get <url>` | Fetch a URL and show status, headers and the start of the body (http get https://example.com) |
+| json diff | `json diff <old.json> <new.json>` | Compare two JSON files and list what changed (json diff a.json b.json) |
 | json minify | `json minify <file.json>` | Shrink a JSON file onto one line (json minify data.json) |
 | json to csv | `json to csv <file.json>` | Convert a JSON file (a list of records) to CSV (json to csv data.json) |
 | json to yaml | `json to yaml <file.json>` | Convert a JSON file to YAML (json to yaml config.json) |
+| jwt decode | `jwt <token>` | Read what is inside a JWT token, without sending it anywhere (jwt eyJ...) |
 | kill port * | `kill port <number>` | Stop whatever is listening on a port (kill port 3000) |
 | new project | `new project <name> [python\|node\|html\|flask]` | Create a starter project folder (new project myapp python \| node \| html \| flask) |
 | open codepen |  | Open CodePen |
@@ -637,15 +704,19 @@ Run the checks yourself any time:
 | open stackoverflow | `open stackoverflow <words>` | Open Stack Overflow or search it |
 | open vscode here |  | Open the current folder in VS Code |
 | open w3schools |  | Open W3Schools |
-| pip install * (online) | `pip install <packages>` | Install Python packages (pip install requests) |
+| pip install (online) * | `pip install <packages>` | Install Python packages (pip install requests) |
 | pip list |  | List installed Python packages |
 | pip outdated (online) |  | List Python packages that have updates |
+| regex explain | `regex explain <pattern>` | Explain a regular expression in plain words (regex explain ^\d{3}-\w+$) |
 | regex tester | `regex test "<pattern>" on "<text>"` | Try a regular expression on some text and see the matches (regex test "\d+" on "abc 123 def 45") |
+| response headers (online) | `http headers <url>` | Show a website's response headers and which security headers it sets (http headers https://example.com) (needs internet) |
 | run tests |  | Run the tests of the project in this folder (run tests): pytest, unittest, npm, go or cargo is detected |
 | serve folder (online) | `serve folder [port]` | Serve the current folder at http://localhost:8000 |
 | show env variables | `env variables [filter]` | List environment variables (secrets hidden); add a word to filter (env variables java) |
 | show path |  | Show the folders in your PATH, one per line, marking missing ones |
 | text diff | `text diff <file1> <file2>` | Show the differences between two text files (text diff a.txt b.txt) |
+| toml to json | `toml to json <file>` | Convert a TOML file (such as pyproject.toml) to JSON (toml to json pyproject.toml). Needs Python 3.11 or newer. |
+| verify checksum | `verify checksum <file> <checksum>` | Check a file against a checksum you were given (verify checksum setup.exe 9f86d0...) |
 | yaml to json | `yaml to json <file.yaml>` | Convert a YAML file to JSON (yaml to json config.yaml) |
 
 ### email
@@ -686,6 +757,8 @@ Run the checks yourself any time:
 | copy file | `copy file <file> to <folder>` | Copy a file or folder (copy file report.pdf to desktop) |
 | copy path | `copy path of <file>` | Copy a file or folder's full path to the clipboard (copy path of report.pdf) |
 | create folder | `create folder <name>` | Create a new folder on your Desktop (create folder projects) |
+| csv chart | `chart csv <file.csv>` | Make a bar chart (HTML page) from a CSV: first text column vs first number column (chart csv sales.csv). |
+| csv to json | `csv to json <file.csv>` | Convert a CSV file to JSON (csv to json sales.csv). Writes a new .json next to it. |
 | delete empty folders * | `delete empty folders <folder>` | Remove empty folders inside a folder (add 'preview' to just list them) |
 | delete old downloads * | `delete old downloads [days]` | Move old files from Downloads to a safe holding folder (delete old downloads 90 days) |
 | empty trash * |  | Empty the Recycle Bin / Trash permanently |
@@ -704,9 +777,12 @@ Run the checks yourself any time:
 | recent files |  | List recently changed files in Documents, Downloads and Desktop |
 | rename by pattern | `rename files in <folder> as <pattern> [apply]` | Rename files with a pattern, preview first (rename files in downloads as trip_{n}.{ext}; placeholders {name} {date} {n} {ext}; add 'apply' to do it) |
 | rename photos by date | `rename photos by date <folder> [apply]` | Rename photos to their date taken, e.g. 2026-10-21_143005.jpg (preview first; add 'apply') |
+| replace in files * | `replace in files <folder> "old" with "new"` | Find and replace text in all text files of a folder, with a backup (replace in files docs "old" with "new"). |
 | stale files | `old large files [size] [age] [folder]` | Find big files you have not touched for a long time (old large files 100 mb 1 year in downloads) |
+| strip exif | `strip exif <photo>` | Remove hidden location and camera data from a photo (strip exif photo.jpg). Needs Pillow. |
 | undo files | `undo` | Undo your last file move, rename or Downloads tidy (undo, undo move, undo rename) |
 | unzip file | `unzip file <archive>` | Extract a .zip / .tar.gz safely (unzip file archive.zip) |
+| watch folder * | `watch folder <folder> move <types> to <folder>` | Watch a folder and move new files of a type into another folder (watch folder downloads move pdf to Documents/PDF). Add 'once' to run a single pass. |
 | zip folder | `zip folder <folder>` | Zip a folder next to itself (zip folder projects) |
 | zip with password | `zip with password <file\|folder>` | Make a password-protected AES zip of a file or folder (the password is asked privately, not typed in the command) |
 
@@ -771,6 +847,11 @@ Run the checks yourself any time:
 | add medicine | `add medicine <name> at <time> [and <time>]` | Save a medicine and its times (add medicine metformin at 8am and 8pm) |
 | bmi calculator | `bmi <weight> kg <height> cm` | Body mass index from weight and height (bmi 70 kg 175 cm, bmi 70 5 ft 9 in) |
 | calorie calculator | `calorie calculator <male\|female> <age> years <kg> kg <cm> cm [activity]` | Estimate daily calories you burn (calorie calculator male 30 years 70 kg 175 cm moderate) |
+| fasting timer | `fast start \| fast status \| fast end \| fast history` | Time a fast (fast start; fast status; fast end) |
+| health log | `bp <sys>/<dia> \| sugar <value> [fasting\|after meal] \| health summary [month]` | Log blood pressure and blood sugar, see a weekly summary (bp 120/80; sugar 105 fasting; health summary) |
+| heart rate zones | `heart rate zones age <years>` | Heart rate zones for your age (heart rate zones age 30) |
+| macro split | `macros <calories> [high protein \| low carb]` | Split daily calories into protein, carbs and fat (macros 2000 calories) |
+| medicine stock | `medicine stock add <name> <count> [<n> a day] \| medicine stock \| medicine refill <name> <count>` | Track how many pills are left and when to refill (medicine stock add metformin 30 2 a day; pills left; medicine refill metformin 60) |
 | medicine today | `medicine today \| medicine taken <name> \| medicine remind \| remove medicine <name>` | Today's medicine list; tick one off, or get alerts for the rest of today (medicine today, medicine taken metformin, medicine remind, remove medicine metformin) |
 | sleep log | `sleep log <hours> \| sleep show` | Log how long you slept and see your recent average (sleep log 7.5 hours, sleep show) |
 | vaccine tracker | `add vaccine <person> <name> <date> \| vaccines \| remove vaccine <person> <name>` | Keep vaccine due dates for the family (add vaccine asha polio 12 nov 2026, vaccines, remove vaccine asha polio) |
@@ -781,6 +862,10 @@ Run the checks yourself any time:
 
 | Task | Usage | What it does |
 |---|---|---|
+| electricity bill | `electricity bill <units> at <rate> [fixed <amt>]` | Estimate an electricity bill (electricity bill 250 units at 7) |
+| gas cylinder | `cylinder changed [date] \| cylinder \| cylinder remove` | Track gas cylinder changes and when the next one is due (cylinder changed; cylinder; cylinder history) |
+| service log | `<item> <qty> [at <price>] \| <item> absent [date] \| <item> summary [month]` | Keep a daily log for milk, maid, newspaper and similar (milk 1.5 at 60; maid absent 3 nov; milk summary) |
+| subscription tracker | `add subscription <name> <date> \| subscriptions \| remove subscription <name>` | Track subscriptions and renewal dates (add subscription netflix 15 dec 2026, subscriptions) |
 | vehicle dues | `add vehicle due <what> <date> \| vehicle dues \| remove vehicle due <what>` | Track insurance, pollution certificate and service dates (add vehicle due insurance bike 15 dec 2026, vehicle dues) |
 | warranty tracker | `add warranty <item> <date> \| warranties \| remove warranty <item>` | Keep warranty end dates and see what expires soon (add warranty laptop 12 mar 2027, warranties, remove warranty laptop) |
 
@@ -850,15 +935,19 @@ Run the checks yourself any time:
 
 | Task | Usage | What it does |
 |---|---|---|
+| compress pdf | `compress pdf <file>` | Make a PDF smaller (compress pdf big.pdf) - needs: pip install pypdf (Pillow shrinks pictures too) |
 | compress video | `compress video <file>` | Make a video file smaller with ffmpeg (compress video movie.mp4) |
 | convert picture | `convert image <file> to <format>` | Convert a picture to another format (convert image photo.png to jpg) |
 | extract audio | `extract audio <video file>` | Save the sound of a video as MP3 (extract audio movie.mp4) |
 | merge pdf | `merge pdf <file> <file> ...` | Join PDF files into one (merge pdf a.pdf b.pdf) |
 | ocr text | `read text from <picture>` | Read the text in a picture or screenshot (read text from scan.png; needs pip install pytesseract pillow and the Tesseract program) |
 | pictures to pdf | `images to pdf <folder\|files>` | Combine pictures into one PDF (images to pdf <folder or files>) |
+| render pdf | `pdf to images <file> [jpg] [<n> dpi]` | Save each PDF page as a picture (pdf to images report.pdf; pdf to images report.pdf 200 dpi) - needs: pip install pypdfium2 Pillow |
 | resize picture | `resize image <file> to <width>` | Resize a picture (resize image photo.jpg to 800 wide, or 50%) |
+| rotate pdf | `rotate pdf <file> [90\|180\|270\|left] [pages 1-3]` | Rotate PDF pages (rotate pdf scan.pdf 90; rotate pdf scan.pdf 180 pages 1-3) - needs: pip install pypdf |
 | shrink photos | `compress pictures <folder> [quality 60] [width 1600]` | Make every picture in a folder smaller into a new 'compressed' folder; originals untouched (compress pictures downloads, compress pictures trip quality 60 width 1600; needs pip install pillow) |
 | split pdf | `split pdf <file> [pages 2-4]` | Split a PDF into pages, or pull out some pages (split pdf report.pdf pages 2-4) |
+| watermark pdf | `watermark pdf <file> <text>` | Stamp text across every PDF page (watermark pdf report.pdf CONFIDENTIAL) - needs: pip install pypdf |
 
 ### money
 
@@ -868,6 +957,7 @@ Run the checks yourself any time:
 | add expense | `add expense <amount> <category> [note]` | Record spending (spent 450 on groceries, add expense 200 food lunch) |
 | borrow money | `borrow <amount> from <name>` | Note money you borrowed from someone (borrow 300 from asha) |
 | budget report | `budget report` | Show this month's spending against your budgets (budget report) |
+| card dues | `add card <name> <date> \| cards \| remove card <name>` | Track credit card payment due dates (add card visa 15 nov, cards, remove card visa) |
 | compound interest | `compound interest <amount> <rate%> <years>` | Compound interest (compound interest 10000 7 3 years [monthly]) |
 | crypto price (online) | `crypto price <coin>` | Live cryptocurrency price (crypto price bitcoin) (needs internet) |
 | currency convert (online) | `currency <amount> <from> to <to>` | Live currency conversion (currency 100 usd to inr) (needs internet) |
@@ -875,18 +965,29 @@ Run the checks yourself any time:
 | emi loan | `emi <amount> <rate%> <years>` | Loan EMI (emi 5 lakh 8.5 5 years) |
 | exchange rates (online) | `exchange rates [base currency]` | Table of today's exchange rates against the rupee (exchange rates, exchange rates eur) |
 | expense total | `expense total [month]` | Spending totals by category (expense total, expense total last month) |
+| freelance rate | `freelance rate income <n> expenses <n> hours <n>` | Work out the hourly rate you need (freelance rate income 4000 expenses 800 hours 25 weeks off 6). |
 | fuel cost | `fuel cost <km> km <mileage> kmpl <price>` | Trip fuel cost from distance, mileage and price (fuel cost 250 km 18 kmpl 105 per litre) |
 | gst amount | `gst <amount> [rate] [inclusive]` | GST add or remove (gst 1000 18, gst 1180 18 inclusive) |
+| house split | `flat members <names> \| flat add <what> <amount> paid by <name> [split <names>] \| flat summary \| flat clear` | Share house costs between flatmates and see who pays whom (flat members amit ravi sam; flat add rent 18000 paid by amit; flat summary) |
+| hra exemption | `hra basic <amt> hra <amt> rent <amt> [metro]` | HRA tax exemption (hra basic 50000 hra 20000 rent 18000 metro) |
+| income tax | `income tax <income> [deductions <amount>]` | Income tax, new vs old regime (income tax 12 lakh; income tax 18 lakh deductions 2 lakh) |
+| interest tax | `interest tax <interest> tax <rate %>   \|   interest tax deposit <amount> rate <%> tax <%>` | Tax on interest earned (interest tax deposit 10000 rate 5 tax 25; interest tax 800 tax 15) |
 | lend money | `lend <amount> to <name> [note]` | Note money you lent to someone (lend 500 to ravi for lunch) |
+| loan compare | `compare loans <amt> <rate> <years> vs <rate> <years>` | Compare two loan offers side by side (compare loans 500000 8.5% 5y vs 9% 4y). |
 | make invoice | `invoice <customer>: <qty> <item> at <rate>, ... [gst 18]` | Make a simple GST invoice page (invoice Ravi Traders: 3 pens at 10, 2 books at 150 gst 18) |
 | percentage change | `percentage change <old> to <new>` | Percentage change between two numbers (percentage change 80 to 100) |
+| ppf maturity | `ppf <amount a year> [years] [rate %]` | PPF maturity (ppf 1.5 lakh a year; ppf 50000 a year 15 years) |
+| profit margin | `profit margin cost <c> price <p>` | Profit margin and markup, or the price you need for a target margin (profit margin cost 60 price 100 \| price for 30% margin cost 70). |
 | rd maturity | `rd <monthly amount> <rate %> <years>` | Recurring deposit maturity (rd 5000 a month 6.5% 2 years) |
 | remove bill | `remove bill <name>` | Delete a saved bill (remove bill electricity) |
 | remove budget | `remove budget <category>` | Remove a category budget (remove budget food) |
+| salary breakup | `salary breakup <amount> [a month\|a year] [tax %] [pension %] [insurance %] [other <amount>]` | Take-home pay from gross salary (salary breakup 5000 a month tax 20 pension 5; salary 60000 a year tax 22) |
 | set budget | `set budget <category> <amount>` | Set a monthly spending limit for a category (set budget food 5000) |
 | settle ledger | `settle <name> [amount]` | Mark a debt as paid (settle ravi, settle ravi 200 for a part payment) |
+| severance pay | `severance <years> years salary <amount> [a year] [weeks <n>]` | Estimate severance or end-of-service pay (severance 5 years salary 4000 a month weeks 2) |
 | show expenses | `show expenses [category] [month]` | List expenses (show expenses, show expenses food, show expenses last month) |
 | show ledger | `ledger [name]` | See who owes you and who you owe (ledger, who owes me, show ledger ravi) |
+| sip goal | `sip goal <amount> in <years> years [at <rate>%]` | Monthly saving needed to reach a goal (sip goal 1 million in 15 years at 8%; how much to save for 50000 in 3 years) |
 | sip growth | `sip <monthly> <return%> <years>` | SIP growth (sip 5000 12 10 years: monthly amount, yearly return %, years) |
 | split bill | `split bill <amount> among <n> [tip %]` | Split a bill (split bill 2400 among 4 tip 10%) |
 | tip calculator | `tip <bill> [percent%] [split <people>]` | Work out a tip and split the bill (tip 1200 10%, tip 2450 12% split 4) |
@@ -1047,10 +1148,16 @@ Run the checks yourself any time:
 | Task | Usage | What it does |
 |---|---|---|
 | add class | `add class <subject> <day> <time>` | Add a weekly class or lesson (add class maths mon 9:00, add class physics tue 2:30 pm room 4) |
+| attendance percentage | `attendance <attended> of <total> [need <percent>]` | Attendance percentage and classes you can skip (attendance 42 of 50; need 75) |
+| cgpa to percentage | `cgpa <value> [out of 4]` | Convert CGPA to percentage (cgpa 8.2 to percentage; cbse 9.4) |
 | flashcards | `flashcards [count] [file]` | Spaced-repetition flashcards from a 'question \| answer' file; cards you miss come back sooner (flashcards, flashcards 5 myfile.txt) |
+| gpa planner | `gpa planner current <gpa> credits <done> target <gpa> next <credits> [scale 10]` | What you must score next to reach a target GPA (gpa planner current 3.2 credits 90 target 3.4 next 30) |
+| make citation | `cite <book\|article\|web> <author>; <title>; <year or source>; ...` | Format a citation in APA and MLA (cite book Smith, John; Deep Learning; 2020; MIT Press) |
+| marks percentage | `marks <obtained> out of <total>` | Percentage from marks (marks 432 out of 500) |
 | reading time | `reading time <file>` | How long a text file or PDF takes to read (reading time notes.txt) |
 | remove class | `remove class <subject> [day]` | Remove a class from the timetable (remove class maths mon) |
 | show timetable |  | Show your weekly timetable |
+| study planner | `study plan <n> subjects <n> days <n> hours` | Plan study hours per day (study plan 5 subjects 20 days 6 hours) |
 | todays classes | `todays classes \| tomorrows classes` | Classes you have today or tomorrow (todays classes, tomorrows classes) |
 
 ### system
@@ -1058,7 +1165,7 @@ Run the checks yourself any time:
 | Task | Usage | What it does |
 |---|---|---|
 | battery status |  | Show battery level and charging state |
-| check updates * (online) |  | Check which programs and system updates are waiting (does not install) |
+| check updates (online) * |  | Check which programs and system updates are waiting (does not install) |
 | cpu temperature |  | Show processor temperature (where the computer allows it) |
 | cpu usage |  | Show current CPU load |
 | disk space |  | Show free space on your drives |
@@ -1086,6 +1193,7 @@ Run the checks yourself any time:
 | lowercase text | `lowercase <text>` | lowercase some text (lowercase HELLO World) |
 | number to words | `number to words <number>` | Write a number in words, Indian and international style (number to words 1234567) |
 | qr code | `qr code <text or link>` | Make a QR code picture from text or a link (qr code https://example.com) |
+| readability score | `readability <text or file>` | Reading level of a text or file (Flesch score and grade). Works with piped text. |
 | reverse text | `reverse text <text>` | Reverse text (reverse text hello) |
 | roman numerals | `roman numeral <number\|numeral>` | Convert between Roman numerals and numbers (roman numeral 2026, or roman numeral MCMXC) |
 | sort lines | `sort lines <items>` | Sort a list alphabetically or by number (sort lines pear, apple, fig); add 'reverse' for Z-A |
@@ -1132,6 +1240,7 @@ Run the checks yourself any time:
 | open uber |  | Open Uber |
 | pnr status | `pnr status <10-digit pnr>` | Check an Indian Railways PNR status (pnr status 1234567890) |
 | train status | `train status <number>` | Check a train's live running status (train status 12951) |
+| trip budget | `trip budget <days> days <n> people <amount> a day [fare <amount>]` | Estimate a trip budget (trip budget 4 days 2 people 3000 a day) |
 
 ### utility
 
@@ -1147,7 +1256,8 @@ Run the checks yourself any time:
 | generate password | `generate password [length]` | Generate a strong random password (generate password 20) |
 | generate uuid |  | Generate a random UUID |
 | hash text | `hash text <text\|file>` | SHA-256 / SHA-1 / MD5 of text or a file |
-| json format | `json format <file>` | Pretty-print and validate a JSON file |
+| json format | `json format <file>` | Pretty-print and validate a JSON file, or JSON piped in (type data.json \| jeeg format json) |
+| my habits | `my habits [month\|year]` | See which phrases and tasks you use most, which often fail, and shortcuts worth saving (my habits; habits month) |
 | random choice | `random choice a, b, c` | Pick one option at random (random choice pizza, burger, pasta) |
 | random number | `random number [min] [max]` | Random number (random number 1 to 50) |
 | roll dice | `roll <n>d<sides>` | Roll dice (roll dice, roll 2d6, roll d20) |
@@ -1193,53 +1303,4 @@ Run the checks yourself any time:
 | open teams |  | Open Microsoft Teams |
 | open trello |  | Open Trello |
 | open zoom |  | Open Zoom |
-
-### 8.20 Use JeeG from your own Python programs
-
-JeeG is also a library. After `pip install jeeg`:
-
-```python
-import jeeg
-
-r = jeeg.run("gst 2500 18")        # say it in words, like at the prompt
-print(r.output)                     # what the task printed
-if r.ok: ...                        # True when the exit code is 0
-
-jeeg.gst_amount(1000, 18).output    # or call a task by name, with arguments
-jeeg.find("open youtube")           # which task would run (runs nothing)
-jeeg.tasks(category="money")        # list what exists; jeeg.categories(), jeeg.task_info("gst_amount")
-
-j = jeeg.JeeG(home="my-data", timeout=30)   # your own data folder and settings
-j("add expense 250 food lunch")
-```
-
-- A `Result` has `.ok`, `.exit`, `.output`, `.lines`, `.task`, `.runs`, `.needs_confirmation`, `.ambiguous`, `.candidates`, `.json()`. Pass `check=True` to raise `JeeGError` on failure.
-- Calls never prompt. Tasks that ask for confirmation return exit code 3 unless you pass `yes=True`.
-- Library calls are not added to your command history (`history=True` to include them).
-- `run_task("name", args...)` skips word matching, so it is the predictable choice inside programs.
-- Terminal-only commands (`web`, `setup`, `update`, `plugin`, ...) are refused from Python.
-- Thread-safe: calls run one at a time. Standard library only, local only. Examples are in `examples/`.
-
-### 8.21 Use JeeG from other programs and apps
-
-- Any language: `jeeg --json <phrase>`, `jeeg --stdio` (JSON lines), `jeeg --serve-api` (local HTTP with a token).
-- Apps that support MCP (for example Claude Desktop): `jeeg --mcp`.
-- Everything stays on your computer; the API listens on 127.0.0.1 only and refuses web pages. Tasks that ask for confirmation are refused unless you start with `--allow-confirm`.
-- Full guide: INTEGRATIONS.md. Examples for Node.js, curl and Python: `examples/other_languages/`.
-
-### 8.22 What is new in 2.8
-
-- **Chain tasks:** `gst 2500 18 then save it to a note` (also `then copy it`, `then speak it`). The first task's answer is passed on; tasks that ask for confirmation are never chained.
-- **Pipe text in:** `type notes.txt | jeeg word count`, `cat list.txt | jeeg sort lines`, `type data.json | jeeg format json` (Windows `type`, Mac/Linux `cat`). Up to 1 MB; words you type win over piped text.
-- **Run things by themselves:** `autorun add "start work day" at 9:00 weekdays` sets up Task Scheduler (Windows) or cron (Mac/Linux). `autorun list`, `autorun remove 1`.
-- **Your habits:** `my habits` shows what you use most, what often fails, and phrases worth a shortcut. Local only.
-- **Better typo fixing:** `shutdwn pc` offers `shutdown pc`, trying every close spelling of each word.
-- **Plugins:** `plugin update` (and `plugin outdated`) refresh library plugins after checking their fingerprints; five new library plugins.
-- **22 new tasks:** salary breakup, interest tax, severance, credit card dues, savings goal (`sip goal`), PDF rotate / compress / watermark / to pictures (optional `pip install pypdf pypdfium2 Pillow`), GPA planner, citations, medicine stock, BP and sugar log, fasting timer, gas cylinder, milk and maid log, flatmate split, regex explainer, colour converter, `.env` checker, checksum verifier, HTTP header check.
-- **Python, other languages, apps:** `import jeeg`, `jeeg --serve-api`, `jeeg --stdio`, `jeeg --mcp` (see PYTHON_GUIDE.md and INTEGRATIONS.md). A starter VS Code extension is in `integrations/vscode/`.
-- **Find any task:** the searchable list is `docs/tasks.html` (on the project page under Tasks).
-
-![JeeG in the terminal](docs/img/terminal.svg)
-![Use JeeG from Python](docs/img/python.svg)
-
 

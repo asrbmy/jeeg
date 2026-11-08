@@ -41,6 +41,11 @@ def ensure_file():
 def fill(step, words):
     """Replace {args} and {1} {2} ... in one step with the words typed after the routine name."""
     step = step.replace("{args}", " ".join(words))
+    import datetime as _d
+    n = _d.datetime.now()
+    for k, v in {"{today}": n.strftime("%Y-%m-%d"), "{date}": n.strftime("%d %B %Y"), "{month}": n.strftime("%B"), "{year}": str(n.year),
+                 "{weekday}": n.strftime("%A"), "{time}": n.strftime("%H:%M"), "{week}": str(n.isocalendar()[1])}.items():
+        step = step.replace(k, v)
     return re.sub(r"\{(\d+)\}", lambda m: words[int(m.group(1)) - 1] if int(m.group(1)) <= len(words) else m.group(0), step)
 
 

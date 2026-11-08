@@ -280,7 +280,7 @@ Result: `dist/jeeg` (or `dist/jeeg.exe`). Test it on a computer without Python.
 Automatic: the `build-exe` workflow (`.github/workflows/build-exe.yml`) runs after the `publish` workflow,
 builds for Windows, Mac and Linux, smoke-tests each program, and attaches `jeeg-windows-x64.exe`,
 `jeeg-macos` and `jeeg-linux-x64` to the release. You can also press **Run workflow** on the Actions tab
-and give a tag. Use the `.exe` URL for winget and Scoop (`packaging/scoop/jeeg.json` is ready; fill in the hash).
+and give a tag. The workflow also uploads a `.sha256` file for each program, which `update now` uses to verify the download. Use the `.exe` URL for winget and Scoop (`packaging/scoop/jeeg.json` is ready; fill in the hash).
 
 Unsigned programs make Windows SmartScreen and macOS Gatekeeper show a warning. Say so in the README
 (users choose "Run anyway" or right-click > Open). Code signing costs money and is optional.

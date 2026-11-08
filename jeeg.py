@@ -29,7 +29,7 @@ Options:
     --dry-run    show what would run, run nothing
     --json       print the result as JSON (task, exit code, output) for other programs
     --serve-api [PORT]  local JSON API for other programs (token protected)   --stdio  JSON lines   --mcp  MCP server
-                 (with these: --only money,text  --except files,system  --log  --allow-confirm)
+                 (with these: --only money,text  --except files,system  --log  --allow-confirm  --allow-origin chrome-extension://ID)
     --list-json  print every task as JSON (for programs in other languages)
     --output F   save what the task prints to a new file F (never overwrites)
     --timeout S  stop a script after S seconds
@@ -60,7 +60,7 @@ import sys
 import time
 from pathlib import Path
 
-__version__ = "2.8.0"
+__version__ = "2.9.0"
 
 HERE = Path(__file__).resolve().parent
 FROZEN = bool(getattr(sys, "frozen", False))      # True inside the standalone program built with PyInstaller
@@ -382,7 +382,7 @@ def resolve(query: str, entries: list[dict]):
 # ------------------------------------------------- your data: aliases, logs
 RESERVED = {"list", "help", "history", "again", "repeat", "redo", "reindex", "selftest", "exit", "quit", "alias",
             "explain", "misses", "stats", "doctor", "tasks", "pack", "tips", "tip", "plugins", "plugin", "update", "setup",
-            "web", "ui", "completion", "learn", "tour", "routines", "privacy", "autorun"}
+            "web", "ui", "completion", "learn", "tour", "routines", "privacy", "autorun", "report", "share"}
 
 
 def _load_json(name: str, default):
@@ -1005,6 +1005,26 @@ def run_chain(query: str, entries: list[dict], opt: dict):
     return run_entry(se, one.split(), opt)
 
 
+def _remember_pick(query: str, e: dict, entries: list) -> None:
+    """After you choose from 'More than one task fits', remember it for the same short phrase (no numbers, 1-4 words)."""
+    try:
+        q = query.lower().strip()
+        target = e["name"].replace("_", " ")
+        if NOLOG or not q or len(q.split()) > 4 or re.search(r"\d", q) or q in RESERVED or q == target:
+            return
+        st, hit = resolve(target, entries)
+        if st != "ok" or hit[1]["name"] != e["name"]:
+            return                                    # the task name alone would not find it again; do not store a wrong shortcut
+        al = _load_json("aliases.json", {})
+        if q in al:
+            return
+        al[q] = target
+        _save_json("aliases.json", al)
+        print(f"(remembered: '{q}' now means '{target}'; undo with: alias remove {q})")
+    except (OSError, ValueError, TypeError, KeyError):
+        pass
+
+
 def run_query(query: str, entries: list[dict], opt: dict) -> int:
     chained = run_chain(query, entries, opt)
     if chained is not None:
@@ -1082,6 +1102,7 @@ def run_query(query: str, entries: list[dict], opt: dict) -> int:
     if pick.isdigit() and 1 <= int(pick) <= len(hits):
         _, e, args = hits[int(pick) - 1]
         history_add(query, e["name"], e.get("private"))
+        _remember_pick(query, e, entries)
         return run_entry(e, args, opt)
     print("Cancelled.")
     return 3
@@ -1182,6 +1203,12 @@ def handle(line: str, dirs, opt) -> int | None:
     if re.match(r"routines\s+(export|import)\b", low):
         import jeeg_cmds
         return jeeg_cmds.cmd_routines_io(q.split(None, 1)[1], STATE, opt.get("yes", False))
+    if low in {"report", "bug report", "jeeg report"}:
+        import jeeg_cmds
+        return jeeg_cmds.cmd_report(lambda: cmd_doctor(dirs, all_entries), STATE, __version__, len(all_entries))
+    if low == "share" or low.startswith("share "):
+        import jeeg_cmds
+        return jeeg_cmds.cmd_share(q.split(None, 1)[1] if " " in q.strip() else "", STATE, dirs)
     if low == "autorun" or low.startswith("autorun "):
         import jeeg_autorun
         return jeeg_autorun.cmd_autorun(q[7:], HERE, STATE, opt.get("dry", False))
@@ -1194,10 +1221,10 @@ def handle(line: str, dirs, opt) -> int | None:
             print(jeeg_cmds.COMPLETION_HELP)
             return 0
         return jeeg_cmds.cmd_completion(parts[1], all_entries)
-    m = re.fullmatch(r"(?:web|ui|web page|web ui)(?:\s+(\d{4,5}))?", low)
+    m = re.fullmatch(r"(?:web|ui|web page|web ui)(?:\s+(lan|phone|wifi))?(?:\s+(\d{4,5}))?", low)
     if m:
         import jeeg_cmds
-        return jeeg_cmds.serve(HERE, STATE, int(m.group(1) or 8765))
+        return jeeg_cmds.serve(HERE, STATE, int(m.group(2) or 8765), lan=bool(m.group(1)))
     if low == "alias" or low.startswith("alias "):
         return cmd_alias(q, entries)
     if low == "explain" or low.startswith("explain "):
@@ -1286,6 +1313,7 @@ def main(argv: list[str]) -> int:
     opt = {"yes": False, "dry": False, "timeout": None, "json": False, "out": None, "quiet": False}
     cli_dirs, words, i = [], [], 0
     bridge, bridge_port, allow_confirm, bridge_log, bridge_only, bridge_deny = None, None, False, False, [], []
+    bridge_origins: list = []
     while i < len(argv):
         a = argv[i]
         if a in {"-y", "--yes"}:
@@ -1323,6 +1351,9 @@ def main(argv: list[str]) -> int:
             allow_confirm = True
         elif a == "--log":
             bridge_log = True
+        elif a == "--allow-origin" and i + 1 < len(argv):
+            i += 1
+            bridge_origins.append(argv[i])
         elif a in {"--only", "--except"} and i + 1 < len(argv):
             i += 1
             (bridge_only if a == "--only" else bridge_deny).extend(x for x in argv[i].replace(",", " ").split() if x)
@@ -1340,7 +1371,7 @@ def main(argv: list[str]) -> int:
             print("Choose a port between 1024 and 65535.")
             return 1
         import jeeg_bridge
-        return jeeg_bridge.main(bridge, bridge_port, allow_confirm, cli_dirs, bridge_only, bridge_deny, bridge_log)
+        return jeeg_bridge.main(bridge, bridge_port, allow_confirm, cli_dirs, bridge_only, bridge_deny, bridge_log, bridge_origins)
 
     dirs = script_dirs(cli_dirs)
     if not dirs:

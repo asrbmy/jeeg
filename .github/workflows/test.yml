@@ -34,6 +34,7 @@ jobs:
       - name: New in 2.8 and quality gates
         run: |
           python tests/test_v28.py
+          python tests/test_v29.py
           python tests/test_quality.py
       - name: Privacy checks
         run: python tests/test_privacy.py

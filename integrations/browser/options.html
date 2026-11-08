@@ -1,0 +1,9 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>JeeG settings</title>
+<style>body{font:15px/1.5 system-ui,sans-serif;max-width:560px;margin:32px auto;padding:0 16px}input{width:100%;box-sizing:border-box;padding:8px;margin:4px 0 14px}code{background:#8882;padding:1px 5px;border-radius:4px}</style></head><body>
+<h1>JeeG settings</h1>
+<p>Run this in a terminal and keep it open: <code id="cmd"></code></p>
+<label for="port">Port</label><input id="port" value="8766" inputmode="numeric">
+<label for="token">Token (from <code>jeeg --api-token</code>)</label><input id="token" type="password" autocomplete="off">
+<button id="save">Save</button> <span id="msg"></span>
+<script src="options.js"></script></body></html>

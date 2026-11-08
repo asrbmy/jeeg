@@ -88,3 +88,10 @@ jeeg --serve-api --log                     # keep a private call log
 - Requests are limited in size (64 KB), time (300 s), output (100,000 characters) and parallel calls (8 at once; more get a 503). A client that stalls for 30 seconds is dropped.
 - Calls are not added to your command history.
 - Keep the token private. To change it, delete `api_token` in your JeeG data folder and start again, or set `JEEG_API_TOKEN` yourself.
+
+## Added in 2.9
+
+- **Browser extension** (`integrations/browser/`): start the API with `jeeg --serve-api --allow-origin chrome-extension://<ID> --only text,money,utility,time`. Only browser-extension origins can be allowed; web pages are always refused. See that folder's README.
+- **Send to JeeG** (`integrations/sendto/install.py`): right-click a file, choose a task. `--dry` shows what would be written, `--remove` undoes it.
+- **Raycast / Alfred** (`integrations/raycast/`), **Home Assistant** example (`integrations/homeassistant/`, same computer only).
+- **Phone page:** `jeeg web lan` (not the API; a small page with a secret link, everyday tasks only).

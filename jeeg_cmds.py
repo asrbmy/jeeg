@@ -40,25 +40,94 @@ def _vtuple(v: str) -> tuple:
     return tuple(int(x) for x in re.findall(r"\d+", v)[:3]) or (0,)
 
 
-def latest_version(timeout: float = 8.0):
-    """(version, url) of the newest GitHub release, or raises OSError with a plain message."""
-    req = urllib.request.Request(RELEASE_API, headers={"User-Agent": "JeeG-update-check", "Accept": "application/vnd.github+json"})
+def _release_api() -> str:
+    """The GitHub release address. JEEG_RELEASE_API may point at your own https address (or http://127.0.0.1 for tests)."""
+    env = os.environ.get("JEEG_RELEASE_API", "")
+    if env.startswith(("https://", "http://127.0.0.1")):
+        return env
+    return RELEASE_API
+
+
+def latest_release(timeout: float = 8.0) -> dict:
+    """The newest GitHub release as a dict (tag_name, html_url, assets), or raises OSError with a plain message."""
+    req = urllib.request.Request(_release_api(), headers={"User-Agent": "JeeG-update-check", "Accept": "application/vnd.github+json"})
     try:
         with urllib.request.urlopen(req, timeout=timeout) as r:
-            data = json.loads(r.read(200_000).decode("utf-8", "replace"))
+            data = json.loads(r.read(500_000).decode("utf-8", "replace"))
     except urllib.error.HTTPError as ex:
         if ex.code == 404:
             raise OSError("no release has been published on GitHub yet")
         raise OSError(f"GitHub answered {ex.code}")
     except (urllib.error.URLError, TimeoutError, ValueError) as ex:
         raise OSError("could not reach GitHub (are you online?)") from ex
-    tag = str(data.get("tag_name", "")).lstrip("vV")
-    if not tag:
+    if not isinstance(data, dict) or not str(data.get("tag_name", "")).lstrip("vV"):
         raise OSError("GitHub did not report a version")
-    return tag, str(data.get("html_url") or RELEASE_PAGE)
+    return data
+
+
+def latest_version(timeout: float = 8.0):
+    """(version, url) of the newest GitHub release, or raises OSError with a plain message."""
+    data = latest_release(timeout)
+    return str(data["tag_name"]).lstrip("vV"), str(data.get("html_url") or RELEASE_PAGE)
+
+
+def exe_asset_name() -> str:
+    if os.name == "nt":
+        return "jeeg-windows-x64.exe"
+    return "jeeg-macos" if sys.platform == "darwin" else "jeeg-linux-x64"
+
+
+def _download(url: str, limit: int, timeout: float = 60.0) -> bytes:
+    if not url.startswith(("https://", "http://127.0.0.1")):
+        raise OSError("refusing a download address that is not https")
+    req = urllib.request.Request(url, headers={"User-Agent": "JeeG-update"})
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            data = r.read(limit + 1)
+    except (urllib.error.URLError, TimeoutError, ValueError) as ex:
+        raise OSError("the download failed (are you online?)") from ex
+    if len(data) > limit:
+        raise OSError("the download is larger than expected, so it was stopped")
+    return data
+
+
+def update_standalone(data: dict, exe: Path) -> int:
+    """Replace the standalone program with the newest release file, after checking its SHA-256."""
+    import hashlib
+    name = exe_asset_name()
+    assets = {str(a.get("name")): str(a.get("browser_download_url", "")) for a in data.get("assets", []) if isinstance(a, dict)}
+    if name not in assets or name + ".sha256" not in assets:
+        print(f"This release has no {name} (with its .sha256 file) yet. Download it later from {data.get('html_url') or RELEASE_PAGE}.")
+        return 1
+    try:
+        want = _download(assets[name + ".sha256"], 4096).decode("utf-8", "replace").split()[0].lower()
+        blob = _download(assets[name], 120_000_000)
+    except OSError as ex:
+        print(f"Could not update: {ex}.")
+        return 1
+    if hashlib.sha256(blob).hexdigest() != want:
+        print("The downloaded file does not match its SHA-256, so it was NOT installed.")
+        return 1
+    new = exe.with_name(exe.name + ".new")
+    try:
+        new.write_bytes(blob)
+        os.chmod(new, 0o755)
+        if os.name == "nt":                               # a running .exe cannot be overwritten, but it can be renamed
+            old = exe.with_name(exe.name + ".old")
+            if old.exists():
+                old.unlink()
+            os.replace(exe, old)
+        os.replace(new, exe)
+    except OSError as ex:
+        print(f"Could not replace the program ({ex}). The new file is at {new}.")
+        return 1
+    print(f"Updated to {str(data['tag_name']).lstrip('vV')}. Run  jeeg --version  to check.")
+    return 0
 
 
 def install_kind(here: Path) -> str:
+    if getattr(sys, "frozen", False):
+        return "exe"
     if (here / ".git").exists():
         return "git"
     if "site-packages" in here.parts or "dist-packages" in here.parts:
@@ -68,15 +137,28 @@ def install_kind(here: Path) -> str:
 
 def cmd_update(q: str, here: Path, version: str, assume_yes: bool = False) -> int:
     now = "now" in q.lower().split()
+    kind = install_kind(here)
+    rel = None
     try:
-        tag, url = latest_version()
+        if kind == "exe":
+            rel = latest_release()
+            tag, url = str(rel["tag_name"]).lstrip("vV"), str(rel.get("html_url") or RELEASE_PAGE)
+        else:
+            tag, url = latest_version()
     except OSError as ex:
         print(f"JeeG {version}. Could not check for a newer version: {ex}.")
         return 1
     if _vtuple(tag) <= _vtuple(version):
         print(f"JeeG {version} is up to date.")
         return 0
-    kind = install_kind(here)
+    if kind == "exe":
+        print(f"A newer version is available: {tag} (you have {version}).")
+        if not now:
+            print("Update with:  update now   (the new file is checked against its SHA-256 before it replaces this program)")
+            return 0
+        if not _ask(f"Replace {sys.executable} with JeeG {tag}?", assume_yes):
+            return 3
+        return update_standalone(rel, Path(sys.executable))
     cmd = {"git": ["git", "-C", str(here), "pull", "--ff-only"],
            "pip": [sys.executable, "-m", "pip", "install", "--upgrade", "jeeg"]}.get(kind)
     print(f"A newer version is available: {tag} (you have {version}).")
@@ -332,10 +414,32 @@ document.getElementById("f").onsubmit=e=>{e.preventDefault();run()};
 </script></body></html>"""
 
 
-def serve(here: Path, state: Path, port: int = 8765, open_browser: bool = True) -> int:
+# Categories the phone page may run. Nothing that opens apps, changes files, or controls the computer.
+LAN_SAFE = {"money", "text", "utility", "time", "health", "study", "info", "productivity", "lists", "shopping", "journal", "habits",
+            "birthdays", "food", "fun", "learning", "reference", "tools", "home", "travel", "reminders", "work", "personal"}
+
+
+def lan_ip() -> str:
+    """This computer's address on the local network (no data is sent; the socket is only used to pick the right interface)."""
+    import socket
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sk:
+            sk.connect(("10.255.255.255", 1))
+            return sk.getsockname()[0]
+    except OSError:
+        return "127.0.0.1"
+
+
+def serve(here: Path, state: Path, port: int = 8765, open_browser: bool = True, lan: bool = False, bind: str = "") -> int:
+    """The local web page. lan=True: also reachable from your phone on the same Wi-Fi, with a secret link and a safe task list."""
     token = secrets.token_urlsafe(24)
-    allowed_hosts = {f"127.0.0.1:{port}", f"localhost:{port}"}
+    ip = lan_ip() if lan else "127.0.0.1"
+    allowed_hosts = {f"127.0.0.1:{port}", f"localhost:{port}"} | ({f"{ip}:{port}"} if lan else set())
     engine = here / "jeeg.py"
+    link_key = secrets.token_urlsafe(18) if lan else ""
+    if lan:
+        from jeeg_bridge import Policy
+        policy = Policy(only=LAN_SAFE)
 
     class H(http.server.BaseHTTPRequestHandler):
         server_version = "JeeG"
@@ -362,6 +466,8 @@ def serve(here: Path, state: Path, port: int = 8765, open_browser: bool = True) 
             if not self._host_ok():
                 return self._send(403, "Forbidden", "text/plain")
             if self.path.split("?")[0] == "/":
+                if lan and not secrets.compare_digest(self.path.partition("?k=")[2][:64], link_key):
+                    return self._send(403, "Open the full link that JeeG printed in the terminal.", "text/plain")
                 return self._send(200, PAGE.replace("__TOKEN__", token))
             self._send(404, "Not found", "text/plain")
 
@@ -384,8 +490,13 @@ def serve(here: Path, state: Path, port: int = 8765, open_browser: bool = True) 
                 return self._send(200, json.dumps({"out": "Say something first."}), "application/json")
             ws = q.lower().split()
             low = ws[1] if ws[0] == "jeeg" and len(ws) > 1 else ws[0]
-            if low in {"web", "ui", "setup", "update", "upgrade", "plugin", "plugins", "exit", "quit", "q", "first", "completion"}:
+            if low in {"web", "ui", "setup", "update", "upgrade", "plugin", "plugins", "exit", "quit", "q", "first", "completion", "report", "share", "autorun"}:
                 return self._send(200, json.dumps({"out": f"'{low}' is only available in the terminal."}), "application/json")
+            if lan:
+                from jeeg_bridge import dispatch
+                ans = dispatch({"op": "run", "query": q}, allow_confirm=False, home=str(state), policy=policy, source="phone")
+                out = (ans.get("result", {}).get("output") if ans.get("ok") else ans.get("error")) or "(no output)"
+                return self._send(200, json.dumps({"out": str(out)[:20000]}), "application/json")
             try:
                 r = subprocess.run(([sys.executable] if getattr(sys, "frozen", False) else [sys.executable, str(engine)]) + [q], capture_output=True, text=True, timeout=60,
                                    stdin=subprocess.DEVNULL, env=dict(os.environ, PYTHONIOENCODING="utf-8"), encoding="utf-8", errors="replace")
@@ -395,12 +506,18 @@ def serve(here: Path, state: Path, port: int = 8765, open_browser: bool = True) 
             self._send(200, json.dumps({"out": out}), "application/json")
 
     try:
-        httpd = http.server.ThreadingHTTPServer(("127.0.0.1", port), H)
+        httpd = http.server.ThreadingHTTPServer(("0.0.0.0" if lan else "127.0.0.1", port), H)
     except OSError as ex:
         print(f"Could not start on port {port}: {ex.strerror or ex}. Try:  serve 8800")
         return 1
-    url = f"http://127.0.0.1:{port}/"
-    print(f"JeeG web page: {url}\nOnly this computer can open it. Press Ctrl+C to stop.")
+    url = f"http://{ip}:{port}/?k={link_key}" if lan else f"http://127.0.0.1:{port}/"
+    if lan:
+        print(f"JeeG phone page: {url}\nOpen that link on a phone on the same Wi-Fi. Anyone who has the link and is on this network can use it,")
+        print("so use it only on a network you trust (not public Wi-Fi). It is plain http. Only everyday tasks work from it (money, text, health,")
+        print("study, lists, reminders ...); nothing that opens apps, changes files or controls the computer. Press Ctrl+C to stop.")
+        open_browser = False
+    else:
+        print(f"JeeG web page: {url}\nOnly this computer can open it. Press Ctrl+C to stop.")
     if open_browser:
         threading.Timer(0.6, lambda: __import__("webbrowser").open(url)).start()
     try:
@@ -409,6 +526,78 @@ def serve(here: Path, state: Path, port: int = 8765, open_browser: bool = True) 
         print("\nStopped.")
     finally:
         httpd.server_close()
+    return 0
+
+
+# ============================================================ report (for a bug report) and share
+def cmd_report(run_doctor, state: Path, version: str, ntasks: int) -> int:
+    """Write jeeg-report.txt with version, system and doctor output. Nothing is sent anywhere; you attach the file yourself."""
+    import contextlib, io, platform
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        try:
+            run_doctor()
+        except Exception as ex:                          # a broken install is exactly when the report is wanted
+            print(f"doctor itself failed: {type(ex).__name__}: {ex}")
+    misses = 0
+    try:
+        misses = len((state / "misses.jsonl").read_text(encoding="utf-8").splitlines())
+    except OSError:
+        pass
+    text = "\n".join([
+        f"JeeG {version}  ({'standalone program' if getattr(sys, 'frozen', False) else 'python'})",
+        f"Python {platform.python_version()} on {platform.platform()}",
+        f"Tasks indexed: {ntasks}    Unmatched phrases saved: {misses}",
+        "", "--- doctor ---", buf.getvalue().rstrip(), "",
+        "--- what to add by hand ---",
+        "The phrase you typed, what you expected, and what happened.",
+    ])
+    home = str(Path.home())
+    text = text.replace(home, "~")
+    user = os.environ.get("USERNAME") or os.environ.get("USER") or ""
+    if len(user) > 2:
+        text = re.sub(re.escape(user), "<user>", text, flags=re.I)
+    dst = Path.cwd() / "jeeg-report.txt"
+    try:
+        dst.write_text(text + "\n", encoding="utf-8")
+    except OSError as ex:
+        print(f"Could not write the report here ({ex.strerror or ex}). Here it is:\n\n{text}")
+        return 1
+    print(f"Wrote {dst}\nIt has your version, system and the doctor result (your home folder and user name are hidden). It contains none of your notes, files or typed phrases.")
+    print("Open it, read it, then attach it to a bug report: https://github.com/asrbmy/jeeg/issues/new")
+    return 0
+
+
+def cmd_share(args: str, state: Path, dirs) -> int:
+    """share plugin <name>  -> copy a plugin you installed into the current folder as one file.  share routines -> routines export."""
+    a = args.split()
+    if not a or a[0] not in {"plugin", "routines", "routine", "aliases", "alias"}:
+        print("Share your setup as one file:\n  share plugin <name>     copy a plugin you installed here\n  share routines          write jeeg-routines.json\n  share aliases           write jeeg-aliases.json")
+        return 0
+    if a[0].startswith("routine"):
+        return cmd_routines_io("export", state)
+    if a[0].startswith("alias"):
+        f = state / "aliases.json"
+        try:
+            data = json.loads(f.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            print("You have no aliases yet. Add one with:  alias add <short> = <task words>")
+            return 1
+        dst = Path.cwd() / "jeeg-aliases.json"
+        dst.write_text(json.dumps({"jeeg": 1, "kind": "aliases", "aliases": data}, indent=2, ensure_ascii=False), encoding="utf-8")
+        print(f"Wrote {dst}. Others can add them with:  alias import jeeg-aliases.json")
+        return 0
+    name = _plugin_name(a[1]) if len(a) > 1 else None
+    src = state / "plugins" / f"{name}.py" if name else None
+    if not src or not src.is_file():
+        print("Usage: share plugin <name>   (see:  plugins)")
+        return 1
+    dst = Path.cwd() / src.name
+    if dst.exists():
+        print(f"{dst} already exists; move it first.")
+        return 1
+    shutil.copyfile(src, dst)
+    print(f"Copied to {dst}. Others install it with:  plugin install {src.name}   (they see the code before it runs)")
     return 0
 
 

@@ -61,4 +61,5 @@ jobs:
           GH_REPO: ${{ github.repository }}
         run: |
           cp "${{ matrix.exe }}" "${{ matrix.asset }}"
-          gh release upload "${{ needs.tag.outputs.tag }}" "${{ matrix.asset }}" --clobber
+          python -c "import hashlib,sys;n=sys.argv[1];print(hashlib.sha256(open(n,'rb').read()).hexdigest()+'  '+n)" "${{ matrix.asset }}" > "${{ matrix.asset }}.sha256"
+          gh release upload "${{ needs.tag.outputs.tag }}" "${{ matrix.asset }}" "${{ matrix.asset }}.sha256" --clobber

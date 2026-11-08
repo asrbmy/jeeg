@@ -7,7 +7,7 @@ JeeG finds the matching script in the `scripts` folder and runs it.
 
 - Pure Python 3.9+, nothing to install. Works on Windows, macOS and Linux.
 - Light: about 16 MB of memory, about 65 ms per command, nothing running in the background (except reminders and alarms you set yourself).
-- 478 ready-made tasks. You can add your own by dropping in a file.
+- 488 ready-made tasks. You can add your own by dropping in a file.
 
 ---
 
@@ -297,6 +297,16 @@ A plugin is one `.py` file. Make a starter with `jeeg plugin new my_task`, edit 
 - Host names, ports and package names are checked before being passed to other programs.
 - Critical system processes cannot be killed with `kill process`.
 - No task sends your files or personal data anywhere. Web tasks only open a page in your browser.
+
+## What is new in 2.9
+
+- **10 new tasks:** `csv to json`, `chart csv`, `readability`, `replace in files`, `strip exif`, `profit margin`, `compare loans`, `freelance rate`, `toml to json`, `watch folder`.
+- **Smarter:** it remembers which task you picked when two fit; routines can use `{today}`, `{month}`, `{year}`...
+- **Phone page:** `web lan` (secret link, everyday tasks only, same Wi-Fi).
+- **No Python needed:** download `jeeg-windows-x64.exe`, `jeeg-macos` or `jeeg-linux-x64` from a release; `update now` keeps it current (SHA-256 checked).
+- **Right-click "Send to JeeG"**, a **browser extension**, Raycast and Alfred launchers (`integrations/`).
+- `report` makes a bug-report file; `share plugin|routines|aliases` makes one shareable file.
+- Publishing guide for PyPI, Homebrew, Scoop, winget and more: `DISTRIBUTION.md`.
 
 ## What is new in 2.8
 

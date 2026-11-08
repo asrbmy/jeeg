@@ -6,7 +6,7 @@
 # priority: 1
 from _undo import undo_last, pending
 from _lib import fail
-if not pending(): fail("Nothing to undo. (JeeG remembers your last 20 file moves and renames.)")
+if not pending(): fail("Nothing to undo for files. (JeeG remembers your last 20 moves and renames.)  Other undos:  undo expense,  undo commit.")
 done, skipped, label = undo_last()
 print(f"Undid '{label}': {done} file(s) put back.")
 for s in skipped: print(f"  skipped: {s}")

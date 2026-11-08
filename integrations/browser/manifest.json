@@ -1,0 +1,12 @@
+{
+  "manifest_version": 3,
+  "name": "JeeG",
+  "version": "0.1.0",
+  "description": "Run a JeeG task on the text you selected. Talks only to JeeG on this computer (127.0.0.1).",
+  "permissions": ["storage", "activeTab", "scripting"],
+  "host_permissions": ["http://127.0.0.1/*"],
+  "action": { "default_popup": "popup.html", "default_title": "JeeG" },
+  "options_page": "options.html",
+  "minimum_chrome_version": "102",
+  "browser_specific_settings": { "gecko": { "id": "jeeg@localhost", "strict_min_version": "109.0" } }
+}

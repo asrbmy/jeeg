@@ -1,9 +1,20 @@
 # Changelog
 
+## 2.9.0
+
+- **10 new tasks (488 in all):** `csv to json`, `chart csv` (HTML bar chart), `readability` (accepts piped text), `replace in files` (asks first, keeps backups), `strip exif` (optional Pillow), `profit margin`, `compare loans`, `freelance rate`, `toml to json` (Python 3.11+), `watch folder` (asks first).
+- **Remembers your pick** when "More than one task fits" (short phrases only; `alias remove` undoes it).
+- **Routine variables:** `{today}`, `{date}`, `{month}`, `{year}`, `{weekday}`, `{week}`, `{time}`.
+- **`web lan`:** phone page with a secret link, host and origin checks and an everyday-tasks-only list.
+- **`update now` for the standalone program:** downloads the release file, checks its SHA-256, replaces the program. `report` writes a bug-report file; `share plugin/routines/aliases` writes one shareable file.
+- **API:** `--allow-origin chrome-extension://ID` lets named browser extensions call the local API (CORS preflight handled); web pages are still refused.
+- **Standalone program (no Python needed):** `python tools/build_exe.py`; the `build-exe` workflow attaches Windows, Mac and Linux files and `.sha256` files to each release. `DISTRIBUTION.md` explains publishing to PyPI, Homebrew, Scoop, winget, Chocolatey, AUR, conda-forge, VS Code, Docker and GitHub Pages; ready files in `packaging/scoop` and `packaging/docker`.
+- **Integrations:** browser extension (`integrations/browser`), Send to JeeG for Windows/Linux/macOS (`integrations/sendto`), Raycast and Alfred, Home Assistant example.
+- `tools/make_guide_appendix.py` rebuilds the task table in USER_GUIDE.md (it was missing 10 tasks from 2.8).
+- Tests: `tests/test_v29.py` (105 checks).
+
 ## 2.8.0
 
-- Standalone program with no Python needed: `python tools/build_exe.py`, and a `build-exe` workflow that attaches Windows, Mac and Linux files to each release. The program runs task scripts itself.
-- `DISTRIBUTION.md`: how to publish to PyPI, Homebrew, Scoop, winget, Chocolatey, AUR, conda-forge, VS Code, Docker and GitHub Pages. Ready files: `packaging/scoop/jeeg.json`, `packaging/docker/Dockerfile`.
 - **Use JeeG from Python:** `import jeeg`, then `jeeg.run("gst 2500 18")`, `jeeg.gst_amount(1000, 18)`, `jeeg.find(...)`, `jeeg.tasks()`, and `jeeg.JeeG(home=...)` for your own data folder. Results carry `.ok`, `.output`, `.exit`, `.task`. Calls never prompt, are not added to history, and are thread-safe.
 - `jeeg.run_many([...])` for several phrases at once and `await jeeg.arun(...)` for asyncio programs.
 - 15 new tasks (478 in all): `cgpa`, `marks` percentage, `study plan`, `heart rate zones`, `macros`, `trip budget`, `income tax` (new vs old regime), `ppf`, `hra`, `attendance` (how many classes you can skip), `electricity bill`, `subscriptions`, `json diff`, `cron` explainer, `jwt` decoder.

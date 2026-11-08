@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import http.server
 import json
+import re
 import os
 import secrets
 import sys
@@ -26,6 +27,8 @@ import jeeg_api
 MAX_BODY = 64 * 1024
 MAX_OUTPUT = 100_000
 DEFAULT_PORT = 8766
+ORIGIN_OK = re.compile(r"(?:chrome-extension|moz-extension)://[A-Za-z0-9\-]{8,64}")   # browser EXTENSIONS only, never web pages
+ALLOWED_ORIGINS: set = set()                                                           # filled by --allow-origin
 VERSION = jeeg.__version__
 
 
@@ -205,9 +208,28 @@ def make_handler(token: str, port: int, cfg: dict):
         def log_message(self, *a):
             pass
 
+        def _cors(self) -> None:
+            o = self.headers.get("Origin")
+            if o and o in ALLOWED_ORIGINS:
+                self.send_header("Access-Control-Allow-Origin", o)
+                self.send_header("Vary", "Origin")
+
+        def do_OPTIONS(self):                                       # preflight, only for an allowed extension
+            o = self.headers.get("Origin", "")
+            if self.headers.get("Host", "") not in hosts or o not in ALLOWED_ORIGINS:
+                return self._send(403, {"ok": False, "error": "Forbidden"})
+            self.send_response(204)
+            self._cors()
+            self.send_header("Access-Control-Allow-Methods", "GET, POST")
+            self.send_header("Access-Control-Allow-Headers", "Authorization, Content-Type, X-JeeG-Token")
+            self.send_header("Access-Control-Max-Age", "600")
+            self.send_header("Content-Length", "0")
+            self.end_headers()
+
         def _send(self, code: int, obj) -> None:
             b = json.dumps(obj).encode("utf-8")
             self.send_response(code)
+            self._cors()
             self.send_header("Content-Type", "application/json; charset=utf-8")
             self.send_header("Content-Length", str(len(b)))
             self.send_header("Cache-Control", "no-store")
@@ -219,7 +241,8 @@ def make_handler(token: str, port: int, cfg: dict):
             if self.headers.get("Host", "") not in hosts:                       # DNS-rebinding
                 self._send(403, {"ok": False, "error": "Forbidden"})
                 return False
-            if self.headers.get("Origin"):                                      # web pages may not call this
+            origin = self.headers.get("Origin")
+            if origin and origin not in ALLOWED_ORIGINS:                        # web pages may not call this
                 self._send(403, {"ok": False, "error": "Browsers are not allowed here."})
                 return False
             given = self.headers.get("Authorization", "")
@@ -437,7 +460,12 @@ def mcp_loop(cfg: dict | None = None, stdin=None, stdout=None) -> int:
     return 0
 
 
-def main(mode: str, port=None, allow_confirm=False, dirs=(), only=(), deny=(), log=False) -> int:
+def main(mode: str, port=None, allow_confirm=False, dirs=(), only=(), deny=(), log=False, origins=()) -> int:
+    for o in origins:
+        if not ORIGIN_OK.fullmatch(o):
+            print(f"--allow-origin accepts only a browser extension address like chrome-extension://abcdefghijklmnop, not '{o}'.")
+            return 1
+        ALLOWED_ORIGINS.add(o)
     if mode == "--api-token":
         try:
             print(get_token())

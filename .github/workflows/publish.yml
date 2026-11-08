@@ -3,7 +3,8 @@ name: publish
 #   Push a new version number in jeeg.py (__version__) to the main branch and this workflow will:
 #   run the tests, build the package, create the tag and the GitHub release (with the CHANGELOG notes and the files),
 #   and upload to PyPI. A version that already has a tag is skipped, so ordinary pushes do nothing.
-# You can also publish a release by hand on GitHub, or press "Run workflow" on the Actions tab.
+# You can also publish a release by hand on GitHub, or press "Run workflow" on the Actions tab (that always builds and
+# retries the upload, even when the version already has a tag).
 # PyPI upload is switched on by the repository variable PUBLISH_PYPI = true (see the pypi job).
 on:
   push:
@@ -37,7 +38,7 @@ jobs:
           if [ "${{ github.event_name }}" = "release" ]; then
             [ "v$V" = "${GITHUB_REF_NAME}" ] || { echo "Tag ${GITHUB_REF_NAME} does not match version $V"; exit 1; }
             echo "go=true" >> "$GITHUB_OUTPUT"
-          elif git rev-parse -q --verify "refs/tags/v$V" >/dev/null; then
+          elif [ "${{ github.event_name }}" != "workflow_dispatch" ] && git rev-parse -q --verify "refs/tags/v$V" >/dev/null; then
             echo "Version $V already has a tag - nothing to release."
             echo "go=false" >> "$GITHUB_OUTPUT"
           else
@@ -64,6 +65,7 @@ jobs:
           python tests/test_api.py
           python tests/test_bridge.py
           python tests/test_v28.py
+          python tests/test_v29.py
           python tests/test_quality.py
           python tests/test_privacy.py
           python tests/test_security.py
@@ -102,7 +104,11 @@ jobs:
             # notes = the "## <version>" section of CHANGELOG.md
             awk -v v="$V" '$0 ~ "^## "v"$" {f=1; next} /^## / {f=0} f' CHANGELOG.md > notes.md
             [ -s notes.md ] || echo "JeeG $V" > notes.md
-            gh release create "v$V" dist/* --target "${GITHUB_SHA}" --title "JeeG $V" --notes-file notes.md
+            if gh release view "v$V" >/dev/null 2>&1; then
+              gh release upload "v$V" dist/* --clobber        # "Run workflow" on a version that already has a release: just retry
+            else
+              gh release create "v$V" dist/* --target "${GITHUB_SHA}" --title "JeeG $V" --notes-file notes.md
+            fi
           fi
   pypi:
     # Only runs when you add a repository variable PUBLISH_PYPI = true (Settings > Secrets and variables > Actions > Variables)
