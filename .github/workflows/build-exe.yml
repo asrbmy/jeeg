@@ -1,0 +1,64 @@
+name: build-exe
+# Builds the standalone program (no Python needed) for Windows, Mac and Linux and attaches it to the newest GitHub release.
+# Runs by itself after the "publish" workflow finishes, or press "Run workflow" (you can give a tag like v2.8.0).
+on:
+  workflow_run:
+    workflows: [publish]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to attach the files to (empty = the newest release)"
+        required: false
+permissions:
+  contents: write
+jobs:
+  tag:
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.t.outputs.tag }}
+    steps:
+      - id: t
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          T="${{ github.event.inputs.tag }}"
+          [ -n "$T" ] || T=$(gh release view --json tagName -q .tagName)
+          echo "Attaching to $T"
+          echo "tag=$T" >> "$GITHUB_OUTPUT"
+  build:
+    needs: tag
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-latest,  asset: jeeg-linux-x64,    exe: dist/jeeg }
+          - { os: macos-latest,   asset: jeeg-macos,        exe: dist/jeeg }
+          - { os: windows-latest, asset: jeeg-windows-x64.exe, exe: dist/jeeg.exe }
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.tag.outputs.tag }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install pyinstaller
+      - run: python tools/build_exe.py
+      - name: Smoke test (the program must run a task without Python)
+        shell: bash
+        env:
+          JEEG_HOME: ${{ runner.temp }}/jeeg-home
+        run: |
+          ./${{ matrix.exe }} --version
+          ./${{ matrix.exe }} "calculate 12 times 7" | grep -q "84"
+      - name: Attach to the release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          cp "${{ matrix.exe }}" "${{ matrix.asset }}"
+          gh release upload "${{ needs.tag.outputs.tag }}" "${{ matrix.asset }}" --clobber

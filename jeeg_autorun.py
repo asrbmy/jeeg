@@ -68,6 +68,8 @@ def describe(h: int, mi: int, days) -> str:
 
 
 def _cmd(here: Path, state: Path, phrase: str) -> list:
+    if getattr(sys, "frozen", False):
+        return [sys.executable, phrase]
     return [sys.executable, str(here / "jeeg.py"), phrase]
 
 

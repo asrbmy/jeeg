@@ -63,6 +63,11 @@ from pathlib import Path
 __version__ = "2.8.0"
 
 HERE = Path(__file__).resolve().parent
+FROZEN = bool(getattr(sys, "frozen", False))      # True inside the standalone program built with PyInstaller
+# How to start this program again, and how to run a .py script. A standalone program has no Python next to it,
+# so it runs scripts itself through the hidden --jeeg-run-script switch.
+SELF_CMD = [sys.executable] if FROZEN else [sys.executable, str(HERE / "jeeg.py")]
+PY_CMD = [sys.executable, "--jeeg-run-script"] if FROZEN else [sys.executable]
 def _state_dir() -> Path:
     """Data folder: JEEG_HOME (or the older TASKRUNNER_HOME), else ~/.jeeg; an existing ~/.taskrunner is still used."""
     env = os.environ.get("JEEG_HOME") or os.environ.get("TASKRUNNER_HOME")
@@ -89,7 +94,7 @@ def _ensure_state() -> None:
 IS_WIN = os.name == "nt"
 
 RUNNERS = {
-    ".py": lambda p: [sys.executable, str(p)],
+    ".py": lambda p: PY_CMD + [str(p)],
     ".js": lambda p: ["node", str(p)],
     ".ps1": lambda p: [
         "powershell" if IS_WIN else "pwsh", "-NoProfile",
@@ -1172,7 +1177,7 @@ def handle(line: str, dirs, opt) -> int | None:
         import jeeg_cmds
         def _run(cmd_line: str) -> None:
             import shlex
-            subprocess.run([sys.executable, str(HERE / "jeeg.py")] + shlex.split(cmd_line), env=dict(os.environ, JEEG_HOME=str(STATE)))
+            subprocess.run(SELF_CMD + shlex.split(cmd_line), env=dict(os.environ, JEEG_HOME=str(STATE)))
         return jeeg_cmds.cmd_learn(_run, sys.stdin.isatty() and sys.stdout.isatty())
     if re.match(r"routines\s+(export|import)\b", low):
         import jeeg_cmds
@@ -1399,6 +1404,13 @@ def __dir__():
 
 def cli() -> None:
     """Entry point for the pip-installed 'jeeg' command."""
+    if FROZEN and len(sys.argv) > 2 and sys.argv[1] == "--jeeg-run-script":
+        import runpy
+        script = os.path.abspath(sys.argv[2])
+        sys.argv = [script] + sys.argv[3:]
+        sys.path.insert(0, os.path.dirname(script))
+        runpy.run_path(script, run_name="__main__")
+        sys.exit(0)
     try:
         code = main(sys.argv[1:])
         sys.stdout.flush()

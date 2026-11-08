@@ -387,7 +387,7 @@ def serve(here: Path, state: Path, port: int = 8765, open_browser: bool = True) 
             if low in {"web", "ui", "setup", "update", "upgrade", "plugin", "plugins", "exit", "quit", "q", "first", "completion"}:
                 return self._send(200, json.dumps({"out": f"'{low}' is only available in the terminal."}), "application/json")
             try:
-                r = subprocess.run([sys.executable, str(engine), q], capture_output=True, text=True, timeout=60,
+                r = subprocess.run(([sys.executable] if getattr(sys, "frozen", False) else [sys.executable, str(engine)]) + [q], capture_output=True, text=True, timeout=60,
                                    stdin=subprocess.DEVNULL, env=dict(os.environ, PYTHONIOENCODING="utf-8"), encoding="utf-8", errors="replace")
                 out = ((r.stdout or "") + (r.stderr or "")).strip()[:20000]
             except subprocess.TimeoutExpired:

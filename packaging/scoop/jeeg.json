@@ -1,0 +1,13 @@
+{
+  "version": "2.8.0",
+  "description": "Type a task in plain words and run it. Local, no account, no AI model.",
+  "homepage": "https://github.com/asrbmy/jeeg",
+  "license": "MIT",
+  "url": "https://github.com/asrbmy/jeeg/releases/download/v2.8.0/jeeg-windows-x64.exe#/jeeg.exe",
+  "hash": "PUT-SHA256-OF-jeeg-windows-x64.exe-HERE",
+  "bin": "jeeg.exe",
+  "checkver": "github",
+  "autoupdate": {
+    "url": "https://github.com/asrbmy/jeeg/releases/download/v$version/jeeg-windows-x64.exe#/jeeg.exe"
+  }
+}

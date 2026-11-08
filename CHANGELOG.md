@@ -1,6 +1,9 @@
 # Changelog
 
 ## 2.8.0
+
+- Standalone program with no Python needed: `python tools/build_exe.py`, and a `build-exe` workflow that attaches Windows, Mac and Linux files to each release. The program runs task scripts itself.
+- `DISTRIBUTION.md`: how to publish to PyPI, Homebrew, Scoop, winget, Chocolatey, AUR, conda-forge, VS Code, Docker and GitHub Pages. Ready files: `packaging/scoop/jeeg.json`, `packaging/docker/Dockerfile`.
 - **Use JeeG from Python:** `import jeeg`, then `jeeg.run("gst 2500 18")`, `jeeg.gst_amount(1000, 18)`, `jeeg.find(...)`, `jeeg.tasks()`, and `jeeg.JeeG(home=...)` for your own data folder. Results carry `.ok`, `.output`, `.exit`, `.task`. Calls never prompt, are not added to history, and are thread-safe.
 - `jeeg.run_many([...])` for several phrases at once and `await jeeg.arun(...)` for asyncio programs.
 - 15 new tasks (478 in all): `cgpa`, `marks` percentage, `study plan`, `heart rate zones`, `macros`, `trip budget`, `income tax` (new vs old regime), `ppf`, `hra`, `attendance` (how many classes you can skip), `electricity bill`, `subscriptions`, `json diff`, `cron` explainer, `jwt` decoder.
