@@ -40,6 +40,18 @@ def _vtuple(v: str) -> tuple:
     return tuple(int(x) for x in re.findall(r"\d+", v)[:3]) or (0,)
 
 
+class _SafeRedirect(urllib.request.HTTPRedirectHandler):
+    """Follow redirects (GitHub downloads redirect) but never to plain http, so a download cannot be downgraded."""
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        if not newurl.startswith(("https://", "http://127.0.0.1")):
+            raise urllib.error.URLError("refusing a redirect to a non-https address")
+        return super().redirect_request(req, fp, code, msg, headers, newurl)
+
+
+_OPENER = urllib.request.build_opener(_SafeRedirect)
+
+
 def _release_api() -> str:
     """The GitHub release address. JEEG_RELEASE_API may point at your own https address (or http://127.0.0.1 for tests)."""
     env = os.environ.get("JEEG_RELEASE_API", "")
@@ -52,7 +64,7 @@ def latest_release(timeout: float = 8.0) -> dict:
     """The newest GitHub release as a dict (tag_name, html_url, assets), or raises OSError with a plain message."""
     req = urllib.request.Request(_release_api(), headers={"User-Agent": "JeeG-update-check", "Accept": "application/vnd.github+json"})
     try:
-        with urllib.request.urlopen(req, timeout=timeout) as r:
+        with _OPENER.open(req, timeout=timeout) as r:
             data = json.loads(r.read(500_000).decode("utf-8", "replace"))
     except urllib.error.HTTPError as ex:
         if ex.code == 404:
@@ -82,7 +94,7 @@ def _download(url: str, limit: int, timeout: float = 60.0) -> bytes:
         raise OSError("refusing a download address that is not https")
     req = urllib.request.Request(url, headers={"User-Agent": "JeeG-update"})
     try:
-        with urllib.request.urlopen(req, timeout=timeout) as r:
+        with _OPENER.open(req, timeout=timeout) as r:
             data = r.read(limit + 1)
     except (urllib.error.URLError, TimeoutError, ValueError) as ex:
         raise OSError("the download failed (are you online?)") from ex
@@ -414,9 +426,22 @@ document.getElementById("f").onsubmit=e=>{e.preventDefault();run()};
 </script></body></html>"""
 
 
-# Categories the phone page may run. Nothing that opens apps, changes files, or controls the computer.
-LAN_SAFE = {"money", "text", "utility", "time", "health", "study", "info", "productivity", "lists", "shopping", "journal", "habits",
-            "birthdays", "food", "fun", "learning", "reference", "tools", "home", "travel", "reminders", "work", "personal"}
+# Tasks the phone page may run: calculators and converters, a few small personal lists. Chosen BY NAME, because a whole category
+# (text, utility ...) also holds tasks that read files or the clipboard, and categories like "tools" and "travel" open websites
+# on the computer. Nothing here opens apps, reads a file path, reads the clipboard or controls the computer.
+LAN_SAFE = {
+    "gst_amount", "emi_loan", "discount_price", "compound_interest", "percentage_change", "sip_growth", "sip_goal", "fuel_cost",
+    "salary_breakup", "severance_pay", "profit_margin", "loan_compare", "freelance_rate", "interest_tax", "income_tax", "hra_exemption",
+    "ppf_maturity", "rd_maturity", "currency_convert", "crypto_price", "exchange_rates",
+    "bmi_calculator", "calorie_calculator", "macro_split", "heart_rate_zones",
+    "cgpa_to_percentage", "marks_percentage", "attendance_percentage", "gpa_planner",
+    "days_until", "date_difference", "add_days", "age_calculator", "show_calendar", "show_time", "convert_time_zone",
+    "calculate", "convert_units", "cooking_convert", "flip_coin", "roll_dice", "random_number", "random_choice", "generate_password",
+    "generate_uuid", "number_to_words", "roman_numerals", "binary_hex", "multiplication_table",
+    "check_weather", "moon_phase", "public_holidays", "daily_quote", "random_fact",
+    "note_add", "note_list", "shopping_add", "shopping_list", "shopping_remove", "add_expense", "show_expenses", "expense_total",
+    "budget_report", "habit_done", "habit_streak", "remind_me", "show_reminders", "add_countdown", "show_countdowns",
+}
 
 
 def lan_ip() -> str:
@@ -440,9 +465,11 @@ def serve(here: Path, state: Path, port: int = 8765, open_browser: bool = True, 
     if lan:
         from jeeg_bridge import Policy
         policy = Policy(only=LAN_SAFE)
+        gate = threading.BoundedSemaphore(4)                  # at most 4 phone requests at once
 
     class H(http.server.BaseHTTPRequestHandler):
         server_version = "JeeG"
+        timeout = 30                                          # a client that stalls cannot hold a thread forever
 
         def log_message(self, *a):
             pass
@@ -494,7 +521,14 @@ def serve(here: Path, state: Path, port: int = 8765, open_browser: bool = True, 
                 return self._send(200, json.dumps({"out": f"'{low}' is only available in the terminal."}), "application/json")
             if lan:
                 from jeeg_bridge import dispatch
-                ans = dispatch({"op": "run", "query": q}, allow_confirm=False, home=str(state), policy=policy, source="phone")
+                if re.search(r"\bthen\b", q, re.I):
+                    return self._send(200, json.dumps({"out": "Chaining tasks is only available in the terminal."}), "application/json")
+                if not gate.acquire(blocking=False):
+                    return self._send(503, json.dumps({"out": "Busy, try again in a moment."}), "application/json")
+                try:
+                    ans = dispatch({"op": "run", "query": q}, allow_confirm=False, home=str(state), policy=policy, source="phone")
+                finally:
+                    gate.release()
                 out = (ans.get("result", {}).get("output") if ans.get("ok") else ans.get("error")) or "(no output)"
                 return self._send(200, json.dumps({"out": str(out)[:20000]}), "application/json")
             try:
@@ -558,6 +592,9 @@ def cmd_report(run_doctor, state: Path, version: str, ntasks: int) -> int:
     if len(user) > 2:
         text = re.sub(re.escape(user), "<user>", text, flags=re.I)
     dst = Path.cwd() / "jeeg-report.txt"
+    if dst.is_symlink():
+        print(f"{dst} is a link; remove it first.")
+        return 1
     try:
         dst.write_text(text + "\n", encoding="utf-8")
     except OSError as ex:
@@ -584,6 +621,9 @@ def cmd_share(args: str, state: Path, dirs) -> int:
             print("You have no aliases yet. Add one with:  alias add <short> = <task words>")
             return 1
         dst = Path.cwd() / "jeeg-aliases.json"
+        if dst.is_symlink():
+            print(f"{dst} is a link; remove it first.")
+            return 1
         dst.write_text(json.dumps({"jeeg": 1, "kind": "aliases", "aliases": data}, indent=2, ensure_ascii=False), encoding="utf-8")
         print(f"Wrote {dst}. Others can add them with:  alias import jeeg-aliases.json")
         return 0
@@ -593,7 +633,7 @@ def cmd_share(args: str, state: Path, dirs) -> int:
         print("Usage: share plugin <name>   (see:  plugins)")
         return 1
     dst = Path.cwd() / src.name
-    if dst.exists():
+    if os.path.lexists(dst):
         print(f"{dst} already exists; move it first.")
         return 1
     shutil.copyfile(src, dst)

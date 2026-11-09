@@ -302,7 +302,7 @@ A plugin is one `.py` file. Make a starter with `jeeg plugin new my_task`, edit 
 
 - **10 new tasks:** `csv to json`, `chart csv`, `readability`, `replace in files`, `strip exif`, `profit margin`, `compare loans`, `freelance rate`, `toml to json`, `watch folder`.
 - **Smarter:** it remembers which task you picked when two fit; routines can use `{today}`, `{month}`, `{year}`...
-- **Phone page:** `web lan` (secret link, everyday tasks only, same Wi-Fi).
+- **Phone page:** `web lan` (secret link, same Wi-Fi, a fixed list of about 70 safe tasks).
 - **No Python needed:** download `jeeg-windows-x64.exe`, `jeeg-macos` or `jeeg-linux-x64` from a release; `update now` keeps it current (SHA-256 checked).
 - **Right-click "Send to JeeG"**, a **browser extension**, Raycast and Alfred launchers (`integrations/`).
 - `report` makes a bug-report file; `share plugin|routines|aliases` makes one shareable file.

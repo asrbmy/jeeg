@@ -94,4 +94,4 @@ jeeg --serve-api --log                     # keep a private call log
 - **Browser extension** (`integrations/browser/`): start the API with `jeeg --serve-api --allow-origin chrome-extension://<ID> --only text,money,utility,time`. Only browser-extension origins can be allowed; web pages are always refused. See that folder's README.
 - **Send to JeeG** (`integrations/sendto/install.py`): right-click a file, choose a task. `--dry` shows what would be written, `--remove` undoes it.
 - **Raycast / Alfred** (`integrations/raycast/`), **Home Assistant** example (`integrations/homeassistant/`, same computer only).
-- **Phone page:** `jeeg web lan` (not the API; a small page with a secret link, everyday tasks only).
+- **Phone page:** `jeeg web lan` (not the API; a small page with a secret link and a fixed list of about 70 safe tasks).

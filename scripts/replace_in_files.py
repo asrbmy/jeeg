@@ -23,7 +23,7 @@ TEXT = {".txt", ".md", ".py", ".js", ".ts", ".html", ".htm", ".css", ".json", ".
 hits = []
 for f, st in walk_files(folder, seconds=20):
     p = Path(f)
-    if p.suffix.lower() not in TEXT or st.st_size > 2 * 1024 * 1024:
+    if p.is_symlink() or p.suffix.lower() not in TEXT or st.st_size > 2 * 1024 * 1024:     # never write through a link
         continue
     try:
         s = p.read_text(encoding="utf-8")

@@ -65,6 +65,7 @@ def linux_body(cmd: list) -> str:
             'else printf "What should JeeG do with this file? "; read -r T; fi\n'
             '[ -n "$T" ] || exit 0\n'
             'for F in "$@"; do\n'
+            '  case "$F" in /*) ;; *) F="./$F" ;; esac   # a file named like an option stays a file\n'
             '  OUT=$(' + run + ' $T "$F" 2>&1)\n'
             '  if command -v zenity >/dev/null 2>&1; then printf "%s\\n" "$OUT" | zenity --text-info --title "JeeG" --width 640 --height 360\n'
             '  else printf "%s\\n" "$OUT"; fi\n'

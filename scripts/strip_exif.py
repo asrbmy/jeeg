@@ -19,19 +19,27 @@ p = path_arg(t.strip())
 if not p.is_file() or p.suffix.lower() not in {".jpg", ".jpeg", ".png", ".webp", ".tif", ".tiff"}:
     fail("Give a photo: JPG, PNG, WebP or TIFF.")
 Image.MAX_IMAGE_PIXELS = 120_000_000
-with Image.open(p) as im:
-    had = bool(getattr(im, "getexif", lambda: {})())
-    gps = False
-    try:
-        gps = 34853 in im.getexif()
-    except Exception:
-        pass
-    fmt = im.format
-    im.load()
-    clean = im.copy()
-    clean.info = {}
-    dest = unique_path(p.with_name(p.stem + "_clean" + p.suffix))
-    clean.save(dest, format=fmt, quality=95) if fmt == "JPEG" else clean.save(dest, format=fmt)
+if p.is_symlink() or p.stat().st_size > 100 * 1024 * 1024:
+    fail("Give a normal photo file under 100 MB.")
+try:
+    with Image.open(p) as im:
+        had = bool(getattr(im, "getexif", lambda: {})())
+        gps = False
+        try:
+            gps = 34853 in im.getexif()
+        except Exception:
+            pass
+        fmt = im.format
+        im.load()
+        clean = im.copy()
+        clean.info = {}
+        dest = unique_path(p.with_name(p.stem + "_clean" + p.suffix))
+        if fmt == "JPEG":
+            clean.save(dest, format=fmt, quality=95)
+        else:
+            clean.save(dest, format=fmt)
+except (OSError, ValueError, Image.DecompressionBombError, Image.UnidentifiedImageError) as ex:
+    fail(f"Could not read that image: {type(ex).__name__}")
 print(f"Saved a copy without hidden data -> {dest}")
 print("The original had camera/time data" + (" and a GPS location" if gps else "") + "." if had else "The original had no EXIF data.")
 print("The original file was not changed.")

@@ -5,13 +5,14 @@
 - **10 new tasks (488 in all):** `csv to json`, `chart csv` (HTML bar chart), `readability` (accepts piped text), `replace in files` (asks first, keeps backups), `strip exif` (optional Pillow), `profit margin`, `compare loans`, `freelance rate`, `toml to json` (Python 3.11+), `watch folder` (asks first).
 - **Remembers your pick** when "More than one task fits" (short phrases only; `alias remove` undoes it).
 - **Routine variables:** `{today}`, `{date}`, `{month}`, `{year}`, `{weekday}`, `{week}`, `{time}`.
-- **`web lan`:** phone page with a secret link, host and origin checks and an everyday-tasks-only list.
+- **`web lan`:** phone page with a secret link, host and origin checks, a fixed list of about 70 safe tasks, and at most 4 requests at once.
 - **`update now` for the standalone program:** downloads the release file, checks its SHA-256, replaces the program. `report` writes a bug-report file; `share plugin/routines/aliases` writes one shareable file.
 - **API:** `--allow-origin chrome-extension://ID` lets named browser extensions call the local API (CORS preflight handled); web pages are still refused.
 - **Standalone program (no Python needed):** `python tools/build_exe.py`; the `build-exe` workflow attaches Windows, Mac and Linux files and `.sha256` files to each release. `DISTRIBUTION.md` explains publishing to PyPI, Homebrew, Scoop, winget, Chocolatey, AUR, conda-forge, VS Code, Docker and GitHub Pages; ready files in `packaging/scoop` and `packaging/docker`.
 - **Integrations:** browser extension (`integrations/browser`), Send to JeeG for Windows/Linux/macOS (`integrations/sendto`), Raycast and Alfred, Home Assistant example.
 - `tools/make_guide_appendix.py` rebuilds the task table in USER_GUIDE.md (it was missing 10 tasks from 2.8).
-- Tests: `tests/test_v29.py` (105 checks).
+- **Security fixes found by review before release:** the phone page now uses a fixed list of task names (whole categories also held tasks that read files or the clipboard or open websites on the computer); downloads and the update check refuse redirects to plain http; `replace in files`, `report` and `share` never write through a symbolic link; the phone page limits parallel requests and times out stalled connections; Send to JeeG on Linux protects file names that start with a dash; `strip exif` handles damaged or huge images.
+- Tests: `tests/test_v29.py` (134 checks).
 
 ## 2.8.0
 

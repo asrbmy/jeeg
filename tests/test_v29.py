@@ -155,8 +155,40 @@ try:
     ok(run("gst 2500 18", origin="http://evil.example")[0] == 403, "phone page origin check")
     ok(get(f"/?k={k}", {"Host": "evil.example"})[0] == 403, "phone page GET host check")
     st, j = run("report"); ok("terminal" in j.get("out", ""), "report not available on the page")
+    for q in ("open amazon", "open wikipedia", "hash text hello", "count words /etc/hostname", "json format /etc/hosts", "reading time /etc/hosts",
+              "reverse text", "encode base64", "readability /etc/hostname", "type notes", "pomodoro", "gst 100 18 then copy it", "gst 100 18 then speak it",
+              "run routine x", "clipboard history", "remind me in 1 minute to x then copy it", "organize downloads", "empty trash"):
+        st, j = run(q)
+        ok(any(x in j.get("out", "") for x in ("not allowed", "only available", "No single matching")) or st != 200, f"phone page refuses {q!r}: {j.get('out', '')[:70]!r}")
+    # an alias that points at a blocked task is still blocked
+    (Path(HOME) / "aliases.json").write_text(json.dumps({"harmless": "open amazon"}))
+    st, j = run("harmless"); ok("not allowed" in j.get("out", ""), "alias to a blocked task is blocked: " + str(j)[:80])
+    (Path(HOME) / "aliases.json").write_text(json.dumps({}))
+    st, j = run("calculate 2+3*4"); ok("14" in j.get("out", ""), "allowed task works after")
+    ok(all(isinstance(x, str) for x in jeeg_cmds.LAN_SAFE) and "open_amazon" not in jeeg_cmds.LAN_SAFE, "allow-list holds task names")
+    names = {e["name"] for e in entries}
+    ok(jeeg_cmds.LAN_SAFE <= names, "every allow-listed name is a real task: " + str(sorted(jeeg_cmds.LAN_SAFE - names)))
+    risky = [e["name"] for e in entries if e["name"] in jeeg_cmds.LAN_SAFE and (e.get("confirm") or e.get("category") in {"files", "system", "apps", "power", "clipboard", "email"})]
+    ok(not risky, "allow-list has no confirm/file/system tasks: " + str(risky))
 finally:
     proc.terminate(); proc.wait(timeout=10)
+
+# ---- downloads never follow a redirect to plain http
+class R(http.server.BaseHTTPRequestHandler):
+    def log_message(self, *a): pass
+    def do_GET(self):
+        self.send_response(302); self.send_header("Location", "http://evil.example/x"); self.end_headers()
+rs = http.server.ThreadingHTTPServer(("127.0.0.1", 0), R); threading.Thread(target=rs.serve_forever, daemon=True).start()
+try:
+    jeeg_cmds._download(f"http://127.0.0.1:{rs.server_port}/a", 100); ok(False, "redirect to http refused")
+except OSError:
+    ok(True, "redirect to http refused")
+os.environ["JEEG_RELEASE_API"] = f"http://127.0.0.1:{rs.server_port}/release"
+try:
+    jeeg_cmds.latest_release(); ok(False, "release check refuses http redirect")
+except OSError:
+    ok(True, "release check refuses http redirect")
+rs.shutdown()
 
 # ---- extension origins on the API
 s = socket.socket(); s.bind(("127.0.0.1", 0)); ap = s.getsockname()[1]; s.close()
@@ -257,6 +289,23 @@ if sys.version_info >= (3, 11):
 else:
     has("toml to json c.toml", "3.11", rc=1)
 
+# ---- symlinks are never written through
+if hasattr(os, "symlink"):
+    outside = WORK / "outside.txt"; outside.write_text("secret colour\n")
+    (WORK / "docs2").mkdir(exist_ok=True); (WORK / "docs2" / "real.txt").write_text("colour\n")
+    try:
+        os.symlink(outside, WORK / "docs2" / "link.txt")
+        code, out = jg("--yes", 'replace in files docs2 "colour" with "color"')
+        ok(outside.read_text() == "secret colour\n", "replace in files does not write through a symlink")
+        ok((WORK / "docs2" / "real.txt").read_text() == "color\n", "regular file in the same folder is changed")
+        os.symlink(outside, WORK / "jeeg-report.txt") if not (WORK / "jeeg-report.txt").is_symlink() and not (WORK / "jeeg-report.txt").exists() else None
+        (WORK / "jeeg-report.txt").unlink() if (WORK / "jeeg-report.txt").exists() and not (WORK / "jeeg-report.txt").is_symlink() else None
+        if not (WORK / "jeeg-report.txt").exists(): os.symlink(outside, WORK / "jeeg-report.txt")
+        code, out = jg("report"); ok(outside.read_text() == "secret colour\n" and "link" in out, "report does not write through a symlink")
+        (WORK / "jeeg-report.txt").unlink()
+    except OSError:
+        pass
+
 # ---- send-to installer (Linux/other path, fake home)
 fh = tempfile.mkdtemp(prefix="jeeg-sendto-")
 env = dict(os.environ, HOME=fh, USERPROFILE=fh, XDG_DATA_HOME=fh + "/.local/share", APPDATA=fh + "/AppData")
@@ -273,6 +322,8 @@ if sys.platform.startswith("linux"):
 body = subprocess.run([sys.executable, "-c", "import sys;sys.path.insert(0,r'%s');import install as i;print(i.windows_body(['C:\\\\x y\\\\jeeg.exe']))" % (ROOT / "integrations" / "sendto")], capture_output=True, text=True).stdout
 ok('"C:\\x y\\jeeg.exe" %T% "%~1"' in body and "pause" in body, "windows send-to script quoting")
 mac = subprocess.run([sys.executable, "-c", "import sys;sys.path.insert(0,r'%s');import install as i;print(i.mac_script(['/usr/local/bin/jeeg']))" % (ROOT / "integrations" / "sendto")], capture_output=True, text=True).stdout
+lin = subprocess.run([sys.executable, "-c", "import sys;sys.path.insert(0,r'%s');import install as i;print(i.linux_body(['jeeg']))" % (ROOT / "integrations" / "sendto")], capture_output=True, text=True).stdout
+ok('case "$F" in /*)' in lin, "linux send-to protects file names that start with a dash")
 ok("on open theFiles" in mac and "quoted form of POSIX path" in mac, "mac droplet script")
 
 # ---- browser extension files

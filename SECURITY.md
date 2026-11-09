@@ -21,6 +21,11 @@ This is a small project run by volunteers, so these are goals, not guarantees. I
 ### Scope
 In scope: the `jeeg` code and scripts in this repository, the plugin library and its fingerprints, the local web page, the local API (`--serve-api`, `--stdio`, `--mcp`), and the release workflow. Out of scope: problems that need you to install a plugin or run a script you did not trust, and issues in Python, your operating system or other software.
 
+## The network-facing parts (2.9)
+- `web lan` (phone page): off unless you ask; secret link plus a per-session token, Host and Origin checks, a fixed list of about 70 safe tasks (by name), no chaining, 4 requests at once, 30 s timeouts, plain http (use only on a trusted network).
+- Browser extensions: `--allow-origin` accepts only `chrome-extension://` and `moz-extension://` addresses you name; web pages are always refused.
+- Updates (`update now`, standalone program only): https only (redirects to http are refused), the file must match its published SHA-256, and nothing is replaced if the check fails. The hash comes from the same release, so it protects against corruption and mix-ups, not against someone who controls your GitHub release.
+
 ## Supported versions
 Only the latest release is supported.
 
