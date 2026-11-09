@@ -5,7 +5,7 @@
 # rawargs: yes
 # priority: 1
 import ast, math, operator, re
-from _lib import args_text, fail
+from _lib import args_text, fail, words_to_digits, var_all, var_save
 src = args_text()
 if not src:
     fail("Usage: calculate <expression>   e.g. calculate 15% of 200")
@@ -13,6 +13,12 @@ if len(src) > 200:
     fail("Expression too long.")
 s = src.lower().replace(",", "").strip()
 s = re.sub(r"^(?:what\s+is|what's|whats|calculate|calc|compute|solve|evaluate)\s+", "", s).rstrip("?=. ")
+s = words_to_digits(s)
+_last = var_all().get("ans")
+if re.search(r"\bans\b", s):
+    if not isinstance(_last, (int, float)):
+        fail("There is no previous answer yet. Calculate something first, then use ans.")
+    s = re.sub(r"\bans\b", "(" + repr(_last) + ")", s)
 s = re.sub(r"(\d+(?:\.\d+)?)\s*(?:%|percent)\s*of\s*(\d+(?:\.\d+)?)", r"(\1/100*\2)", s)
 s = re.sub(r"(\d+(?:\.\d+)?)\s*percent\b", r"(\1/100)", s)
 for pat, rep in ((r"square root of\s*(\d+(?:\.\d+)?)", r"sqrt(\1)"), (r"\bsqrt\s+(\d+(?:\.\d+)?)", r"sqrt(\1)"),
@@ -51,5 +57,10 @@ except (ValueError, SyntaxError, TypeError, OverflowError, RecursionError, Memor
     fail("I could not understand that calculation.")
 if isinstance(v, float):
     v = int(v) if v.is_integer() and abs(v) < 1e15 else float(format(v, ".10g"))
+if isinstance(v, (int, float)) and abs(v) < 1e15:
+    try:
+        _vs = var_all(); _vs["ans"] = v; var_save(_vs)          # so the next calculation (or $ans) can use it
+    except OSError:
+        pass
 shown = re.sub(r"^(?:what\s+is|what's|whats|calculate|calc|compute|solve|evaluate)\s+", "", src.strip(), flags=re.I).rstrip("?=. ")
 print(f"{shown} = {v:,}" if isinstance(v, int) else f"{shown} = {v}")

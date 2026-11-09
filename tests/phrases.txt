@@ -457,3 +457,13 @@ freelance rate income 4000 => freelance_rate | freelance rate income 4000
 how much should i charge per hour => freelance_rate | how much should i charge per hour
 toml to json pyproject.toml => toml_to_json | toml to json pyproject.toml
 watch folder downloads move pdf to Documents/PDF => watch_folder | watch folder downloads move pdf to Documents/PDF
+set var rate = 18 => var_define | set var rate = 18
+show variables => var_list |
+remove var rate => var_remove | remove var rate
+spending trends => spending_trends |
+where is my money going => spending_trends |
+will i overspend this month => spending_forecast |
+unusual expenses => spending_anomalies |
+index folder Documents => index_folder | index folder Documents
+search index invoice march => index_lookup | search index invoice march
+search inside my files for invoice => index_lookup | search inside my files for invoice

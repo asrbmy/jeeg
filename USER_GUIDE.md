@@ -26,7 +26,7 @@ Contents
 
 - A small launcher written in Python (standard library only). It has no background service and does not need an account.
 - It reads every script in `scripts/`, matches your words to a script, and runs it. A script is just a file you can open and edit.
-- 488 tasks are included across apps, websites, files, system, network, reminders, personal records, money calculators, text tools, developer tools and quick searches.
+- 496 tasks are included across apps, websites, files, system, network, reminders, personal records, money calculators, text tools, developer tools and quick searches.
 - It runs on Windows, macOS and Linux. Python 3.9 or newer is required.
 - It is quick (about 56 ms per command including Python start-up, measured on Linux) and light (about 16 MB while a command runs; nothing stays in memory between commands, except reminders and alarms you set).
 
@@ -427,6 +427,15 @@ j("add expense 250 food lunch")
 - **Standalone program (no Python).** `python tools/build_exe.py`, or download `jeeg-windows-x64.exe`, `jeeg-macos`, `jeeg-linux-x64` from a GitHub release.
 - **10 new tasks:** `csv to json`, `chart csv` (an HTML bar chart, nothing uploaded), `readability` (Flesch score; accepts piped text), `replace in files <folder> "old" with "new"` (asks first; originals are saved), `strip exif <photo>` (needs Pillow), `profit margin`, `compare loans`, `freelance rate`, `toml to json` (Python 3.11+), `watch folder <folder> move <types> to <folder>` (asks first; add `once` for one pass).
 
+### 8.24 What is new in 2.10
+
+- **Variables.** `set var rate = 18` saves a value. Write `$rate` (or `${rate}`) in any phrase and JeeG fills it in first: `gst 1000 $rate`. `vars` shows them; `remove var rate` deletes one. A name that is not defined stays as you typed it. Up to 100 variables, values up to 120 characters.
+- **`ans`.** After any `calculate`, `calculate ans * 2` continues from the last answer, and `$ans` works in other tasks (`gst $ans 18`).
+- **Numbers in words.** `calculate five thousand times 3`, `emi five lakh 8.5 5 years`. Words of 10 or more are converted (`twenty five`, `two thousand twenty six`); a lone `one` to `nine` is left as a word.
+- **Batch files.** Put one phrase per line in a text file (blank lines and `#` comments are ignored), then `batch myjobs.txt`. It stops at the first failure; `batch myjobs.txt keep going` continues. Variables work inside a batch file. `web`, `update`, `setup`, `plugin` and similar terminal-only commands are skipped.
+- **Search inside your files.** `index folder Documents` reads text, Markdown, code, HTML, CSV and Word (.docx) files into a private index on your computer. `search index invoice march` lists the best matches with a snippet. `index status` shows what is indexed, `index update` refreshes only changed files, `index remove Documents` (or `index remove all`) forgets it. Nothing is indexed from hidden folders, `node_modules`, symbolic links, binary files, or files whose names look like secrets (`.env`, `*.pem`, `*.key`, `id_rsa`, anything with password, token, secret or credential in the name). Files over 2 MB (20 MB for Word) are skipped. Your files are never changed.
+- **Spending analytics** from your `add expense` records: `spending trends` shows six months, which categories grew or shrank compared with the same days last month; `spending forecast` projects the month end from your pace and checks it against `set budget` limits; `spending anomalies` points out unusually large expenses and possible double entries. They are hints, not verdicts.
+
 ## 9. Teaching and checking JeeG
 
 **Aliases: your own short words**
@@ -583,7 +592,7 @@ Run the checks yourself any time:
 
 ## 15. Appendix: every task
 
-488 tasks. In the Usage column, `<...>` is something you fill in and `[...]` is optional. A star means the task asks before running; "online" means it can use the internet.
+496 tasks. In the Usage column, `<...>` is something you fill in and `[...]` is optional. A star means the task asks before running; "online" means it can use the internet.
 
 
 ### ai
@@ -768,6 +777,8 @@ Run the checks yourself any time:
 | find text | `find text <words> in <folder>` | Search inside text files for a phrase (find text invoice in documents) |
 | folder size | `folder size [folder]` | Show how big a folder is (folder size downloads) |
 | folder tree | `folder tree [folder] [depth n]` | Show a folder as a tree (folder tree documents, tree depth 3) |
+| index folder | `index folder <folder> \| index status \| index update \| index remove <folder>` | Build a searchable index of a folder's text files, notes and Word documents (index folder docs; index status; index update; index remove docs). Nothing leaves your computer. |
+| index lookup | `search index <words>` | Search the text inside your indexed files, best matches first, with a snippet (search index invoice march). |
 | large files | `large files [folder]` | Find the biggest files (large files downloads) |
 | large folders | `large folders [folder]` | Show which sub-folders take the most space (large folders downloads) |
 | move file | `move file <file> to <folder>` | Move a file or folder (move file report.pdf to documents) |
@@ -989,6 +1000,9 @@ Run the checks yourself any time:
 | show ledger | `ledger [name]` | See who owes you and who you owe (ledger, who owes me, show ledger ravi) |
 | sip goal | `sip goal <amount> in <years> years [at <rate>%]` | Monthly saving needed to reach a goal (sip goal 1 million in 15 years at 8%; how much to save for 50000 in 3 years) |
 | sip growth | `sip <monthly> <return%> <years>` | SIP growth (sip 5000 12 10 years: monthly amount, yearly return %, years) |
+| spending anomalies | `spending anomalies` | Find unusually large or possibly duplicated expenses (spending anomalies). |
+| spending forecast | `spending forecast` | Predict this month's total spending from your pace so far, against your budgets (spending forecast). |
+| spending trends | `spending trends` | Month-by-month spending, and which categories grew or shrank (spending trends). |
 | split bill | `split bill <amount> among <n> [tip %]` | Split a bill (split bill 2400 among 4 tip 10%) |
 | tip calculator | `tip <bill> [percent%] [split <people>]` | Work out a tip and split the bill (tip 1200 10%, tip 2450 12% split 4) |
 | undo expense * |  | Remove the last recorded expense |
@@ -1261,6 +1275,9 @@ Run the checks yourself any time:
 | random choice | `random choice a, b, c` | Pick one option at random (random choice pizza, burger, pasta) |
 | random number | `random number [min] [max]` | Random number (random number 1 to 50) |
 | roll dice | `roll <n>d<sides>` | Roll dice (roll dice, roll 2d6, roll d20) |
+| var define | `set var <name> = <value>` | Save a value under a name and use it in any phrase as $name (set var rate = 18, then gst 1000 $rate). |
+| var list | `vars` | Show your saved variables (vars, show variables). |
+| var remove | `remove var <name>` | Delete a saved variable (remove var rate). |
 
 ### web
 

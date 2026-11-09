@@ -1,8 +1,19 @@
 # Changelog
 
+## 2.10.0
+
+- **Your own variables:** `set var rate = 18`, then use `$rate` (or `${rate}`) in any phrase: `gst 1000 $rate`. `vars` lists them, `remove var rate` deletes one. Unknown `$names` are left as typed, so `$5` still means five dollars.
+- **`ans`:** `calculate` remembers its last answer; use `calculate ans * 2`, or `$ans` in any other task (`gst $ans 18`).
+- **Spelled-out numbers:** `calculate five thousand times 3`, `emi five lakh 8.5 5 years` (tasks that use the shared number reader).
+- **`batch <file>`:** run a text file of phrases, one per line (`#` comments, up to 200 lines); stops at the first failure unless you add `keep going`. Terminal-only commands such as `web`, `update` and `setup` are skipped.
+- **Local search index:** `index folder Documents` builds a full-text index (SQLite FTS5) of text, notes, code, HTML and Word files; `search index invoice march` finds them, best match first, with a snippet. `index update` re-reads only what changed; `index remove` forgets a folder (your files are never touched). Files that look like secrets (.env, keys, passwords, tokens), hidden folders, `node_modules`, links and binary files are never indexed, and the index file is private to you. Nothing leaves your computer.
+- **Spending analytics:** `spending trends` (6 months, what grew or shrank, same-day comparison), `spending forecast` (month-end projection against your budgets), `spending anomalies` (unusually large or double-entered expenses).
+- A closed pipe (`jeeg ... | head`) no longer prints a Python error.
+- Tests: `tests/test_v210.py` (116 checks).
+
 ## 2.9.0
 
-- **10 new tasks (488 in all):** `csv to json`, `chart csv` (HTML bar chart), `readability` (accepts piped text), `replace in files` (asks first, keeps backups), `strip exif` (optional Pillow), `profit margin`, `compare loans`, `freelance rate`, `toml to json` (Python 3.11+), `watch folder` (asks first).
+- **10 new tasks (488 after that release):** `csv to json`, `chart csv` (HTML bar chart), `readability` (accepts piped text), `replace in files` (asks first, keeps backups), `strip exif` (optional Pillow), `profit margin`, `compare loans`, `freelance rate`, `toml to json` (Python 3.11+), `watch folder` (asks first).
 - **Remembers your pick** when "More than one task fits" (short phrases only; `alias remove` undoes it).
 - **Routine variables:** `{today}`, `{date}`, `{month}`, `{year}`, `{weekday}`, `{week}`, `{time}`.
 - **`web lan`:** phone page with a secret link, host and origin checks, a fixed list of about 70 safe tasks, and at most 4 requests at once.

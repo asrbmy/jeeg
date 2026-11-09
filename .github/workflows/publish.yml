@@ -66,6 +66,7 @@ jobs:
           python tests/test_bridge.py
           python tests/test_v28.py
           python tests/test_v29.py
+          python tests/test_v210.py
           python tests/test_quality.py
           python tests/test_privacy.py
           python tests/test_security.py

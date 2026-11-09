@@ -60,7 +60,7 @@ import sys
 import time
 from pathlib import Path
 
-__version__ = "2.9.0"
+__version__ = "2.10.0"
 
 HERE = Path(__file__).resolve().parent
 FROZEN = bool(getattr(sys, "frozen", False))      # True inside the standalone program built with PyInstaller
@@ -382,7 +382,7 @@ def resolve(query: str, entries: list[dict]):
 # ------------------------------------------------- your data: aliases, logs
 RESERVED = {"list", "help", "history", "again", "repeat", "redo", "reindex", "selftest", "exit", "quit", "alias",
             "explain", "misses", "stats", "doctor", "tasks", "pack", "tips", "tip", "plugins", "plugin", "update", "setup",
-            "web", "ui", "completion", "learn", "tour", "routines", "privacy", "autorun", "report", "share"}
+            "web", "ui", "completion", "learn", "tour", "routines", "privacy", "autorun", "report", "share", "batch"}
 
 
 def _load_json(name: str, default):
@@ -1025,7 +1025,73 @@ def _remember_pick(query: str, e: dict, entries: list) -> None:
         pass
 
 
+VAR_RE = re.compile(r"\$\{?([A-Za-z][A-Za-z0-9_]{0,23})\}?")
+
+
+def expand_vars(query: str) -> str:
+    """Replace $name (or ${name}) with a value you saved with 'set var name = value'. Unknown names are left as typed,
+    so '$5' and '$total' (when not defined) stay as they are."""
+    if "$" not in query:
+        return query
+    vs = _load_json("vars.json", {})
+    if not isinstance(vs, dict) or not vs:
+        return query
+
+    def sub(m):
+        v = vs.get(m.group(1).lower())
+        if isinstance(v, bool) or not isinstance(v, (str, int, float)):
+            return m.group(0)
+        return str(v)
+    return VAR_RE.sub(sub, query)
+
+
+BATCH_SKIP = {"web", "ui", "setup", "update", "upgrade", "plugin", "plugins", "autorun", "batch", "exit", "quit", "report", "share"}
+
+
+def cmd_batch(arg: str, entries: list, opt: dict) -> int:
+    """batch <file> [keep going]: run each line of a text file as a JeeG phrase (blank lines and # comments are skipped)."""
+    keep = bool(re.search(r"\bkeep\s+going\b|--keep-going", arg, re.I))
+    name = re.sub(r"\s*(?:\bkeep\s+going\b|--keep-going)\s*", " ", arg, flags=re.I).strip().strip('"\'')
+    if not name:
+        print("Usage: batch <file> [keep going]   (one phrase per line; # starts a comment; stops at the first failure unless 'keep going')")
+        return 1
+    p = Path(name).expanduser()
+    try:
+        if not p.is_file() or p.stat().st_size > 200_000:
+            print("Give a text file under 200 KB, one phrase per line.")
+            return 1
+        lines = p.read_text(encoding="utf-8-sig").splitlines()
+    except (OSError, UnicodeDecodeError) as ex:
+        print(f"Could not read {p.name}: {getattr(ex, 'strerror', None) or 'not a text file'}.")
+        return 1
+    todo = [ln.strip() for ln in lines if ln.strip() and not ln.strip().startswith("#")]
+    if not todo:
+        print("The file has no phrases.")
+        return 1
+    if len(todo) > 200:
+        print("A batch file can have at most 200 phrases.")
+        return 1
+    worst, ran, failed = 0, 0, 0
+    for n, ln in enumerate(todo, 1):
+        first = ln.lower().split()[0]
+        if first in BATCH_SKIP or ln.lower().startswith("jeeg batch"):
+            print(f"[{n}/{len(todo)}] skipped (terminal-only): {ln}")
+            continue
+        print(f"[{n}/{len(todo)}] {ln}")
+        rc = run_query(expand_vars(ln), entries, opt)
+        ran += 1
+        if rc not in (0, None):
+            failed += 1
+            worst = max(worst, rc)
+            if not keep:
+                print(f"Stopped at line {n} (exit {rc}). Add 'keep going' to continue after a failure.")
+                return worst
+    print(f"Batch done: {ran} ran, {failed} failed.")
+    return worst
+
+
 def run_query(query: str, entries: list[dict], opt: dict) -> int:
+    query = expand_vars(query)
     chained = run_chain(query, entries, opt)
     if chained is not None:
         return chained
@@ -1203,6 +1269,8 @@ def handle(line: str, dirs, opt) -> int | None:
     if re.match(r"routines\s+(export|import)\b", low):
         import jeeg_cmds
         return jeeg_cmds.cmd_routines_io(q.split(None, 1)[1], STATE, opt.get("yes", False))
+    if low == "batch" or low.startswith("batch "):
+        return cmd_batch(q.split(None, 1)[1] if " " in q.strip() else "", entries, opt)
     if low in {"report", "bug report", "jeeg report"}:
         import jeeg_cmds
         return jeeg_cmds.cmd_report(lambda: cmd_doctor(dirs, all_entries), STATE, __version__, len(all_entries))

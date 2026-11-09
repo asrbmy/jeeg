@@ -26,7 +26,7 @@ def has(q, *needles, rc=0, **kw):
     return out
 
 import jeeg, jeeg_cmds, jeeg_bridge as B
-ok(jeeg.__version__ >= "2.9.0", "version bumped " + jeeg.__version__)
+ok(tuple(int(x) for x in jeeg.__version__.split(".")) >= (2, 9, 0), "version bumped " + jeeg.__version__)
 
 # ---- remembered picks
 entries = jeeg.active(jeeg.load_index(jeeg.script_dirs([])))

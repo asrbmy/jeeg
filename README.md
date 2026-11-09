@@ -7,7 +7,7 @@ JeeG finds the matching script in the `scripts` folder and runs it.
 
 - Pure Python 3.9+, nothing to install. Works on Windows, macOS and Linux.
 - Light: about 16 MB of memory, about 65 ms per command, nothing running in the background (except reminders and alarms you set yourself).
-- 488 ready-made tasks. You can add your own by dropping in a file.
+- 496 ready-made tasks. You can add your own by dropping in a file.
 
 ---
 
@@ -297,6 +297,13 @@ A plugin is one `.py` file. Make a starter with `jeeg plugin new my_task`, edit 
 - Host names, ports and package names are checked before being passed to other programs.
 - Critical system processes cannot be killed with `kill process`.
 - No task sends your files or personal data anywhere. Web tasks only open a page in your browser.
+
+## What is new in 2.10
+
+- **Variables and `ans`:** `set var rate = 18`, then `gst 1000 $rate`; `calculate ans * 2`.
+- **Search inside your files, offline:** `index folder Documents`, then `search index invoice march` (SQLite full-text search; secrets are never indexed).
+- **Spending analytics:** `spending trends`, `spending forecast`, `spending anomalies`.
+- **`batch file.txt`** runs a list of phrases; **spelled-out numbers** work (`five lakh`, `two thousand`).
 
 ## What is new in 2.9
 

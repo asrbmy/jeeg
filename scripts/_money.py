@@ -1,7 +1,7 @@
 """Money parsing, Indian digit grouping and live currency rates. Not a task."""
 import re
 
-from _lib import fail
+from _lib import fail, words_to_digits
 from _net import get
 
 MULT = {"k": 1e3, "thousand": 1e3, "lakh": 1e5, "lakhs": 1e5, "lac": 1e5, "lacs": 1e5, "cr": 1e7,
@@ -12,6 +12,7 @@ _NUM = re.compile(r"(?<![\w.])(\d[\d,]*(?:\.\d+)?)\s*(" + "|".join(sorted(MULT, 
 def numbers(text):
     """All numbers in text with k / lakh / crore / m suffixes applied: '5 lakh 8.5%' -> [500000.0, 8.5]."""
     out = []
+    text = words_to_digits(text)
     for m in _NUM.finditer(text):
         v = float(m.group(1).replace(",", ""))
         out.append(v * MULT[m.group(2).lower()] if m.group(2) else v)
