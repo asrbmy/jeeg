@@ -26,7 +26,7 @@ Contents
 
 - A small launcher written in Python (standard library only). It has no background service and does not need an account.
 - It reads every script in `scripts/`, matches your words to a script, and runs it. A script is just a file you can open and edit.
-- 496 tasks are included across apps, websites, files, system, network, reminders, personal records, money calculators, text tools, developer tools and quick searches.
+- 498 tasks are included across apps, websites, files, system, network, reminders, personal records, money calculators, text tools, developer tools and quick searches.
 - It runs on Windows, macOS and Linux. Python 3.9 or newer is required.
 - It is quick (about 56 ms per command including Python start-up, measured on Linux) and light (about 16 MB while a command runs; nothing stays in memory between commands, except reminders and alarms you set).
 
@@ -420,7 +420,7 @@ j("add expense 250 food lunch")
 - **Update the standalone program.** `update` checks GitHub; for the downloaded `.exe`/Mac/Linux program, `update now` downloads the new file, checks its SHA-256 and replaces the old one. Nothing is installed if the check fails.
 - **Bug report file.** `report` writes `jeeg-report.txt` (version, system, `doctor` result; your home folder and user name are hidden; none of your notes or typed phrases). You read it, then attach it to an issue.
 - **Share your setup.** `share plugin <name>`, `share routines`, `share aliases` each write one file you can send to a friend.
-- **Phone page.** `web lan` prints a secret link to open on a phone on the same Wi-Fi. It only runs a fixed list of about 70 safe tasks (calculators, converters, a few small lists such as shopping, notes and expenses). It never opens apps or websites, reads files or the clipboard, changes files, or controls the computer, and it refuses chained tasks. Plain http: use it only on a network you trust.
+- **Phone page.** `web lan` prints a secret link to open on a phone on the same Wi-Fi (for every task use `web lan god`, see 8.25). In safe mode it only runs a fixed list of about 70 safe tasks (calculators, converters, a few small lists such as shopping, notes and expenses). It never opens apps or websites, reads files or the clipboard, changes files, or controls the computer, and it refuses chained tasks. Plain http: use it only on a network you trust.
 - **Browser extension** (`integrations/browser/`): select text on a page, pick a task, see the answer. Start the API with `jeeg --serve-api --allow-origin chrome-extension://<ID>`; browser extensions you name are the only web origin accepted.
 - **Send to JeeG** (`integrations/sendto/install.py`): right-click a file > Send to / Scripts > JeeG, type a task such as `hash` or `compress`. Windows, Linux (Nautilus, Nemo, Caja) and macOS (droplet app, built with `osacompile`).
 - **Raycast and Alfred** launchers (`integrations/raycast/`) and a Home Assistant example (`integrations/homeassistant/`, not tested here).
@@ -435,6 +435,23 @@ j("add expense 250 food lunch")
 - **Batch files.** Put one phrase per line in a text file (blank lines and `#` comments are ignored), then `batch myjobs.txt`. It stops at the first failure; `batch myjobs.txt keep going` continues. Variables work inside a batch file. `web`, `update`, `setup`, `plugin` and similar terminal-only commands are skipped.
 - **Search inside your files.** `index folder Documents` reads text, Markdown, code, HTML, CSV and Word (.docx) files into a private index on your computer. `search index invoice march` lists the best matches with a snippet. `index status` shows what is indexed, `index update` refreshes only changed files, `index remove Documents` (or `index remove all`) forgets it. Nothing is indexed from hidden folders, `node_modules`, symbolic links, binary files, or files whose names look like secrets (`.env`, `*.pem`, `*.key`, `id_rsa`, anything with password, token, secret or credential in the name). Files over 2 MB (20 MB for Word) are skipped. Your files are never changed.
 - **Spending analytics** from your `add expense` records: `spending trends` shows six months, which categories grew or shrank compared with the same days last month; `spending forecast` projects the month end from your pace and checks it against `set budget` limits; `spending anomalies` points out unusually large expenses and possible double entries. They are hints, not verdicts.
+
+### 8.25 Phone page: safe mode and god mode
+
+- `web lan` (safe mode, the default): prints a secret link; open it on a phone on the same Wi-Fi. Only about 70 safe tasks work (calculators, converters, shopping/notes/expenses, reminders).
+- `web lan god` (god mode): every task works from the phone, including opening apps, reading and changing files and `then` chains. Tasks that ask for confirmation show a "Yes, run it" button first. To protect you it needs a 6-digit PIN that appears only in the terminal (type it on the phone after opening the link), allows 5 wrong tries, closes itself after 30 minutes (`web lan god for 60 minutes` changes it, up to 240), shows a red banner with a countdown, and prints every command in the terminal.
+- `web`, `setup`, `update`, `plugin`, `autorun`, `report` and `share` stay terminal-only in both modes.
+- It is plain http. Use it only on your own Wi-Fi, never public Wi-Fi, and press Ctrl+C when you are done.
+
+### 8.26 AI mode: let an AI use JeeG
+
+- `connect ai` starts AI mode in **ask** mode: calculators, converters and small lists run at once; anything else waits until you type `y` in this terminal (no answer in 60 seconds means no).
+- `connect ai safe` allows only the safe list. `connect ai god` runs every task (tasks that delete or change things still ask you). Add `for 90 minutes` (default 30, maximum 240).
+- JeeG prints a link. In Claude.ai use Settings > Connectors > Add custom connector and paste the link that ends in `/mcp`, then start a new chat and say "use my JeeG". For other AIs paste the short message JeeG prints.
+- It needs a tunnel program that you install yourself: `cloudflared` (free, no account) or `ngrok`. `connect ai via ssh` uses localhost.run with only ssh. `connect ai no tunnel` gives a link that works only on this computer.
+- `connect ai phone` shows the y/n questions on your phone (own link and PIN, printed only in the terminal; first answer wins).
+- `connect ai read` allows look-only tasks too. `allow files,system` lets whole categories run unasked. `keep` reuses the same link next time (`forget` deletes it). Each call is also saved in a private session log.
+- Press Ctrl+C to close it; the link stops working at once. Full details: REMOTE_AI.md.
 
 ## 9. Teaching and checking JeeG
 
@@ -592,7 +609,7 @@ Run the checks yourself any time:
 
 ## 15. Appendix: every task
 
-496 tasks. In the Usage column, `<...>` is something you fill in and `[...]` is optional. A star means the task asks before running; "online" means it can use the internet.
+498 tasks. In the Usage column, `<...>` is something you fill in and `[...]` is optional. A star means the task asks before running; "online" means it can use the internet.
 
 
 ### ai
@@ -657,7 +674,7 @@ Run the checks yourself any time:
 | Task | Usage | What it does |
 |---|---|---|
 | clear clipboard |  | Clear the clipboard |
-| clipboard history | `clipboard history [number \| clear]` | List saved clipboard items, or copy one back (clipboard history, clipboard history 2, clear clipboard history) |
+| clipboard history | `clipboard history [number \| clear \| search <word>]` | List saved clipboard items, find one by a word, or copy one back (clipboard history, search clipboard history invoice, clipboard history 2, clear clipboard history) |
 | copy to clipboard | `copy to clipboard <text>` | Copy text to the clipboard (copy hello world) |
 | save clipboard | `save clipboard` | Keep what is on the clipboard in your private clipboard history (save clipboard) |
 | show clipboard |  | Show what is on the clipboard |
@@ -762,6 +779,7 @@ Run the checks yourself any time:
 | clean temp files * |  | Delete temporary files older than 24 hours |
 | compare files | `compare files <a> <b>` | Compare two files: same or different, and what changed (compare files a.txt b.txt) |
 | compare folders | `compare folders <a> <b>` | Compare two folders: what is only in one, and what differs (compare folders a b) |
+| contact sheet | `contact sheet <folder>` | Make one picture with small thumbnails of every photo in a folder (contact sheet <folder>). Needs Pillow. |
 | convert encoding | `convert encoding <file>` | Fix garbled text by saving a file as UTF-8 (convert encoding old.txt) |
 | copy file | `copy file <file> to <folder>` | Copy a file or folder (copy file report.pdf to desktop) |
 | copy path | `copy path of <file>` | Copy a file or folder's full path to the clipboard (copy path of report.pdf) |
@@ -1184,6 +1202,7 @@ Run the checks yourself any time:
 | cpu usage |  | Show current CPU load |
 | disk space |  | Show free space on your drives |
 | gpu info |  | Show graphics card details |
+| health check |  | One-screen check of your computer: disk, memory, CPU, battery, uptime, with warnings |
 | installed programs | `installed programs [name]` | List installed programs, or search them (installed programs chrome) |
 | keep awake | `keep awake [2 hours]` | Stop the computer sleeping for a while (keep awake 2 hours) |
 | kill process * | `kill process <name>` | Close a program by name (e.g. kill process notepad) |

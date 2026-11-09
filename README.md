@@ -7,7 +7,7 @@ JeeG finds the matching script in the `scripts` folder and runs it.
 
 - Pure Python 3.9+, nothing to install. Works on Windows, macOS and Linux.
 - Light: about 16 MB of memory, about 65 ms per command, nothing running in the background (except reminders and alarms you set yourself).
-- 496 ready-made tasks. You can add your own by dropping in a file.
+- 498 ready-made tasks. You can add your own by dropping in a file.
 
 ---
 
@@ -298,6 +298,22 @@ A plugin is one `.py` file. Make a starter with `jeeg plugin new my_task`, edit 
 - Critical system processes cannot be killed with `kill process`.
 - No task sends your files or personal data anywhere. Web tasks only open a page in your browser.
 
+## What is new in 2.14
+
+- **Approve from your phone:** `connect ai phone` shows the AI's y/n questions on your phone with Allow and Deny buttons (own secret link + PIN, shown only in the terminal).
+
+## What is new in 2.13
+
+- **AI mode:** `connect ai read` (look-only), `allow <category>`, `keep` (same link every time) and a private session log. New tasks: `health check`, `contact sheet`, `search clipboard history`. Light/dark button on the web page.
+
+## What is new in 2.12
+
+- **AI mode:** `connect ai` makes a temporary https link (through `cloudflared` or `ngrok`, which you install yourself) that you paste into Claude.ai (Settings > Connectors > Add custom connector) or any AI that can open links, so it can use JeeG on your computer. Three modes: `safe`, `ask` (default: you type y for anything beyond the safe list) and `god`. Time-limited, secret link, every call printed. See REMOTE_AI.md.
+
+## What is new in 2.11
+
+- **Phone page god mode:** `web lan god` lets a phone run any task (apps, files, chains, confirmation buttons) with a secret link, a 6-digit PIN, 5-try lockout, a time limit and a terminal log. `web lan` stays the safe default.
+
 ## What is new in 2.10
 
 - **Variables and `ans`:** `set var rate = 18`, then `gst 1000 $rate`; `calculate ans * 2`.
@@ -309,7 +325,7 @@ A plugin is one `.py` file. Make a starter with `jeeg plugin new my_task`, edit 
 
 - **10 new tasks:** `csv to json`, `chart csv`, `readability`, `replace in files`, `strip exif`, `profit margin`, `compare loans`, `freelance rate`, `toml to json`, `watch folder`.
 - **Smarter:** it remembers which task you picked when two fit; routines can use `{today}`, `{month}`, `{year}`...
-- **Phone page:** `web lan` (secret link, same Wi-Fi, a fixed list of about 70 safe tasks).
+- **Phone page:** `web lan` (safe mode: secret link, same Wi-Fi, about 70 safe tasks) and `web lan god` (every task, with a PIN, a time limit and confirmation buttons).
 - **No Python needed:** download `jeeg-windows-x64.exe`, `jeeg-macos` or `jeeg-linux-x64` from a release; `update now` keeps it current (SHA-256 checked).
 - **Right-click "Send to JeeG"**, a **browser extension**, Raycast and Alfred launchers (`integrations/`).
 - `report` makes a bug-report file; `share plugin|routines|aliases` makes one shareable file.

@@ -13,6 +13,7 @@ import shutil
 import subprocess
 import sys
 import threading
+import time
 import urllib.error
 import urllib.request
 from pathlib import Path
@@ -404,7 +405,9 @@ def cmd_setup(here: Path, state: Path, entries: list[dict], assume_yes: bool = F
 PAGE = """<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>JeeG</title><style>
 :root{--bg:#faf9f5;--fg:#1f1e1d;--mut:#73726c;--card:#fff;--line:#e8e6dc;--acc:#c96442}
-@media(prefers-color-scheme:dark){:root{--bg:#262624;--fg:#f0eee6;--mut:#a09f97;--card:#30302e;--line:#444441;--acc:#d97757}}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#262624;--fg:#f0eee6;--mut:#a09f97;--card:#30302e;--line:#444441;--acc:#d97757}}
+:root[data-theme=dark]{--bg:#262624;--fg:#f0eee6;--mut:#a09f97;--card:#30302e;--line:#444441;--acc:#d97757}
+#th{background:none;color:var(--mut);border:1px solid var(--line);padding:2px 10px;font-size:12px}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 system-ui,-apple-system,Segoe UI,sans-serif}
 main{max-width:680px;margin:0 auto;padding:40px 16px}h1{font:600 28px Georgia,serif;margin:0 0 4px}p.s{color:var(--mut);margin:0 0 24px}
 form{display:flex;gap:8px}input{flex:1;padding:12px 14px;font:inherit;color:inherit;background:var(--card);border:1px solid var(--line);border-radius:12px}
@@ -413,15 +416,25 @@ pre{white-space:pre-wrap;word-wrap:break-word;background:var(--card);border:1px 
 .q{color:var(--mut);margin-top:20px;font-size:14px}.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
 .chips button{background:var(--card);color:var(--fg);border:1px solid var(--line);padding:6px 12px;font-size:14px}
 footer{margin-top:32px;color:var(--mut);font-size:13px}</style></head><body><main>
+<div id="gb" hidden style="background:#b3261e;color:#fff;padding:10px 14px;border-radius:12px;margin-bottom:16px;font-size:14px"><b>GOD MODE</b>: every task can run on your computer from this page. Closes in <span id="gt"></span>.</div>
+<form id="pf" hidden style="margin-bottom:16px"><input id="pin" inputmode="numeric" autocomplete="off" maxlength="12" placeholder="PIN shown in the terminal"><button>Unlock</button></form>
 <h1>JeeG</h1><p class="s">Say the task. It runs on this computer. Nothing leaves it.</p>
 <form id="f"><input id="q" autocomplete="off" autofocus placeholder="for example: gst 2500 18" maxlength="500"><button>Run</button></form>
 <div class="chips" id="c"></div><div id="out"></div>
-<footer>Local page, only reachable from this computer. Tasks that ask for confirmation are declined here; run them in the terminal.</footer></main>
+<footer id="ft">Local page, only reachable from this computer. Tasks that ask for confirmation are declined here; run them in the terminal.</footer><button id="th" type="button" title="Switch light or dark" style="margin:12px 0 0">theme</button></main>
 <script>
-const T="__TOKEN__",o=document.getElementById("out"),q=document.getElementById("q");
+(function(){var r=document.documentElement,t=null;try{t=localStorage.getItem("jeeg-theme")}catch(e){}if(t)r.dataset.theme=t;
+document.getElementById("th").onclick=function(){var d=r.dataset.theme||(matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light");d=d==="dark"?"light":"dark";r.dataset.theme=d;try{localStorage.setItem("jeeg-theme",d)}catch(e){}}})();
+const T="__TOKEN__",MODE="__MODE__";let END=Date.now()+__SECS__*1000,PIN="";const o=document.getElementById("out"),q=document.getElementById("q");
+if(MODE==="god"){document.getElementById("gb").hidden=false;document.getElementById("pf").hidden=false;document.getElementById("f").hidden=true;document.getElementById("c").hidden=true;
+document.getElementById("ft").textContent="God mode: confirmation tasks ask you first. Use only on your own trusted Wi-Fi. Stop it any time with Ctrl+C in the terminal.";
+setInterval(()=>{const s=Math.max(0,Math.round((END-Date.now())/1000));document.getElementById("gt").textContent=Math.floor(s/60)+":"+String(s%60).padStart(2,"0");if(!s)document.body.innerHTML="<main><h1>JeeG</h1><p>God mode ended. Start it again in the terminal.</p></main>"},500);
+document.getElementById("pf").onsubmit=e=>{e.preventDefault();PIN=document.getElementById("pin").value.trim();document.getElementById("pf").hidden=true;document.getElementById("f").hidden=false;document.getElementById("c").hidden=false;q.focus()}}
+else if(MODE==="safe"){document.getElementById("ft").textContent="Phone page (safe mode): calculators, converters and small lists only. Use only on your own trusted Wi-Fi."}
 for(const s of["system info","show ip","weather mumbai","gst 2500 18","emi 5 lakh 8.5 5 years","todo list"]){const b=document.createElement("button");b.type="button";b.textContent=s;b.onclick=()=>{q.value=s;run()};document.getElementById("c").append(b)}
-async function run(){const v=q.value.trim();if(!v)return;const d=document.createElement("div");d.className="q";d.textContent="> "+v;const p=document.createElement("pre");p.textContent="...";o.prepend(p);o.prepend(d);
-try{const r=await fetch("/run",{method:"POST",headers:{"Content-Type":"application/json","X-JeeG-Token":T},body:JSON.stringify({q:v})});const j=await r.json();p.textContent=j.out||"(no output)"}catch(e){p.textContent="Could not reach JeeG."}q.value=""}
+async function run(v,yes){v=v||q.value.trim();if(!v)return;const d=document.createElement("div");d.className="q";d.textContent="> "+v;const p=document.createElement("pre");p.textContent="...";o.prepend(p);o.prepend(d);
+try{const r=await fetch("/run",{method:"POST",headers:{"Content-Type":"application/json","X-JeeG-Token":T,"X-JeeG-Pin":PIN},body:JSON.stringify({q:v,yes:!!yes})});const j=await r.json();p.textContent=j.out||"(no output)";
+if(j.confirm){const b=document.createElement("button");b.type="button";b.textContent="Yes, run it";b.style.marginTop="8px";b.onclick=()=>{b.remove();run(v,true)};p.after(b)}}catch(e){p.textContent="Could not reach JeeG."}q.value=""}
 document.getElementById("f").onsubmit=e=>{e.preventDefault();run()};
 </script></body></html>"""
 
@@ -455,16 +468,21 @@ def lan_ip() -> str:
         return "127.0.0.1"
 
 
-def serve(here: Path, state: Path, port: int = 8765, open_browser: bool = True, lan: bool = False, bind: str = "") -> int:
+def serve(here: Path, state: Path, port: int = 8765, open_browser: bool = True, lan: bool = False, bind: str = "", god: bool = False, minutes: int = 30) -> int:
     """The local web page. lan=True: also reachable from your phone on the same Wi-Fi, with a secret link and a safe task list."""
     token = secrets.token_urlsafe(24)
     ip = lan_ip() if lan else "127.0.0.1"
     allowed_hosts = {f"127.0.0.1:{port}", f"localhost:{port}"} | ({f"{ip}:{port}"} if lan else set())
     engine = here / "jeeg.py"
     link_key = secrets.token_urlsafe(18) if lan else ""
+    mode = "god" if god else ("safe" if lan else "local")
+    pin = "".join(secrets.choice("0123456789") for _ in range(6)) if god else ""
+    deadline = time.time() + max(0.01, min(float(minutes), 240)) * 60 if god else None
+    bad = {"n": 0}                                          # wrong PIN attempts (god mode locks after 5)
+    lock = threading.Lock()
     if lan:
         from jeeg_bridge import Policy
-        policy = Policy(only=LAN_SAFE)
+        policy = None if god else Policy(only=LAN_SAFE)
         gate = threading.BoundedSemaphore(4)                  # at most 4 phone requests at once
 
     class H(http.server.BaseHTTPRequestHandler):
@@ -495,7 +513,8 @@ def serve(here: Path, state: Path, port: int = 8765, open_browser: bool = True, 
             if self.path.split("?")[0] == "/":
                 if lan and not secrets.compare_digest(self.path.partition("?k=")[2][:64], link_key):
                     return self._send(403, "Open the full link that JeeG printed in the terminal.", "text/plain")
-                return self._send(200, PAGE.replace("__TOKEN__", token))
+                left = int(max(0, deadline - time.time())) if god else 0
+                return self._send(200, PAGE.replace("__TOKEN__", token).replace("__MODE__", mode).replace("__SECS__", str(left)))
             self._send(404, "Not found", "text/plain")
 
         def do_POST(self):
@@ -506,11 +525,25 @@ def serve(here: Path, state: Path, port: int = 8765, open_browser: bool = True, 
             origin = self.headers.get("Origin")
             if origin and origin not in {f"http://{h}" for h in allowed_hosts}:
                 return self._send(403, "Forbidden", "text/plain")
+            if god:
+                if time.time() > deadline:
+                    threading.Thread(target=httpd.shutdown, daemon=True).start()
+                    return self._send(403, json.dumps({"out": "God mode has ended. Start it again in the terminal."}), "application/json")
+                with lock:
+                    if bad["n"] >= 5:
+                        return self._send(429, json.dumps({"out": "Locked after 5 wrong PINs. Stop and restart the phone page."}), "application/json")
+                    if not secrets.compare_digest(self.headers.get("X-JeeG-Pin", "").encode("utf-8"), pin.encode("utf-8")):
+                        bad["n"] += 1
+                        left_tries = 5 - bad["n"]
+                        print(f"{time.strftime('%H:%M:%S')}  WRONG PIN from {self.client_address[0]} ({left_tries} tries left)", flush=True)
+                        return self._send(403, json.dumps({"out": f"Wrong PIN ({left_tries} tries left)."}), "application/json")
             try:
                 n = int(self.headers.get("Content-Length", "0"))
                 if not 0 < n <= 4096:
                     raise ValueError
-                q = str(json.loads(self.rfile.read(n).decode("utf-8")).get("q", "")).strip()[:500]
+                body = json.loads(self.rfile.read(n).decode("utf-8"))
+                q = str(body.get("q", "")).strip()[:500]
+                yes = body.get("yes") is True
             except (ValueError, UnicodeDecodeError, AttributeError):
                 return self._send(400, json.dumps({"out": "Bad request."}), "application/json")
             if not q:
@@ -521,16 +554,24 @@ def serve(here: Path, state: Path, port: int = 8765, open_browser: bool = True, 
                 return self._send(200, json.dumps({"out": f"'{low}' is only available in the terminal."}), "application/json")
             if lan:
                 from jeeg_bridge import dispatch
-                if re.search(r"\bthen\b", q, re.I):
+                if not god and re.search(r"\bthen\b", q, re.I):
                     return self._send(200, json.dumps({"out": "Chaining tasks is only available in the terminal."}), "application/json")
                 if not gate.acquire(blocking=False):
                     return self._send(503, json.dumps({"out": "Busy, try again in a moment."}), "application/json")
                 try:
-                    ans = dispatch({"op": "run", "query": q}, allow_confirm=False, home=str(state), policy=policy, source="phone")
+                    if god:
+                        print(f"{time.strftime('%H:%M:%S')}  {self.client_address[0]}  {q}" + ("   [confirmed]" if yes else ""), flush=True)
+                    ans = dispatch({"op": "run", "query": q, "yes": yes, "timeout": 120 if god else 60}, allow_confirm=god, home=str(state),
+                                   policy=policy, source="phone-god" if god else "phone")
                 finally:
                     gate.release()
-                out = (ans.get("result", {}).get("output") if ans.get("ok") else ans.get("error")) or "(no output)"
-                return self._send(200, json.dumps({"out": str(out)[:20000]}), "application/json")
+                res = ans.get("result", {}) if ans.get("ok") else {}
+                out = (res.get("output") if ans.get("ok") else ans.get("error")) or "(no output)"
+                payload = {"out": str(out)[:20000]}
+                if god and res.get("needs_confirmation"):
+                    payload["confirm"] = True
+                    payload["out"] = (str(out)[:20000] + "\n\nThis task asks for confirmation. Press the button to run it.").strip()
+                return self._send(200, json.dumps(payload), "application/json")
             try:
                 r = subprocess.run(([sys.executable] if getattr(sys, "frozen", False) else [sys.executable, str(engine)]) + [q], capture_output=True, text=True, timeout=60,
                                    stdin=subprocess.DEVNULL, env=dict(os.environ, PYTHONIOENCODING="utf-8"), encoding="utf-8", errors="replace")
@@ -545,10 +586,17 @@ def serve(here: Path, state: Path, port: int = 8765, open_browser: bool = True, 
         print(f"Could not start on port {port}: {ex.strerror or ex}. Try:  serve 8800")
         return 1
     url = f"http://{ip}:{port}/?k={link_key}" if lan else f"http://127.0.0.1:{port}/"
-    if lan:
+    if god:
+        print(f"\n  JeeG phone page, GOD MODE\n  Link: {url}\n  PIN : {pin}   (type it on the phone after opening the link)\n")
+        print("  Every task can run on this computer from the phone (open apps, read files, change files, shut down), except the")
+        print("  terminal-only commands (web, setup, update, plugin, autorun, report, share). Tasks that ask for confirmation show a button first.")
+        print(f"  It closes by itself in {max(1, min(int(round(float(minutes))), 240))} minutes, or after 5 wrong PINs. Anyone with the link AND the PIN has full use of this computer's JeeG,")
+        print("  and the connection is plain http: use it only on a Wi-Fi you trust. Each command is printed below. Ctrl+C stops it.\n", flush=True)
+        open_browser = False
+    elif lan:
         print(f"JeeG phone page: {url}\nOpen that link on a phone on the same Wi-Fi. Anyone who has the link and is on this network can use it,")
-        print("so use it only on a network you trust (not public Wi-Fi). It is plain http. Only everyday tasks work from it (money, text, health,")
-        print("study, lists, reminders ...); nothing that opens apps, changes files or controls the computer. Press Ctrl+C to stop.")
+        print("so use it only on a network you trust (not public Wi-Fi). It is plain http. Safe mode: only a fixed list of about 70 calculators, converters")
+        print("and small lists works; nothing that opens apps, reads files or controls the computer. For every task use:  web lan god. Press Ctrl+C to stop.")
         open_browser = False
     else:
         print(f"JeeG web page: {url}\nOnly this computer can open it. Press Ctrl+C to stop.")

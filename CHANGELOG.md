@@ -1,5 +1,40 @@
 # Changelog
 
+## 2.14.0
+
+- **Approve from your phone.** `connect ai phone` (ask or god mode) also shows each y/n question on a phone page, with big Allow and Deny buttons. The first answer wins: the phone or the terminal. The page has its own secret link and a 6-digit PIN that are shown only in the terminal (the AI is never told them); 5 wrong PINs lock it; it closes with the AI link; no answer in 60 seconds still means no. It works from anywhere the tunnel link reaches (mobile data included). With `no tunnel` only this computer can open it.
+- Tests: `tests/test_remote.py` now has 113 checks. The page was also driven in a real headless browser (PIN, question, Allow, task ran).
+
+## 2.13.0
+
+- **AI mode upgrades.**
+  - `connect ai read`: safe tasks plus look-only tasks (disk space, file lists, git status, system info ...). Nothing that changes anything.
+  - `connect ai allow files,system`: let whole task categories run without asking (unknown category names are refused).
+  - `connect ai keep`: the secret part of the link is saved (private file in your JeeG folder) and reused, so a fixed address (for example your own cloudflared/Tailscale tunnel with `url ...` and `port ...`) needs adding to the AI only once. `connect ai forget` deletes it.
+  - Session log: every call is also written to `ai-sessions/<date>.log` in your JeeG folder (only you can read it). `connect ai no log` turns it off.
+- **New tasks:** `health check` (one-screen disk, memory, CPU, battery, uptime with warnings), `contact sheet <folder>` (one picture of thumbnails, needs Pillow), and `search clipboard history <word>`.
+- The web page has a light/dark button (remembers your choice).
+- Tests: `tests/test_remote.py` now has 85 checks; 7 new routing phrases.
+
+## 2.12.0
+
+- **AI mode: `connect ai`.** Lets an AI assistant (Claude.ai, ChatGPT, any agent that can open a link) use JeeG on your computer. JeeG starts a small server that listens on 127.0.0.1 only, starts a tunnel program you already have (`cloudflared`, `ngrok`, or `ssh` to localhost.run) and prints a temporary https link. Paste the link into the AI (for Claude.ai: Settings > Connectors > Add custom connector > paste the MCP link).
+  - The link contains a 43-character random secret; every wrong guess gets the same plain 404; browsers (Origin header) and unknown Host names are refused; it closes after 30 minutes (`for 90 minutes`, maximum 240) or on Ctrl+C.
+  - Three modes: `connect ai safe` (only the fixed safe list), `connect ai` (**ask**, the default: safe tasks run at once, anything else waits for your y/n in the terminal, no answer in 60 s = no), `connect ai god` (every task; tasks that change or delete things still need your y).
+  - Speaks MCP (`jeeg_run`, `jeeg_find`, `jeeg_list`) and a plain URL API (`/run?q=...`) for AIs that can only open links.
+  - Terminal-only commands (`web`, `setup`, `update`, `plugin`, `autorun`, `report`, `share`, `connect`) stay blocked. At most 4 requests at once, 120 per minute, 16 KB bodies, 30 KB answers. Every call is printed in the terminal.
+  - `connect ai no tunnel` gives a local link only; `connect ai url https://...` uses an address you already have (for example Tailscale Funnel).
+  - JeeG has no AI in it and sends nothing itself. The tunnel provider and the AI service see what passes through the link, and task output goes back to the AI.
+- Tests: `tests/test_remote.py` (63 checks, using fake tunnel programs). The real Claude.ai connection and real tunnels could not be tested in the build sandbox.
+
+## 2.11.0
+
+- **Phone page, two modes.** `web lan` is **safe mode** (a fixed list of about 70 calculators, converters and small lists). `web lan god` is **god mode**: every task can run from the phone, including opening apps, reading and changing files, chaining with `then`, and tasks that ask for confirmation (a "Yes, run it" button appears first). Add `for 60 minutes` to change the default 30-minute limit (maximum 240).
+  - God mode needs the secret link **and** a 6-digit PIN that is shown only in the terminal; 5 wrong PINs lock it; it closes by itself when the time is up; every command is printed in the terminal with the phone's address; the page shows a red GOD MODE banner and a countdown.
+  - Terminal-only commands (`web`, `setup`, `update`, `plugin`, `autorun`, `report`, `share`) stay blocked in both modes, because they change JeeG itself.
+  - Still plain http on your Wi-Fi: use it only on a network you trust.
+- Tests: `tests/test_phone.py` (41 checks).
+
 ## 2.10.0
 
 - **Your own variables:** `set var rate = 18`, then use `$rate` (or `${rate}`) in any phrase: `gst 1000 $rate`. `vars` lists them, `remove var rate` deletes one. Unknown `$names` are left as typed, so `$5` still means five dollars.

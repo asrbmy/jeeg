@@ -35,10 +35,13 @@ ALLOWED_HELPERS = {"_net.py", "_lib.py"}          # _lib: urllib.parse only (not
 helpers = {p.name for p in SCR.glob("_*.py") if net_imports(p)}
 check("only _net.py (and nothing else) among helpers uses network modules", helpers <= {"_net.py", "_sys.py", "_worker.py"} | ALLOWED_HELPERS, str(helpers))
 engine = {p.name for p in ROOT.glob("*.py") if net_imports(p)}
-check("engine network use is limited to jeeg.py (doctor), jeeg_cmds.py (update, library, plugin install, local web page) and jeeg_bridge.py (local API)",
-      engine <= {"jeeg.py", "jeeg_cmds.py", "jeeg_bridge.py"}, str(engine))
+check("engine network use is limited to jeeg.py (doctor), jeeg_cmds.py (update, library, plugin install, local web page), jeeg_bridge.py (local API) and jeeg_remote.py (AI mode)",
+      engine <= {"jeeg.py", "jeeg_cmds.py", "jeeg_bridge.py", "jeeg_remote.py"}, str(engine))
 bridge_src = (ROOT / "jeeg_bridge.py").read_text(encoding="utf-8")
 check("the local API binds to 127.0.0.1 only", '("127.0.0.1", port)' in bridge_src and "0.0.0.0" not in bridge_src and '("", ' not in bridge_src)
+remote_src = (ROOT / "jeeg_remote.py").read_text(encoding="utf-8")
+check("AI mode binds to 127.0.0.1 only and checks a secret in constant time", '("127.0.0.1", port)' in remote_src and "0.0.0.0" not in remote_src and "compare_digest" in remote_src)
+check("AI mode never uses a shell to start the tunnel", "shell=True" not in remote_src and "os.system" not in remote_src)
 check("the local API needs a token and refuses browsers", "compare_digest" in bridge_src and 'headers.get("Origin")' in bridge_src)
 
 # 2. every task script that imports a network module, or _net, says so with '# network: yes'
@@ -52,8 +55,8 @@ for p in sorted(SCR.glob("*.py")):
         check(f"{p.stem} imports network code and is tagged '# network: yes'", tagged)
 
 # 3. the only web addresses written in the engine are the ones documented in PRIVACY.md
-allowed = {"api.github.com", "github.com", "raw.githubusercontent.com", "127.0.0.1", "localhost", "example.com", "example.invalid", "files.pythonhosted.org", "pypi.org", "1.1.1.1", "evil.example"}
-for f in ("jeeg.py", "jeeg_cmds.py", "jeeg_bridge.py"):
+allowed = {"api.github.com", "github.com", "raw.githubusercontent.com", "127.0.0.1", "localhost", "example.com", "example.invalid", "files.pythonhosted.org", "pypi.org", "1.1.1.1", "evil.example", "developers.cloudflare.com"}
+for f in ("jeeg.py", "jeeg_cmds.py", "jeeg_bridge.py", "jeeg_remote.py"):
     hosts = set(re.findall(r"https?://([A-Za-z0-9.\-]+)", (ROOT / f).read_text(encoding="utf-8")))
     check(f"{f} only mentions documented hosts", hosts <= allowed, str(hosts - allowed))
 check("engine has no telemetry words", not re.search(r"analytics|telemetry\s*\(|track_event|sentry|mixpanel|segment\.io", (ROOT / "jeeg.py").read_text() + (ROOT / "jeeg_cmds.py").read_text(), re.I))

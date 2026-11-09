@@ -67,6 +67,8 @@ jobs:
           python tests/test_v28.py
           python tests/test_v29.py
           python tests/test_v210.py
+          python tests/test_phone.py
+          python tests/test_remote.py
           python tests/test_quality.py
           python tests/test_privacy.py
           python tests/test_security.py
@@ -129,3 +131,29 @@ jobs:
         with:
           packages-dir: dist/
           skip-existing: true
+  pypi-status:
+    # Says in plain words why the pypi job did or did not run (see the "Summary" page of the run).
+    needs: [check, build, assets]
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Explain
+        env:
+          GO: ${{ needs.check.outputs.go }}
+          VERSION: ${{ needs.check.outputs.version }}
+          BUILD: ${{ needs.build.result }}
+          ASSETS: ${{ needs.assets.result }}
+          FLAG: ${{ vars.PUBLISH_PYPI }}
+        run: |
+          {
+            echo "### Why PyPI was (not) updated"
+            if [ "$GO" != "true" ]; then
+              echo "- **Nothing was released:** version \`$VERSION\` already has a tag. Raise \`__version__\` in jeeg.py and push, or press **Run workflow** to retry this version."
+            elif [ "$BUILD" != "success" ] || [ "$ASSETS" != "success" ]; then
+              echo "- **A job failed:** build = $BUILD, assets = $ASSETS. Open that job and read the first red line."
+            elif [ "$FLAG" != "true" ]; then
+              echo "- **The upload switch is off.** Add a repository *variable* (not a secret) named \`PUBLISH_PYPI\` with the value \`true\`: Settings > Secrets and variables > Actions > Variables. Then press **Run workflow**."
+            else
+              echo "- The pypi job ran. If it failed with \`invalid-publisher\`, the trusted publisher on pypi.org does not match: owner, repository, workflow \`publish.yml\`, environment \`pypi\`."
+            fi
+          } | tee -a "$GITHUB_STEP_SUMMARY"

@@ -21,7 +21,7 @@ def has(q, *needles, rc=0, absent=()):
     return out
 
 import jeeg
-ok(jeeg.__version__ >= "2.10.0", "version " + jeeg.__version__)
+ok(tuple(int(x) for x in jeeg.__version__.split(".")) >= (2, 10, 0), "version " + jeeg.__version__)
 
 # ---- variables start empty
 has("vars", "No variables yet")

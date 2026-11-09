@@ -60,7 +60,7 @@ import sys
 import time
 from pathlib import Path
 
-__version__ = "2.10.0"
+__version__ = "2.14.0"
 
 HERE = Path(__file__).resolve().parent
 FROZEN = bool(getattr(sys, "frozen", False))      # True inside the standalone program built with PyInstaller
@@ -1289,10 +1289,17 @@ def handle(line: str, dirs, opt) -> int | None:
             print(jeeg_cmds.COMPLETION_HELP)
             return 0
         return jeeg_cmds.cmd_completion(parts[1], all_entries)
-    m = re.fullmatch(r"(?:web|ui|web page|web ui)(?:\s+(lan|phone|wifi))?(?:\s+(\d{4,5}))?", low)
+    m = re.fullmatch(r"(?:connect(?:\s+jeeg)?(?:\s+to)?\s+(?:an\s+)?(?:ai|agent|claude|chatgpt|llm)|ai\s+(?:mode|connect))(?:\s+(.*))?", low)
     if m:
+        import jeeg_remote
+        return jeeg_remote.cmd_connect(STATE, m.group(1) or "")
+    m = re.fullmatch(r"(?:web|ui|web page|web ui)(?:\s+(lan|phone|wifi))?(?:\s+(god|full|everything))?(?:\s+(\d{4,5}))?(?:\s+(?:for\s+)?(\d{1,3})\s*(?:min|mins|minutes))?", low)
+    if m and not (m.group(2) and not m.group(1)):
         import jeeg_cmds
-        return jeeg_cmds.serve(HERE, STATE, int(m.group(2) or 8765), lan=bool(m.group(1)))
+        return jeeg_cmds.serve(HERE, STATE, int(m.group(3) or 8765), lan=bool(m.group(1)), god=bool(m.group(2)), minutes=max(1, int(m.group(4) or 30)))
+    if re.fullmatch(r"(?:web|ui)\s+(?:god|full|everything)(?:\s+.*)?", low):
+        print("God mode is for the phone page. Use:  web lan god   (add 'for 60 minutes' to change the 30-minute limit)")
+        return 1
     if low == "alias" or low.startswith("alias "):
         return cmd_alias(q, entries)
     if low == "explain" or low.startswith("explain "):
