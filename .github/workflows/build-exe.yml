@@ -54,6 +54,7 @@ jobs:
         run: |
           ./${{ matrix.exe }} --version
           ./${{ matrix.exe }} "calculate 12 times 7" | grep -q "84"
+          ./${{ matrix.exe }} selfcheck
       - name: Attach to the release
         shell: bash
         env:

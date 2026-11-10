@@ -302,5 +302,101 @@ if mm:
     ok(ai not in mm.group(1), "the AI secret and the phone secret differ")
 proc.terminate(); proc.wait(5)
 
+# ---- v2.15: allow always, call limit, write cap, notify, ai log, install mcp
+a = R.parse_args("limit 50 notify ntfy.sh/MyTopic123 phone"); ok(a["limit"] == 50 and a["notify"] == "ntfy.sh/MyTopic123" and a["phone"], "limit/notify parsed: " + str(a))
+ok(R.parse_args("limit 99999")["limit"] == 1000 and R.parse_args("")["limit"] == 100, "limit capped, default 100")
+# allow always (terminal answer 'a' and phone)
+ap = R.Approver(phone=R.PhoneApprovals(), wait=10); rs = R.RemoteState("ask", 5, HOME, ap, log=lambda *_: None)
+box = {}
+th = threading.Thread(target=lambda: box.update(r=ap.ask("x", "hash_text")), daemon=True); th.start()
+for _ in range(50):
+    w = ap.phone.waiting()
+    if w: break
+    time.sleep(0.1)
+ok(w and w[0]["always"] is True, "phone offers 'allow always' for a single task")
+ap.phone.answer(w[0]["id"], True, True); th.join(5)
+ok(box["r"] is True and "hash_text" in ap.always, "allow always remembered for this task")
+ok(ap.ask("again", "hash_text") is True, "asked again: no question, already allowed")
+ok("other_task" not in ap.always and ap.always == {"hash_text"}, "always is per task only")
+ap2 = R.Approver(phone=R.PhoneApprovals(), wait=10)
+th = threading.Thread(target=lambda: box.update(r=ap2.ask("y", "")), daemon=True); th.start()
+for _ in range(50):
+    w = ap2.phone.waiting()
+    if w: break
+    time.sleep(0.1)
+ok(w and w[0]["always"] is False, "no 'always' button for confirmation questions")
+ap2.phone.answer(w[0]["id"], True, True); th.join(5)
+ok(box["r"] is True and not ap2.always, "always is ignored without a task name")
+# phone endpoint accepts always only as a boolean
+rs, h, port = serve_phone(); ap = rs.approver
+t, box = ask_in_thread("hash text hello"); items = wait_pending()
+c, b = preq(port, rs, "answer", {"id": items[0]["id"], "allow": True, "always": "yes"}); ok(c == 400, "always must be a boolean")
+c, b = preq(port, rs, "answer", {"id": items[0]["id"], "allow": True, "always": True}); t.join(15)
+ok(box["d"]["ok"] and "hash_text" in ap.always, "phone allow-always works end to end")
+asked_before = len(json.loads(preq(port, rs, "pending")[1])["items"])
+d = run(port, rs, "hash text world"); ok(d["ok"] and json.loads(preq(port, rs, "pending")[1])["items"] == [], "same task later runs without a question")
+h.shutdown()
+# call limit
+rs, h, port = serve("safe"); rs.limit = 3
+res = [run(port, rs, "gst 100 18")["ok"] for _ in range(3)]
+c, body = req(port, rs.base_path + "run", {"query": "gst 100 18"})
+ok(all(res) and c == 429 and "limit" in body, "request limit stops the 4th call")
+m = mcp(port, rs, "tools/call", {"name": "jeeg_run", "arguments": {"query": "gst 100 18"}}); ok(m["result"]["isError"] and "limit" in m["result"]["content"][0]["text"], "limit applies to MCP too")
+ok(mcp(port, rs, "tools/list")["result"]["tools"], "listing is not counted")
+h.shutdown()
+# write cap in god mode
+rs, h, port = serve("god"); rs.approver.write_cap = 2
+r1, r2, r3 = [run(port, rs, "hash text hello") for _ in range(3)]
+ok(r1["ok"] and r2["ok"] and not r3["ok"] and "Too many" in r3["output"], "non-safe tasks are capped per minute")
+ok(run(port, rs, "gst 100 18")["ok"], "safe tasks are not capped")
+h.shutdown()
+# notify: pings, rate limited, no details
+sent = []
+import urllib.request as _ur
+real = _ur.urlopen
+class _Fake:
+    def read(self, n=0): return b""
+def fake_open(req, timeout=0):
+    sent.append((req.full_url, req.data)); return _Fake()
+_ur.urlopen = fake_open
+try:
+    n = R.make_notifier("ntfy.sh/MyTopic123"); n(); n(); time.sleep(0.5)
+finally:
+    _ur.urlopen = real
+ok(len(sent) == 1 and sent[0][0] == "https://ntfy.sh/MyTopic123" and b"waiting" in sent[0][1], "notify sends one short ping")
+ok(b"hash" not in sent[0][1] and R.secrets.token_urlsafe(4) not in sent[0][0], "ping carries no request details")
+# ai log
+r = subprocess.run([sys.executable, str(ROOT / "jeeg.py"), "ai log"], capture_output=True, text=True, env=dict(os.environ, JEEG_HOME=HOME), cwd=WORK, stdin=subprocess.DEVNULL, timeout=30)
+ok("AI session" in r.stdout and "newest last" in r.stdout, "ai log shows the latest session: " + r.stdout[:120])
+r = subprocess.run([sys.executable, str(ROOT / "jeeg.py"), "ai log list"], capture_output=True, text=True, env=dict(os.environ, JEEG_HOME=HOME), cwd=WORK, stdin=subprocess.DEVNULL, timeout=30)
+ok("line(s)" in r.stdout, "ai log list")
+rs, h, port = serve("god")
+for q in ("ai log", "install mcp cursor yes", "selfcheck", "batch x"):
+    d = run(port, rs, q); ok(not d["ok"] and "terminal" in d["output"], "terminal-only for the AI: " + q)
+h.shutdown()
+# install mcp
+import json as _j
+base = tempfile.mkdtemp(prefix="jeeg-rm-home-")
+cfgf = R._mcp_targets(base)["claude-desktop"]; cfgf.parent.mkdir(parents=True, exist_ok=True)
+cfgf.write_text(_j.dumps({"mcpServers": {"other": {"command": "x"}}, "theme": "dark"}))
+R.cmd_install_mcp(["py", "jeeg.py"], "claude-desktop", base)
+ok("jeeg" not in _j.loads(cfgf.read_text())["mcpServers"], "install without yes changes nothing")
+R.cmd_install_mcp(["py", "jeeg.py"], "claude desktop yes", base)
+c = _j.loads(cfgf.read_text())
+ok("jeeg" in c["mcpServers"] and "other" in c["mcpServers"] and c["theme"] == "dark", "install keeps the other settings")
+ok(c["mcpServers"]["jeeg"]["args"][:3] == ["jeeg.py", "--mcp", "--only"] and "gst_amount" in c["mcpServers"]["jeeg"]["args"][3] and "hash_text" not in c["mcpServers"]["jeeg"]["args"][3], "installed with the safe list only")
+ok(len(list(cfgf.parent.glob("*.bak-*"))) == 1, "a backup was kept")
+R.cmd_install_mcp(["py", "jeeg.py"], "claude-desktop full yes", base)
+ok(_j.loads(cfgf.read_text())["mcpServers"]["jeeg"]["args"] == ["jeeg.py", "--mcp"], "full = no restriction")
+R.cmd_install_mcp(["py", "jeeg.py"], "claude-desktop remove yes", base)
+ok("jeeg" not in _j.loads(cfgf.read_text())["mcpServers"] and "other" in _j.loads(cfgf.read_text())["mcpServers"], "remove takes only JeeG out")
+cfgf.write_text("{not json")
+ok(R.cmd_install_mcp(["py", "jeeg.py"], "claude-desktop yes", base) == 1 and cfgf.read_text() == "{not json", "a broken config is never overwritten")
+
+# ---- selfcheck itself
+r = subprocess.run([sys.executable, str(ROOT / "jeeg.py"), "selfcheck"], capture_output=True, text=True, env=dict(os.environ, JEEG_HOME=HOME), cwd=WORK, stdin=subprocess.DEVNULL, timeout=300)
+ok(r.returncode == 0 and "Everything required works" in r.stdout and "FAIL" not in r.stdout, "selfcheck passes: " + r.stdout[-300:])
+ok(not (Path(HOME) / "words.txt").exists(), "selfcheck leaves your data folder alone")
+
 print(f"remote: {P} passed, {F} failed")
 sys.exit(1 if F else 0)

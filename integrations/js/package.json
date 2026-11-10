@@ -1,0 +1,12 @@
+{
+  "name": "jeeg-client",
+  "version": "1.0.0",
+  "description": "Use JeeG (plain-English tasks on your computer) from JavaScript or TypeScript. No dependencies.",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "license": "MIT",
+  "engines": { "node": ">=18" },
+  "files": ["index.js", "index.d.ts", "README.md"],
+  "keywords": ["jeeg", "automation", "mcp", "local"],
+  "repository": { "type": "git", "url": "https://github.com/asrbmy/jeeg" }
+}

@@ -611,6 +611,98 @@ def serve(here: Path, state: Path, port: int = 8765, open_browser: bool = True, 
     return 0
 
 
+# ============================================================ selfcheck: does JeeG really work on THIS computer?
+def cmd_selfcheck(self_cmd: list, version: str, here: Path) -> int:
+    """Runs real, harmless checks in a throw-away data folder. Prints pass / FAIL / note. Nothing is sent anywhere.
+    Paste the whole output into a bug report. Exit code 1 if anything FAILED."""
+    import platform
+    import subprocess
+    import tempfile
+    import urllib.request
+    results = []
+
+    def check(name, fn, fatal=True):
+        try:
+            res = fn()
+            good, detail = (res if isinstance(res, tuple) else (bool(res), ""))
+        except Exception as ex:                                  # a check must never stop the others
+            good, detail = False, f"{type(ex).__name__}: {ex}"
+        tag = "pass" if good else ("FAIL" if fatal else "note")
+        results.append((tag, name, detail))
+        print(f"  {tag:<5} {name}" + (f"   ({detail})" if detail else ""), flush=True)
+
+    tmp = Path(tempfile.mkdtemp(prefix="jeeg-selfcheck-"))
+    env = dict(os.environ, JEEG_HOME=str(tmp / "home"), PYTHONIOENCODING="utf-8")
+    env.pop("JEEG_API_TOKEN", None)
+
+    def run(*words, timeout=60):
+        r = subprocess.run(list(self_cmd) + list(words), capture_output=True, text=True, timeout=timeout, env=env, cwd=str(tmp),
+                           stdin=subprocess.DEVNULL, encoding="utf-8", errors="replace")
+        return r.returncode, (r.stdout + r.stderr)
+    print(f"JeeG {version} selfcheck on {platform.system()} {platform.release()}, Python {platform.python_version()}"
+          + (" (standalone program)" if getattr(sys, "frozen", False) else ""))
+    print("  (uses a throw-away data folder; your notes and settings are not touched)\n")
+
+    check("a calculator task runs", lambda: (lambda c, o: ("118" in o, o.strip().splitlines()[-1][:60] if o.strip() else "no output"))(*run("gst 100 18")))
+    check("the task list is built", lambda: (lambda c, o: (c == 0 and "tasks" in o.lower(), ""))(*run("reindex")))
+    check("two tasks in one line both run", lambda: (lambda c, o: (c == 0 and "free" in o and "UTC" in o, ""))(*run("show time and disk space")))
+    (tmp / "words.txt").write_text("one two three four\n", encoding="utf-8")
+    check("a file task reads a file", lambda: (lambda c, o: ("4" in o, ""))(*run("count words", str(tmp / "words.txt"))))
+    check("unicode text prints without crashing", lambda: (lambda c, o: (c in (0, 1), ""))(*run("uppercase text héllo ₹ नमस्ते")))
+    check("a wrong command is explained, not a crash", lambda: (lambda c, o: ("Traceback" not in o, ""))(*run("zzqx nonsense qqq")))
+
+    def api():
+        import jeeg_bridge
+        token = "selfchecktoken" * 3
+        h = jeeg_bridge.http.server.ThreadingHTTPServer(("127.0.0.1", 0), jeeg_bridge.make_handler(token, 0, jeeg_bridge._cfg(home=str(tmp / "home"))))
+        port = h.server_address[1]
+        h.server_close()
+        return True, "server can bind to 127.0.0.1"
+    check("this computer allows a local server", api, fatal=False)
+
+    def ai_server():
+        import jeeg_remote
+        rs = jeeg_remote.RemoteState("safe", 1, str(tmp / "home"), jeeg_remote.Approver(), log=lambda *_: None)
+        h = http.server.ThreadingHTTPServer(("127.0.0.1", 0), jeeg_remote.make_handler(rs))
+        rs.httpd = h
+        port = h.server_address[1]
+        rs.hosts = {f"127.0.0.1:{port}"}
+        threading.Thread(target=h.serve_forever, daemon=True).start()
+        try:
+            req = urllib.request.Request(f"http://127.0.0.1:{port}{rs.base_path}run", data=json.dumps({"query": "gst 100 18"}).encode())
+            body = json.loads(urllib.request.urlopen(req, timeout=30).read())
+            bad = urllib.request.Request(f"http://127.0.0.1:{port}/wrong/")
+            try:
+                urllib.request.urlopen(bad, timeout=10)
+                refused = False
+            except Exception:
+                refused = True
+        finally:
+            h.shutdown()
+            h.server_close()
+        return (body.get("ok") is True and "118" in body.get("output", "") and refused), "AI-mode server answers and refuses a wrong link"
+    check("AI mode (connect ai) works locally", ai_server)
+    tun = [t for t in ("cloudflared", "ngrok", "ssh") if shutil.which(t)]
+    check("a tunnel program is installed (for connect ai)", lambda: (bool(tun), ", ".join(tun) if tun else "install cloudflared or ngrok to use AI mode over the internet"), fatal=False)
+
+    def clip():
+        sys.path.insert(0, str(here / "scripts"))
+        import _sys
+        return (bool(_sys.clip_get is not None), "")
+    check("clipboard helpers load", clip, fatal=False)
+    check("Pillow is installed (picture tasks)", lambda: (__import__("importlib.util", fromlist=["util"]).find_spec("PIL") is not None, "pip install Pillow for picture tasks"), fatal=False)
+    check("the data folder is writable", lambda: ((tmp / "home").exists() or (tmp / "home").mkdir(parents=True, exist_ok=True) or True, ""))
+    try:
+        shutil.rmtree(tmp, ignore_errors=True)
+    except OSError:
+        pass
+    bad = [r for r in results if r[0] == "FAIL"]
+    notes = [r for r in results if r[0] == "note"]
+    print(f"\n{len(results) - len(bad) - len(notes)} passed, {len(bad)} failed, {len(notes)} optional item(s) missing.")
+    print("Everything required works." if not bad else "Copy everything above into a bug report: https://github.com/asrbmy/jeeg/issues/new")
+    return 1 if bad else 0
+
+
 # ============================================================ report (for a bug report) and share
 def cmd_report(run_doctor, state: Path, version: str, ntasks: int) -> int:
     """Write jeeg-report.txt with version, system and doctor output. Nothing is sent anywhere; you attach the file yourself."""

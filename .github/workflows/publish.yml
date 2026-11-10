@@ -69,6 +69,8 @@ jobs:
           python tests/test_v210.py
           python tests/test_phone.py
           python tests/test_remote.py
+          python tests/test_fuzz.py
+          python tests/test_connect.py
           python tests/test_quality.py
           python tests/test_privacy.py
           python tests/test_security.py

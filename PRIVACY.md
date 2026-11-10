@@ -13,7 +13,7 @@ JeeG is built so that you can check these statements yourself.
 Only in the `.jeeg` folder in your home directory (or `JEEG_HOME`), readable only by you on Mac and Linux. Notes, expenses, journal, medicines, contacts and the rest are plain files you can open, copy or delete. Tasks marked private (passwords, medicines, clipboard) are not written to your command history.
 
 **When JeeG itself uses the internet**
-Only when you run a task that needs it. Say `privacy` to see the list; `list` marks those tasks with `[online]`. Today that is 30 of 498 tasks: weather, exchange rates, news, dictionary and Wikipedia look-ups, `check website`, `ping host`, `git pull` and similar. Everything else (calculators, files, notes, reminders, reports, invoices, medicines) works with the network cable unplugged.
+Only when you run a task that needs it. Say `privacy` to see the list; `list` marks those tasks with `[online]`. Today that is 41 of 517 tasks: weather, exchange rates, news, dictionary and Wikipedia look-ups, `check website`, `ping host`, `git pull`, the connector tasks you set up yourself (webhooks, mail, GitHub, MQTT, peers ...) and similar. Everything else (calculators, files, notes, reminders, reports, invoices, medicines) works with the network cable unplugged.
 
 Besides tasks, the engine contacts these addresses, only when you type the matching command:
 
@@ -34,6 +34,14 @@ Plugins run as normal programs with your permissions, so they could do anything.
 **Check it yourself**
 - `python tests/test_privacy.py` checks which files can use the network and which web addresses appear in the engine.
 - The whole engine is two readable files (`jeeg.py`, `jeeg_cmds.py`) and a folder of small scripts.
+
+## AI mode and the network
+
+`connect ai` starts a server that listens only on this computer. The tunnel program you install (cloudflared, ngrok or ssh) makes it reachable from the internet, and it and the AI service can see requests and answers. If you use `notify ntfy.sh/TOPIC`, JeeG sends one fixed message (no task text) to that ntfy server. JeeG sends nothing otherwise.
+
+## Connectors
+
+`telegram start` contacts api.telegram.org (long polling) while it runs. Connector tasks contact only the service you configured: your webhook address, your mail provider, api.github.com, your calendar link, your MQTT broker or devices on your own network. Nothing is sent until you set a connector up and use it, and tokens go only to the service they belong to. Say `privacy` for the list of tasks that can use the network.
 
 ## The local API (`--serve-api`, `--stdio`, `--mcp`)
 

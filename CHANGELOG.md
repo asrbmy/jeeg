@@ -1,5 +1,29 @@
 # Changelog
 
+## 2.16.0
+
+- **Connectors** (see `CONNECTORS.md`). Everything is off until you set it up; secrets are asked for privately and kept in files only you can read.
+  - **Telegram bot:** `telegram setup`, `telegram start [safe|read|ask|god]`. Outbound only (no tunnel). Chats must be paired with a one-time code shown on the computer; 5 wrong codes lock pairing; groups ignored; same modes and limits as AI mode.
+  - **Incoming hooks:** `hook add name = task`, `hook listen`. A link starts one saved task and nothing else; confirmation tasks are refused; rate limited.
+  - **Tasks:** `webhook` (Slack, Discord, Zapier, n8n ...), `wake` (Wake-on-LAN), `computer` and `on <name> run <task>` (ssh), `device` (Shelly Gen1/Gen2, Tasmota), `mqtt`, `android` (adb), `serial`, `peer` (JeeG to JeeG), `mcp add/tools/call` (JeeG as an MCP client), `mail setup/inbox/send`, `github login/inbox/issues/prs`, `calendar feed` (Google/Outlook/Apple private iCal links, read only).
+  - **Other languages:** `integrations/openapi/jeeg-openapi.json` (OpenAPI 3 description of the local API) and `integrations/js` (a dependency-free JavaScript/TypeScript client with types).
+- Routing: a task whose header says `priority: 4` or more now gets double pattern weight, so command-like forms (`on pi run ...`) beat a plain keyword match. `send mail ...` now goes to `compose email`.
+- Tests: `tests/test_connect.py` (134+ checks against fake Telegram, webhook, plug, MQTT, mail, GitHub, adb and ssh servers on this computer, two JeeGs talking to each other, JeeG using its own MCP server, and the JavaScript client). `tests/phrases.txt` has 21 more routing phrases.
+
+## 2.15.0
+
+- **`selfcheck`:** real, harmless checks on your own computer (runs a task, two tasks in one line, a file task, unicode, a bad command, a local server, AI mode locally, tunnel program, Pillow, data folder). Uses a throw-away data folder. The CI now runs it on Windows, Mac and Linux, and the standalone programs run it before release. `MANUAL_TEST.md` lists what only a person can check.
+- **AI mode:**
+  - "Allow always (this task, this session)": a button on the phone page, or `a` in the terminal. It covers only that one task name and only until AI mode closes; confirmation questions never get it.
+  - `limit N` (default 100, max 1000 requests per session) and a fixed cap of 5 non-safe tasks per minute.
+  - `notify ntfy.sh/TOPIC` sends a short ping (no details, at most one per 30 seconds) to the free ntfy app when the AI is waiting. Opt-in: it contacts the ntfy server you name.
+  - `ai log` / `ai log list` shows saved session logs.
+  - `install mcp claude-desktop|cursor [read|full] yes` writes JeeG into that app's MCP settings (safe tasks only by default; a backup is kept; a broken settings file is never overwritten; `remove` takes it out). No tunnel needed.
+- **New tasks:** `payment reminder` (polite message from your ledger or from a name and amount; copies it), `action items` (to-do lines from meeting notes, simple rules), `screen text` (screenshot, read the text, copy it; the screenshot is not saved).
+- **Preview mode** (`preview` as a word) for `clean temp files`, `empty trash`, `shred file` and `replace in files`: shows what would happen and changes nothing, without the confirmation question.
+- **Fuzz test** (`tests/test_fuzz.py`, fixed seed, also runs in CI): thousands of odd phrases, option strings, JSON messages and HTTP requests against the router, AI mode and the server; none may crash it.
+- **Packaging:** winget manifest templates and `tools/fill_packaging.py` (fills version and hashes from a release); notes on signing in `packaging/winget/README.md`.
+
 ## 2.14.0
 
 - **Approve from your phone.** `connect ai phone` (ask or god mode) also shows each y/n question on a phone page, with big Allow and Deny buttons. The first answer wins: the phone or the terminal. The page has its own secret link and a 6-digit PIN that are shown only in the terminal (the AI is never told them); 5 wrong PINs lock it; it closes with the AI link; no answer in 60 seconds still means no. It works from anywhere the tunnel link reaches (mobile data included). With `no tunnel` only this computer can open it.

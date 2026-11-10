@@ -26,7 +26,7 @@ Contents
 
 - A small launcher written in Python (standard library only). It has no background service and does not need an account.
 - It reads every script in `scripts/`, matches your words to a script, and runs it. A script is just a file you can open and edit.
-- 498 tasks are included across apps, websites, files, system, network, reminders, personal records, money calculators, text tools, developer tools and quick searches.
+- 517 tasks are included across apps, websites, files, system, network, reminders, personal records, money calculators, text tools, developer tools and quick searches.
 - It runs on Windows, macOS and Linux. Python 3.9 or newer is required.
 - It is quick (about 56 ms per command including Python start-up, measured on Linux) and light (about 16 MB while a command runs; nothing stays in memory between commands, except reminders and alarms you set).
 
@@ -449,9 +449,23 @@ j("add expense 250 food lunch")
 - `connect ai safe` allows only the safe list. `connect ai god` runs every task (tasks that delete or change things still ask you). Add `for 90 minutes` (default 30, maximum 240).
 - JeeG prints a link. In Claude.ai use Settings > Connectors > Add custom connector and paste the link that ends in `/mcp`, then start a new chat and say "use my JeeG". For other AIs paste the short message JeeG prints.
 - It needs a tunnel program that you install yourself: `cloudflared` (free, no account) or `ngrok`. `connect ai via ssh` uses localhost.run with only ssh. `connect ai no tunnel` gives a link that works only on this computer.
+- `connect ai limit 50`, `notify ntfy.sh/TOPIC` (opt-in ping), `ai log`, and `install mcp claude-desktop yes` (Claude Desktop or Cursor, no tunnel).
 - `connect ai phone` shows the y/n questions on your phone (own link and PIN, printed only in the terminal; first answer wins).
 - `connect ai read` allows look-only tasks too. `allow files,system` lets whole categories run unasked. `keep` reuses the same link next time (`forget` deletes it). Each call is also saved in a private session log.
 - Press Ctrl+C to close it; the link stops working at once. Full details: REMOTE_AI.md.
+
+### 8.27 Connect JeeG to other things
+
+See `CONNECTORS.md` for the full list. The short version:
+
+- **From your phone:** `telegram setup` once, then `telegram start` and send `/pair <code>` to your bot. Then message tasks in plain words.
+- **From a web address or another service:** `hook add backup = backup folder documents`, then `hook listen`.
+- **To Slack, Discord, Zapier:** `webhook add team <https address>`, then `webhook send team hello`.
+- **Your home:** `wake nas`, `device on lamp`, `mqtt publish home lights/kitchen on`.
+- **Other computers:** `computer add pi pi@192.168.1.20`, then `on pi run disk space`.
+- **Mail, GitHub, calendar:** `mail setup ...` / `mail inbox`, `github login` / `github inbox`, `calendar feed add work <link>` / `calendar feed upcoming`.
+- **From code:** JavaScript `integrations/js`, any language via `integrations/openapi/jeeg-openapi.json`, Python `import jeeg_api`.
+- Secrets are asked for privately, never typed in the command, and kept in files only you can read. Say `computer list`, `webhook list`, `device list` and so on to see what is saved.
 
 ## 9. Teaching and checking JeeG
 
@@ -609,7 +623,7 @@ Run the checks yourself any time:
 
 ## 15. Appendix: every task
 
-498 tasks. In the Usage column, `<...>` is something you fill in and `[...]` is optional. A star means the task asks before running; "online" means it can use the internet.
+517 tasks. In the Usage column, `<...>` is something you fill in and `[...]` is optional. A star means the task asks before running; "online" means it can use the internet.
 
 
 ### ai
@@ -708,6 +722,7 @@ Run the checks yourself any time:
 | git stash | `git stash [pop\|list\|save <note>]` | Stash or restore uncommitted changes (git stash, git stash pop, git stash list) |
 | git status |  | Show git status of the current folder |
 | git undo commit * |  | Undo the last commit but keep your changes (git undo last commit) |
+| github inbox (online) | `github login \| github inbox \| github issues <owner/repo> \| github forget` | See your GitHub notifications or a repo's open issues (github login, github inbox, github issues owner/repo). Token asked privately. |
 | http get (online) | `http get <url>` | Fetch a URL and show status, headers and the start of the body (http get https://example.com) |
 | json diff | `json diff <old.json> <new.json>` | Compare two JSON files and list what changed (json diff a.json b.json) |
 | json minify | `json minify <file.json>` | Shrink a JSON file onto one line (json minify data.json) |
@@ -715,6 +730,8 @@ Run the checks yourself any time:
 | json to yaml | `json to yaml <file.json>` | Convert a JSON file to YAML (json to yaml config.json) |
 | jwt decode | `jwt <token>` | Read what is inside a JWT token, without sending it anywhere (jwt eyJ...) |
 | kill port * | `kill port <number>` | Stop whatever is listening on a port (kill port 3000) |
+| mcp call * | `mcp call <name> <tool> [json arguments]` | Use a tool from a saved MCP server (mcp call files read_file {"path": "notes.txt"}). It runs that server's tool on this computer. |
+| mcp servers | `mcp add <name> = <command> \| mcp list \| mcp tools <name> \| mcp remove <name>` | Let JeeG use tools from other MCP servers (mcp add files = npx some-server, mcp tools files, then: mcp call files <tool> {json}) |
 | new project | `new project <name> [python\|node\|html\|flask]` | Create a starter project folder (new project myapp python \| node \| html \| flask) |
 | open codepen |  | Open CodePen |
 | open dockerhub | `open dockerhub <words>` | Open Docker Hub |
@@ -751,6 +768,9 @@ Run the checks yourself any time:
 |---|---|---|
 | compose email | `compose email <words>` | Compose a Gmail message (words become the subject) |
 | email to | `email <contact\|address> [about <subject>]` | Start an email to a saved contact or address (email mom about dinner) |
+| mail inbox (online) | `mail inbox [how many]` | Show your unread mail (sender, subject, date). Reads only the headers and marks nothing as read. Needs  mail setup. |
+| mailbox post (online) * | `mail send <to> \| <subject> \| <body>` | Send a mail from your saved account (mail send bob@example.com \| Subject \| Body). It asks first. Needs  mail setup. |
+| mailbox setup (online) | `mail setup <address> <imap host> <smtp host> \| mail status \| mail forget` | Save your mail account for mail tasks (mail setup you@gmail.com imap.gmail.com smtp.gmail.com). Uses an app password, asked privately. |
 | open gmail |  | Open Gmail |
 
 ### entertainment
@@ -776,7 +796,7 @@ Run the checks yourself any time:
 |---|---|---|
 | backup folder | `backup folder <folder>` | Zip a folder into ~/Backups with a timestamp (backup folder documents) |
 | bulk rename | `bulk rename <folder> replace <old> with <new>` | Rename many files at once, with a preview first (bulk rename downloads replace img with photo) |
-| clean temp files * |  | Delete temporary files older than 24 hours |
+| clean temp files * | `clean temp files [preview]` | Delete temporary files older than 24 hours (clean temp files preview shows what would go) |
 | compare files | `compare files <a> <b>` | Compare two files: same or different, and what changed (compare files a.txt b.txt) |
 | compare folders | `compare folders <a> <b>` | Compare two folders: what is only in one, and what differs (compare folders a b) |
 | contact sheet | `contact sheet <folder>` | Make one picture with small thumbnails of every photo in a folder (contact sheet <folder>). Needs Pillow. |
@@ -788,7 +808,7 @@ Run the checks yourself any time:
 | csv to json | `csv to json <file.csv>` | Convert a CSV file to JSON (csv to json sales.csv). Writes a new .json next to it. |
 | delete empty folders * | `delete empty folders <folder>` | Remove empty folders inside a folder (add 'preview' to just list them) |
 | delete old downloads * | `delete old downloads [days]` | Move old files from Downloads to a safe holding folder (delete old downloads 90 days) |
-| empty trash * |  | Empty the Recycle Bin / Trash permanently |
+| empty trash * | `empty trash [preview]` | Empty the Recycle Bin / Trash permanently (empty trash preview only looks) |
 | file types | `file types in <folder>` | Count files by type in a folder (file types in downloads) |
 | find duplicates | `find duplicates [folder]` | Find duplicate files in a folder (read-only report) |
 | find file | `find file <name words>` | Find files by name under your home folder (find file invoice pdf) |
@@ -806,7 +826,7 @@ Run the checks yourself any time:
 | recent files |  | List recently changed files in Documents, Downloads and Desktop |
 | rename by pattern | `rename files in <folder> as <pattern> [apply]` | Rename files with a pattern, preview first (rename files in downloads as trip_{n}.{ext}; placeholders {name} {date} {n} {ext}; add 'apply' to do it) |
 | rename photos by date | `rename photos by date <folder> [apply]` | Rename photos to their date taken, e.g. 2026-10-21_143005.jpg (preview first; add 'apply') |
-| replace in files * | `replace in files <folder> "old" with "new"` | Find and replace text in all text files of a folder, with a backup (replace in files docs "old" with "new"). |
+| replace in files * | `replace in files <folder> "old" with "new" [preview]` | Find and replace text in all text files of a folder, with a backup (replace in files docs "old" with "new"). |
 | stale files | `old large files [size] [age] [folder]` | Find big files you have not touched for a long time (old large files 100 mb 1 year in downloads) |
 | strip exif | `strip exif <photo>` | Remove hidden location and camera data from a photo (strip exif photo.jpg). Needs Pillow. |
 | undo files | `undo` | Undo your last file move, rename or Downloads tidy (undo, undo move, undo rename) |
@@ -857,10 +877,12 @@ Run the checks yourself any time:
 
 | Task | Usage | What it does |
 |---|---|---|
+| android adb | `android devices \| android battery \| android screenshot \| android open <web address>` | Look at an Android phone over USB or Wi-Fi with adb (android devices, android battery, android screenshot, android open https://example.com) |
 | mute volume |  | Mute or unmute the sound |
 | next track |  | Skip to the next song |
 | play pause |  | Play or pause the current media |
 | previous track |  | Go back to the previous song |
+| serial port | `serial ports \| serial send <port> <text> [baud 9600] \| serial read <port> [seconds]` | List serial ports or send a line to a device such as an Arduino (serial ports, serial send COM3 hello). Needs pip install pyserial. |
 | set brightness | `set brightness <0-100>` | Set screen brightness (set brightness 60) |
 | set volume | `set volume <0-100>` | Set the volume to a level (set volume 40) |
 | show desktop |  | Minimise everything and show the desktop |
@@ -974,6 +996,7 @@ Run the checks yourself any time:
 | render pdf | `pdf to images <file> [jpg] [<n> dpi]` | Save each PDF page as a picture (pdf to images report.pdf; pdf to images report.pdf 200 dpi) - needs: pip install pypdfium2 Pillow |
 | resize picture | `resize image <file> to <width>` | Resize a picture (resize image photo.jpg to 800 wide, or 50%) |
 | rotate pdf | `rotate pdf <file> [90\|180\|270\|left] [pages 1-3]` | Rotate PDF pages (rotate pdf scan.pdf 90; rotate pdf scan.pdf 180 pages 1-3) - needs: pip install pypdf |
+| screen text | `screen text` | Take a screenshot, read the text in it and copy it to the clipboard (needs pillow, pytesseract and the Tesseract program) |
 | shrink photos | `compress pictures <folder> [quality 60] [width 1600]` | Make every picture in a folder smaller into a new 'compressed' folder; originals untouched (compress pictures downloads, compress pictures trip quality 60 width 1600; needs pip install pillow) |
 | split pdf | `split pdf <file> [pages 2-4]` | Split a PDF into pages, or pull out some pages (split pdf report.pdf pages 2-4) |
 | watermark pdf | `watermark pdf <file> <text>` | Stamp text across every PDF page (watermark pdf report.pdf CONFIDENTIAL) - needs: pip install pypdf |
@@ -1004,6 +1027,7 @@ Run the checks yourself any time:
 | lend money | `lend <amount> to <name> [note]` | Note money you lent to someone (lend 500 to ravi for lunch) |
 | loan compare | `compare loans <amt> <rate> <years> vs <rate> <years>` | Compare two loan offers side by side (compare loans 500000 8.5% 5y vs 9% 4y). |
 | make invoice | `invoice <customer>: <qty> <item> at <rate>, ... [gst 18]` | Make a simple GST invoice page (invoice Ravi Traders: 3 pens at 10, 2 books at 150 gst 18) |
+| payment reminder | `payment reminder <name in your ledger \| name amount [invoice X] [by date]>` | Write a polite payment-reminder message and copy it (payment reminder ravi, or: payment reminder Ravi Traders 5000 invoice INV-0012 by 15 nov) |
 | percentage change | `percentage change <old> to <new>` | Percentage change between two numbers (percentage change 80 to 100) |
 | ppf maturity | `ppf <amount a year> [years] [rate %]` | PPF maturity (ppf 1.5 lakh a year; ppf 50000 a year 15 years) |
 | profit margin | `profit margin cost <c> price <p>` | Profit margin and markup, or the price you need for a target margin (profit margin cost 60 price 100 \| price for 30% margin cost 70). |
@@ -1038,11 +1062,18 @@ Run the checks yourself any time:
 | flush dns * |  | Clear the DNS cache |
 | listening ports |  | Show which programs are listening on network ports |
 | live network speed | `live network speed [seconds]` | Watch your current download/upload speed for a few seconds (live network speed) |
+| mqtt message (online) | `mqtt add <name> <host[:port]> [user] \| mqtt publish <name> <topic> <message> \| mqtt listen <name> <topic> [seconds] \| mqtt list \| mqtt remove <name>` | Send or listen to MQTT messages (mqtt add home 192.168.1.2, mqtt publish home lights/kitchen on, mqtt listen home sensors/#) |
+| peer jeeg (online) | `peer add <name> <link from 'connect ai'> \| peer run <name> <task> \| peer list \| peer remove <name>` | Talk to a JeeG on another computer through its AI-mode link (peer add office <link>, peer run office disk space) |
 | ping host (online) | `ping host <name or ip>` | Ping a host (ping google.com) |
 | port check (online) | `port check <host> <port>` | Check if a port is open (port check example.com 443) |
 | port owner | `who uses port <number>` | Which program is using a port (who uses port 3000) |
 | show ip (online) |  | Show your local and public IP address |
+| smart device (online) | `device add <name> <shelly\|tasmota> <ip> \| device on\|off\|toggle\|status <name> \| device list \| device remove <name>` | Control smart plugs on your home network (device add lamp shelly 192.168.1.50, then: device on lamp / device off lamp / device status lamp) |
+| ssh hosts | `computer add <name> <user@host> \| computer list \| computer remove <name>` | Save other computers you can reach with ssh (computer add pi pi@192.168.1.20), then run JeeG tasks on them |
+| ssh task (online) * | `on <name> run <task>` | Run a JeeG task on another computer over ssh (on pi run disk space). Needs JeeG there and an ssh key (no password prompts). |
 | trace route (online) | `trace route <host>` | Trace the network route to a host |
+| wake on lan (online) | `wake <name \| MAC address> \| wake add <name> <MAC> \| wake list \| wake remove <name>` | Turn on a computer on your network with a Wake-on-LAN packet (wake add nas AA:BB:CC:DD:EE:FF, then: wake nas) |
+| webhook (online) | `webhook add <name> <https address> \| webhook send <name> <text> \| webhook list \| webhook remove <name>` | Save web addresses (Slack, Discord, Zapier, n8n ...) and send them a message (webhook add team https://..., webhook send team deploy done) |
 | wifi info |  | Show the Wi-Fi network you are connected to |
 
 ### personal
@@ -1089,6 +1120,7 @@ Run the checks yourself any time:
 | Task | Usage | What it does |
 |---|---|---|
 | add countdown | `add countdown <event> <date>` | Count the days to an event (add countdown exam 12 dec 2026) |
+| calendar feed (online) | `calendar feed add <name> <https address \| file.ics> \| calendar feed upcoming [name] [days] \| calendar feed list \| calendar feed remove <name>` | Show upcoming events from a calendar link or .ics file (calendar feed add work <secret iCal address>, calendar feed upcoming). Works with Google/Outlook secret iCal links, no sign-in. |
 | eye break | `eye break [minutes]` | 20-20-20 eye break reminder every 20 minutes |
 | notify due | `notify due` | Pop up a notification for what is due: birthdays, bills, countdowns, medicine (what is due, notify due) |
 | pomodoro | `pomodoro [rounds] [N work] [N break]` | Pomodoro focus timer: 25 min work / 5 min break (pomodoro 4 rounds) |
@@ -1135,7 +1167,7 @@ Run the checks yourself any time:
 | breach check (online) | `breach check "<password>"` | Check if a password has appeared in known data leaks (only a 5-character hash prefix is sent) |
 | file hash | `file hash <file> [expected hash]` | Show the SHA-256, SHA-1 and MD5 fingerprint of a file, to check a download (file hash setup.exe) |
 | password strength | `password strength "<password>"` | Rate how strong a password is, privately (password strength "MyPass123") |
-| shred file * | `shred file <file>` | Overwrite a file with random data and delete it (cannot be undone) |
+| shred file * | `shred file <file> [preview]` | Overwrite a file with random data and delete it (cannot be undone) |
 
 ### shopping
 
@@ -1309,6 +1341,7 @@ Run the checks yourself any time:
 
 | Task | Usage | What it does |
 |---|---|---|
+| action items | `action items <notes file \| text>` | Pull the to-do lines out of meeting notes (action items notes.txt, or paste text after it). Simple rules, no AI. |
 | meeting notes | `meeting notes [title]` | Create a dated meeting-notes file from a template (meeting notes weekly sync) |
 
 ### workspace

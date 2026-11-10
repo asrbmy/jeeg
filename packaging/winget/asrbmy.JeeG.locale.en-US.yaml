@@ -1,0 +1,10 @@
+PackageIdentifier: asrbmy.JeeG
+PackageVersion: __VERSION__
+PackageLocale: en-US
+Publisher: asrbmy
+PackageName: JeeG
+License: MIT
+ShortDescription: Type a task in plain words and run it. Local, no account, no AI model.
+PackageUrl: https://github.com/asrbmy/jeeg
+ManifestType: defaultLocale
+ManifestVersion: 1.6.0

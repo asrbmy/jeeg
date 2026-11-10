@@ -1,0 +1,11 @@
+PackageIdentifier: asrbmy.JeeG
+PackageVersion: __VERSION__
+InstallerType: portable
+Commands:
+  - jeeg
+Installers:
+  - Architecture: x64
+    InstallerUrl: https://github.com/asrbmy/jeeg/releases/download/v__VERSION__/jeeg-windows-x64.exe
+    InstallerSha256: __SHA256_WINDOWS__
+ManifestType: installer
+ManifestVersion: 1.6.0

@@ -1,0 +1,43 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "JeeG local API",
+    "version": "1.0.0",
+    "description": "Run plain-English tasks on this computer. Start with `jeeg --serve-api` (listens on 127.0.0.1 only). Get the token with `jeeg --api-token`. Tasks that ask for confirmation are refused unless JeeG was started with --allow-confirm. Use this file with any OpenAPI client generator (Go, Rust, Java, C#, Swift ...)."
+  },
+  "servers": [{ "url": "http://127.0.0.1:8766", "description": "This computer only" }],
+  "security": [{ "bearer": [] }],
+  "paths": {
+    "/v1/health": { "get": { "operationId": "health", "summary": "Is JeeG running, and which version", "responses": { "200": { "description": "ok", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Envelope" } } } } } } },
+    "/v1/tasks": { "get": { "operationId": "listTasks", "summary": "List tasks", "parameters": [{ "name": "category", "in": "query", "schema": { "type": "string" } }],
+      "responses": { "200": { "description": "ok", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Envelope" } } } } } } },
+    "/v1/categories": { "get": { "operationId": "listCategories", "summary": "Task categories with counts", "responses": { "200": { "description": "ok", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Envelope" } } } } } } },
+    "/v1/find": { "get": { "operationId": "findTasks", "summary": "Which tasks match a phrase (nothing is run)",
+      "parameters": [{ "name": "q", "in": "query", "required": true, "schema": { "type": "string" } }, { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 5, "maximum": 999 } }],
+      "responses": { "200": { "description": "ok", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Envelope" } } } } } } },
+    "/v1/info": { "get": { "operationId": "taskInfo", "summary": "Details about one task", "parameters": [{ "name": "name", "in": "query", "required": true, "schema": { "type": "string" } }],
+      "responses": { "200": { "description": "ok", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Envelope" } } } } } } },
+    "/v1/run": { "post": { "operationId": "run", "summary": "Run a request written in plain words",
+      "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/RunRequest" } } } },
+      "responses": { "200": { "description": "ok (check result.ok and result.exit for the task's own outcome)", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/RunEnvelope" } } } },
+                     "400": { "description": "bad request" }, "401": { "description": "missing or wrong token" }, "503": { "description": "too many requests at once" } } } },
+    "/v1/task": { "post": { "operationId": "runTask", "summary": "Run one named task with exact arguments",
+      "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["name"], "properties": { "name": { "type": "string" }, "args": { "type": "array", "maxItems": 50, "items": { "type": "string" } }, "yes": { "type": "boolean" }, "timeout": { "type": "number" } } } } } },
+      "responses": { "200": { "description": "ok", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/RunEnvelope" } } } } } } }
+  },
+  "components": {
+    "securitySchemes": { "bearer": { "type": "http", "scheme": "bearer", "description": "The token printed by `jeeg --api-token`." } },
+    "schemas": {
+      "Envelope": { "type": "object", "required": ["ok"], "properties": { "ok": { "type": "boolean" }, "result": {}, "error": { "type": "string" } } },
+      "RunRequest": { "type": "object", "required": ["query"], "properties": {
+        "query": { "type": "string", "maxLength": 2000, "example": "gst 2500 18" },
+        "yes": { "type": "boolean", "description": "Confirm tasks that ask first. Honoured only if JeeG was started with --allow-confirm." },
+        "timeout": { "type": "number", "description": "Seconds before the task is stopped (default 60)." } } },
+      "RunResult": { "type": "object", "properties": {
+        "query": { "type": "string" }, "exit": { "type": "integer", "description": "0 ok, 1 error, 2 ambiguous, 3 needs confirmation" }, "ok": { "type": "boolean" },
+        "task": { "type": "string" }, "output": { "type": "string" }, "needs_confirmation": { "type": "boolean" }, "ambiguous": { "type": "boolean" },
+        "candidates": { "type": "array", "items": { "type": "string" } } } },
+      "RunEnvelope": { "type": "object", "required": ["ok"], "properties": { "ok": { "type": "boolean" }, "result": { "$ref": "#/components/schemas/RunResult" }, "error": { "type": "string" } } }
+    }
+  }
+}

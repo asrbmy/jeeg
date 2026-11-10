@@ -33,10 +33,10 @@ def net_imports(path):
 # 1. only these files outside the task scripts may use network modules
 ALLOWED_HELPERS = {"_net.py", "_lib.py"}          # _lib: urllib.parse only (not in NET)
 helpers = {p.name for p in SCR.glob("_*.py") if net_imports(p)}
-check("only _net.py (and nothing else) among helpers uses network modules", helpers <= {"_net.py", "_sys.py", "_worker.py"} | ALLOWED_HELPERS, str(helpers))
+check("only _net.py (and nothing else) among helpers uses network modules", helpers <= {"_net.py", "_sys.py", "_worker.py", "_mqtt.py", "_conn.py", "_mcpclient.py"} | ALLOWED_HELPERS, str(helpers))
 engine = {p.name for p in ROOT.glob("*.py") if net_imports(p)}
-check("engine network use is limited to jeeg.py (doctor), jeeg_cmds.py (update, library, plugin install, local web page), jeeg_bridge.py (local API) and jeeg_remote.py (AI mode)",
-      engine <= {"jeeg.py", "jeeg_cmds.py", "jeeg_bridge.py", "jeeg_remote.py"}, str(engine))
+check("engine network use is limited to jeeg.py (doctor), jeeg_cmds.py (update, library, plugin install, local web page), jeeg_bridge.py (local API), jeeg_remote.py (AI mode) and jeeg_connect.py (Telegram bot, hooks)",
+      engine <= {"jeeg.py", "jeeg_cmds.py", "jeeg_bridge.py", "jeeg_remote.py", "jeeg_connect.py"}, str(engine))
 bridge_src = (ROOT / "jeeg_bridge.py").read_text(encoding="utf-8")
 check("the local API binds to 127.0.0.1 only", '("127.0.0.1", port)' in bridge_src and "0.0.0.0" not in bridge_src and '("", ' not in bridge_src)
 remote_src = (ROOT / "jeeg_remote.py").read_text(encoding="utf-8")

@@ -15,7 +15,7 @@ SEP = ";" if os.name == "nt" else ":"
 
 
 def stdlib_imports(folder: Path) -> list:
-    own = {p.stem for p in folder.glob("*.py")} | {"jeeg", "jeeg_cmds", "jeeg_api", "jeeg_bridge", "jeeg_autorun", "jeeg_remote"}
+    own = {p.stem for p in folder.glob("*.py")} | {"jeeg", "jeeg_cmds", "jeeg_api", "jeeg_bridge", "jeeg_autorun", "jeeg_remote", "jeeg_connect"}
     found = set()
     for f in folder.glob("*.py"):
         try:
@@ -35,6 +35,7 @@ def stdlib_imports(folder: Path) -> list:
 
 def main() -> int:
     mods = stdlib_imports(ROOT / "scripts")
+    mods += [m for m in ("email.header", "email.message", "email.utils", "http.client", "urllib.parse", "ssl", "imaplib", "smtplib") if m not in mods]   # sub-modules the scripts reach through their parent
     cmd = [sys.executable, "-m", "PyInstaller", "--onefile", "--noconfirm", "--clean", "--name", "jeeg",
            "--add-data", f"{ROOT / 'scripts'}{SEP}scripts", "--add-data", f"{ROOT / 'library'}{SEP}library"]
     for m in mods:

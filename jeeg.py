@@ -60,7 +60,7 @@ import sys
 import time
 from pathlib import Path
 
-__version__ = "2.14.0"
+__version__ = "2.16.0"
 
 HERE = Path(__file__).resolve().parent
 FROZEN = bool(getattr(sys, "frozen", False))      # True inside the standalone program built with PyInstaller
@@ -340,7 +340,7 @@ def rank(query: str, entries: list[dict]):
     for e in entries:
         s, flags, strong = score_entry(words, e, gen)
         if e.get("pat") and pattern_hit(e["pat"], query):
-            s, strong = s + PATTERN_BONUS, True          # the phrase itself says what the task is
+            s, strong = s + PATTERN_BONUS * (2 if e.get("prio", 0) >= 4 else 1), True   # the phrase itself says what the task is (priority 4+: a command-like form)
         if not strong or s < MIN_SCORE:
             continue
         need = 2 if e.get("raw") else 1      # rawargs: only drop words that matched the name
@@ -380,7 +380,7 @@ def resolve(query: str, entries: list[dict]):
 
 
 # ------------------------------------------------- your data: aliases, logs
-RESERVED = {"list", "help", "history", "again", "repeat", "redo", "reindex", "selftest", "exit", "quit", "alias",
+RESERVED = {"selfcheck", "list", "help", "history", "again", "repeat", "redo", "reindex", "selftest", "exit", "quit", "alias",
             "explain", "misses", "stats", "doctor", "tasks", "pack", "tips", "tip", "plugins", "plugin", "update", "setup",
             "web", "ui", "completion", "learn", "tour", "routines", "privacy", "autorun", "report", "share", "batch"}
 
@@ -1271,6 +1271,9 @@ def handle(line: str, dirs, opt) -> int | None:
         return jeeg_cmds.cmd_routines_io(q.split(None, 1)[1], STATE, opt.get("yes", False))
     if low == "batch" or low.startswith("batch "):
         return cmd_batch(q.split(None, 1)[1] if " " in q.strip() else "", entries, opt)
+    if low in {"selfcheck", "self check", "check jeeg", "jeeg selfcheck"}:
+        import jeeg_cmds
+        return jeeg_cmds.cmd_selfcheck(SELF_CMD, __version__, HERE)
     if low in {"report", "bug report", "jeeg report"}:
         import jeeg_cmds
         return jeeg_cmds.cmd_report(lambda: cmd_doctor(dirs, all_entries), STATE, __version__, len(all_entries))
@@ -1289,6 +1292,22 @@ def handle(line: str, dirs, opt) -> int | None:
             print(jeeg_cmds.COMPLETION_HELP)
             return 0
         return jeeg_cmds.cmd_completion(parts[1], all_entries)
+    m = re.fullmatch(r"telegram(?:\s+(.*))?", low)
+    if m:
+        import jeeg_connect
+        return jeeg_connect.cmd_telegram(STATE, m.group(1) or "")
+    m = re.fullmatch(r"hooks?(?:\s+(.*))?", q, re.I | re.S)
+    if m:
+        import jeeg_connect
+        return jeeg_connect.cmd_hook(STATE, m.group(1) or "")
+    m = re.fullmatch(r"(?:show\s+)?(?:ai|agent)\s+(?:session\s+)?log(?:\s+(.*))?", low)
+    if m:
+        import jeeg_remote
+        return jeeg_remote.cmd_ai_log(STATE, m.group(1) or "")
+    m = re.fullmatch(r"install\s+(?:mcp|jeeg)(?:\s+(?:for|in|to))?(?:\s+(.*))?", low)
+    if m:
+        import jeeg_remote
+        return jeeg_remote.cmd_install_mcp(SELF_CMD, m.group(1) or "")
     m = re.fullmatch(r"(?:connect(?:\s+jeeg)?(?:\s+to)?\s+(?:an\s+)?(?:ai|agent|claude|chatgpt|llm)|ai\s+(?:mode|connect))(?:\s+(.*))?", low)
     if m:
         import jeeg_remote

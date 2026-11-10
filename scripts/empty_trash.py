@@ -1,10 +1,18 @@
 # keywords: empty trash, empty recycle bin, clear trash, clear recycle bin, delete trash, empty bin, purge trash
-# desc: Empty the Recycle Bin / Trash permanently
+# desc: Empty the Recycle Bin / Trash permanently (empty trash preview only looks)
+# usage: empty trash [preview]
 # category: files
 # confirm: yes
 import shutil, subprocess
 from pathlib import Path
-from _lib import WIN, MAC, fail
+from _lib import WIN, MAC, fail, args_text
+if any(w in {"preview", "dry-run", "dryrun"} for w in args_text().lower().split()):
+    n = 0
+    if not (WIN or MAC):
+        d = Path.home() / ".local/share/Trash/files"
+        n = len(list(d.iterdir())) if d.is_dir() else 0
+    print((f"Preview: {n} item(s) in the Trash would be deleted for good." if not (WIN or MAC) else "Preview: everything in the Recycle Bin / Trash would be deleted for good.") + " Nothing was changed.")
+    raise SystemExit(0)
 if WIN:
     import ctypes
     rc = ctypes.windll.shell32.SHEmptyRecycleBinW(None, None, 0x7)      # no confirmation, no sound, no progress

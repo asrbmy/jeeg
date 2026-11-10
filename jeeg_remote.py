@@ -5,6 +5,10 @@
     connect ai read                  safe tasks plus look-only tasks (disk space, list files, git status ...); never changes anything
     connect ai allow files,system    also let the AI use whole task categories without asking (see:  list)
     connect ai phone                 also answer the y/n questions on your phone (needs the tunnel link, PIN shown in the terminal)
+    connect ai limit 50              stop after 50 requests (default 100, maximum 1000)
+    connect ai notify ntfy.sh/TOPIC  send a ping (no details) to the free ntfy app when the AI is waiting for your approval
+    ai log                           show the last AI session log;  ai log list  shows all
+    install mcp claude-desktop       connect Claude Desktop / Cursor to JeeG directly (no tunnel needed): see  install mcp
     connect ai keep                  keep the same link next time (saved in your JeeG folder), so you add the connector only once
     connect ai forget                delete the kept link
     connect ai no log                do not write the session log (default: ai-sessions/ in your JeeG folder, only you can read it)
@@ -47,7 +51,7 @@ MAX_PARALLEL = 4
 RATE_PER_MIN = 120
 APPROVE_WAIT = 60
 TERMINAL_ONLY = {"web", "ui", "setup", "update", "upgrade", "plugin", "plugins", "exit", "quit", "q", "first", "completion", "report", "share",
-                 "autorun", "connect", "learn", "tour", "tutorial", "routines"}
+                 "autorun", "connect", "learn", "tour", "tutorial", "routines", "ai", "install", "selfcheck", "batch"}
 MODES = ("safe", "read", "ask", "god")
 TUNNELS = ("cloudflared", "ngrok", "ssh")
 URL_RE = {
@@ -92,8 +96,9 @@ def _auto_policy(mode: str, extra=()):
 def parse_args(rest: str) -> dict:
     """'god for 60 minutes via ngrok' -> {'mode': 'god', 'minutes': 60, 'via': 'ngrok', ...}. Raises ValueError for nonsense."""
     low = (rest or "").lower().strip()
+    raw = rest or ""
     out = {"mode": "ask", "minutes": 30, "via": "auto", "tunnel": True, "url": "", "port": DEFAULT_PORT, "allow": [], "keep": False, "forget": False,
-           "log": True, "phone": False}
+           "log": True, "phone": False, "limit": 100, "notify": ""}
     m = re.search(r"\ballow\s+([a-z0-9_,\- ]+?)(?=\s+(?:for|via|url|port|keep|no|local|without|safe|read|ask|god)\b|$)", low)
     if m:
         out["allow"] = [w for w in re.split(r"[,\s]+", m.group(1)) if w]
@@ -104,6 +109,15 @@ def parse_args(rest: str) -> dict:
     if re.search(r"\bkeep(?:\s+(?:the\s+)?link)?\b", low):
         out["keep"] = True
         low = re.sub(r"\bkeep(?:\s+(?:the\s+)?link)?\b", " ", low)
+    m = re.search(r"\blimit\s+(\d{1,6})\b", low)
+    if m:
+        out["limit"] = max(1, min(1000, int(m.group(1))))
+        low = low.replace(m.group(0), " ")
+    m = re.search(r"\bnotify\s+(?:https://)?([a-z0-9.\-]+/[A-Za-z0-9_\-]{6,64})(?=\s|$)", low)
+    if m:
+        mm = re.search(r"notify\s+(?:https://)?([A-Za-z0-9.\-]+/[A-Za-z0-9_\-]{6,64})", raw, re.I)
+        out["notify"] = mm.group(1) if mm else m.group(1)
+        low = low.replace(m.group(0), " ")
     if re.search(r"\b(?:approve\s+(?:on\s+)?(?:my\s+)?)?phone\b", low):
         out["phone"] = True
         low = re.sub(r"\b(?:approve\s+(?:on\s+)?(?:my\s+)?)?phone\b", " ", low)
@@ -143,16 +157,18 @@ def parse_args(rest: str) -> dict:
         elif w in {"for", "mode", "the", "a", "an", "to", "ai", "approve", "approvals", "on", "my"}:
             continue
         else:
-            raise ValueError(f"I did not understand '{w}'. Use:  connect ai [safe|read|ask|god] [for 60 minutes] [no tunnel] [via ngrok] [url ADDRESS] [allow files] [keep]")
+            raise ValueError(f"I did not understand '{w}'. Use:  connect ai [safe|read|ask|god] [for 60 minutes] [no tunnel] [via ngrok] [url ADDRESS] [allow files] [keep] [limit 50] [phone]")
     return out
 
 
 # ------------------------------------------------------------------ approval in this terminal
 class Pending:
-    def __init__(self, text: str):
+    def __init__(self, text: str, key: str = ""):
         self.id = secrets.token_hex(6)
         self.text = text
+        self.key = key                      # the task name, so "allow always" can mean "this task, this session"
         self.answer = None
+        self.always = False
 
 
 class PhoneApprovals:
@@ -162,8 +178,8 @@ class PhoneApprovals:
         self._lock = threading.Lock()
         self._items: dict = {}
 
-    def add(self, text: str) -> Pending:
-        p = Pending(text)
+    def add(self, text: str, key: str = "") -> Pending:
+        p = Pending(text, key)
         with self._lock:
             self._items[p.id] = p
         return p
@@ -174,13 +190,14 @@ class PhoneApprovals:
 
     def waiting(self) -> list:
         with self._lock:
-            return [{"id": p.id, "text": p.text} for p in self._items.values() if p.answer is None]
+            return [{"id": p.id, "text": p.text, "always": bool(p.key)} for p in self._items.values() if p.answer is None]
 
-    def answer(self, pid: str, allow: bool) -> bool:
+    def answer(self, pid: str, allow: bool, always: bool = False) -> bool:
         with self._lock:
             p = self._items.get(pid)
             if p is None or p.answer is not None:
                 return False
+            p.always = bool(allow and always and p.key)
             p.answer = bool(allow)
             return True
 
@@ -193,8 +210,13 @@ class Approver:
         self._fn = ask_fn
         self._wait = wait
         self.phone = phone
+        self.always: set = set()                            # task names allowed for the rest of this session
+        self.notify = None                                  # optional function called when a question is waiting
+        self.write_cap = 5                                  # at most this many non-safe tasks per minute
+        self._writes: deque = deque()
         self._q: queue.Queue = queue.Queue()
         self._lock = threading.Lock()
+        self._lock_w = threading.Lock()
         self._reader = None
 
     def _start_reader(self):
@@ -207,7 +229,19 @@ class Approver:
         self._reader = threading.Thread(target=read, daemon=True)
         self._reader.start()
 
-    def ask(self, text: str) -> bool:
+    def write_ok(self) -> bool:
+        now = time.time()
+        with self._lock_w:
+            while self._writes and now - self._writes[0] > 60:
+                self._writes.popleft()
+            if len(self._writes) >= self.write_cap:
+                return False
+            self._writes.append(now)
+            return True
+
+    def ask(self, text: str, key: str = "") -> bool:
+        if key and key in self.always:
+            return True
         with self._lock:                                   # one question at a time
             if self._fn is not None:
                 return bool(self._fn(text))
@@ -215,28 +249,39 @@ class Approver:
                 tty = sys.stdin is not None and sys.stdin.isatty()
             except (OSError, ValueError):
                 tty = False
-            pend = self.phone.add(text) if self.phone else None
+            pend = self.phone.add(text, key) if self.phone else None
             if not tty and pend is None:
                 return False
+            if self.notify is not None:
+                try:
+                    self.notify()
+                except Exception:
+                    pass
             try:
                 if tty:
                     if self._reader is None:
                         self._start_reader()
                     while not self._q.empty():              # forget anything typed earlier
                         self._q.get_nowait()
-                where = ("type y then Enter here" + (" or press Allow on your phone" if pend else "")) if tty else "press Allow on your phone"
+                where = ("type y then Enter here" + (" (a = allow this task always this session)" if key else "") + (" or press Allow on your phone" if pend else "")) if tty else "press Allow on your phone"
                 print(f"\n  >>> {text}\n  >>> Allow? {where} (no answer in {self._wait:.0f}s = no): ", end="", flush=True)
                 end = time.time() + self._wait
                 while time.time() < end:
                     if tty:
                         try:
-                            return self._q.get(timeout=0.2) in {"y", "yes"}
+                            ans = self._q.get(timeout=0.2)
+                            if ans in {"a", "always"} and key:
+                                self.always.add(key)
+                                return True
+                            return ans in {"y", "yes"}
                         except queue.Empty:
                             pass
                     else:
                         time.sleep(0.2)
                     if pend is not None and pend.answer is not None:
                         print("(answered on the phone)", flush=True)
+                        if pend.always and key:
+                            self.always.add(key)
                         return pend.answer
                 print("(no answer, refused)", flush=True)
                 return False
@@ -282,15 +327,25 @@ def run_for_ai(query, mode: str, approver: Approver, state, log=print, source: s
         log(f"{_ts()}  AI ({mode})  {q}   -> {'ok' if d.get('ok') and d['result'].get('ok') else 'no'}")
         return show(d)
 
-    if mode == "ask" and not chain:                          # safe tasks need no question
+    if mode in ("ask", "god") and not chain:                 # safe tasks need no question and are not counted against the cap
         d = dispatch({"op": "run", "query": q, "timeout": 60}, allow_confirm=False, home=home, policy=safe, source=source + "-ask")
         if d.get("ok"):
             log(f"{_ts()}  AI (ask, safe task)  {q}")
             return show(d)
+    key = ""
+    if not chain:
+        try:
+            pl = jeeg_api.plan(q, home=home)
+            key = pl[0] if pl else ""
+        except Exception:
+            key = ""
     if mode == "ask":
-        if not approver.ask(f"The AI wants JeeG to run:  {q}"):
+        if not approver.ask(f"The AI wants JeeG to run:  {q}", key):
             log(f"{_ts()}  AI (ask) DENIED  {q}")
             return "The person at the computer said no (or did not answer).", True
+    if not approver.write_ok():
+        log(f"{_ts()}  AI ({mode}) slowed down (more than {approver.write_cap} non-safe tasks in a minute)  {q}")
+        return f"Too many non-safe tasks in one minute (limit {approver.write_cap}). Wait a minute and ask again.", True
     log(f"{_ts()}  AI ({mode})  {q}")
     d = dispatch({"op": "run", "query": q, "timeout": 120}, allow_confirm=False, home=home, source=source + "-" + mode)
     if d.get("ok") and d["result"].get("needs_confirmation"):
@@ -328,9 +383,11 @@ def instructions(mode: str, base: str) -> str:
 
 # ------------------------------------------------------------------ the server
 class RemoteState:
-    def __init__(self, mode: str, minutes: int, state, approver: Approver, log=print, extra=(), secret: str = ""):
+    def __init__(self, mode: str, minutes: int, state, approver: Approver, log=print, extra=(), secret: str = "", limit: int = 100):
         self.secret = secret or secrets.token_urlsafe(32)
         self.extra = tuple(extra)
+        self.limit = limit
+        self.calls = 0
         self.mode = mode
         self.deadline = time.time() + minutes * 60
         self.state = state
@@ -356,6 +413,14 @@ class RemoteState:
             self.hits.append(now)
             return True
 
+    def count_call(self) -> bool:
+        """One request that runs a task. False once the session limit is used up."""
+        with self.lock:
+            if self.limit and self.calls >= self.limit:
+                return False
+            self.calls += 1
+            return True
+
     def policy(self):
         return _auto_policy(self.mode, self.extra)
 
@@ -367,6 +432,9 @@ def _mcp(rs: RemoteState, msg, host: str):
     """Streamable-HTTP MCP. Returns the JSON-RPC answer, or None for a notification."""
     if isinstance(msg, dict) and msg.get("method") == "tools/call" and (msg.get("params") or {}).get("name") == "jeeg_run" and msg.get("id") is not None:
         a = (msg.get("params") or {}).get("arguments")
+        if not rs.count_call():
+            rs.log(f"{_ts()}  AI call limit ({rs.limit}) reached")
+            return {"jsonrpc": "2.0", "id": msg["id"], "result": {"content": [{"type": "text", "text": f"The limit of {rs.limit} requests for this session is used up."}], "isError": True}}
         text, bad = run_for_ai((a or {}).get("query") if isinstance(a, dict) else "", rs.mode, rs.approver, rs.state, rs.log, "mcp", rs.extra)
         return {"jsonrpc": "2.0", "id": msg["id"], "result": {"content": [{"type": "text", "text": text}], "isError": bad}}
     cfg = jeeg_bridge._cfg(allow_confirm=False, home=str(rs.state), policy=rs.policy())
@@ -392,8 +460,8 @@ async function poll(){try{var r=await fetch("pending",{headers:hdr(),cache:"no-s
 if(r.status==429){S.textContent="Locked after 5 wrong PINs. Restart AI mode.";return}if(r.status==410){S.textContent="AI mode has closed.";return}
 var j=await r.json();S.textContent=j.items.length?"The AI is asking:":"Waiting for the AI to ask for something ...";L.textContent="";
 j.items.forEach(function(it){var c=document.createElement("div");c.className="c";var b=document.createElement("b");b.textContent=it.text;c.appendChild(b);var d=document.createElement("div");d.className="r";
-[["Deny","n",false],["Allow","y",true]].forEach(function(x){var k=document.createElement("button");k.className=x[1];k.textContent=x[0];k.onclick=function(){answer(it.id,x[2])};d.appendChild(k)});c.appendChild(d);L.appendChild(c)})}catch(e){S.textContent="Cannot reach the computer."}setTimeout(poll,2000)}
-async function answer(id,allow){await fetch("answer",{method:"POST",headers:hdr(),body:JSON.stringify({id:id,allow:allow===true})})}
+[["Deny","n",false,false],["Allow","y",true,false]].concat(it.always?[["Allow always (this task, this session)","y",true,true]]:[]).forEach(function(x){var k=document.createElement("button");k.className=x[1];k.textContent=x[0];k.onclick=function(){answer(it.id,x[2],x[3])};d.appendChild(k)});if(it.always)d.style.flexWrap="wrap";c.appendChild(d);L.appendChild(c)})}catch(e){S.textContent="Cannot reach the computer."}setTimeout(poll,2000)}
+async function answer(id,allow,always){await fetch("answer",{method:"POST",headers:hdr(),body:JSON.stringify({id:id,allow:allow===true,always:always===true})})}
 P.onchange=function(){PIN=P.value.trim();if(PIN){P.hidden=true;S.textContent="Checking ...";poll()}};
 </script></body></html>"""
 
@@ -489,15 +557,18 @@ def make_handler(rs: RemoteState):
                     if not 0 < n <= 1024:
                         raise ValueError
                     body = json.loads(self.rfile.read(n).decode("utf-8"))
-                    pid, allow = body.get("id"), body.get("allow")
-                    if not isinstance(pid, str) or not isinstance(allow, bool):
+                    pid, allow, always = body.get("id"), body.get("allow"), body.get("always", False)
+                    if not isinstance(pid, str) or not isinstance(allow, bool) or not isinstance(always, bool):
                         raise ValueError
                 except (ValueError, UnicodeDecodeError, AttributeError):
                     return self._json({"error": "bad"}, 400)
-                return self._json({"ok": ap.answer(pid, allow)})
+                return self._json({"ok": ap.answer(pid, allow, always)})
             self._send(404, "Not found")
 
         def _run(self, query):
+            if not rs.count_call():
+                rs.log(f"{_ts()}  AI call limit ({rs.limit}) reached")
+                return self._json({"ok": False, "output": f"The limit of {rs.limit} requests for this session is used up. Ask the person to restart AI mode."}, 429)
             if not rs.gate.acquire(blocking=False):
                 return self._json({"ok": False, "output": "Busy, try again in a moment."}, 503)
             try:
@@ -626,6 +697,29 @@ def stop_tunnel(p) -> None:
 
 
 # ------------------------------------------------------------------ the command
+def make_notifier(target: str, state: str = "", wait: float = 5.0):
+    """Send a short ping (no details) to ntfy when a question is waiting. At most one ping per 30 seconds. Failure is silent."""
+    host, _, topic = target.partition("/")
+    last = {"t": 0.0}
+
+    def send():
+        now = time.time()
+        if now - last["t"] < 30:
+            return
+        last["t"] = now
+
+        def go():
+            try:
+                import urllib.request
+                req = urllib.request.Request(f"https://{host}/{topic}", data=b"JeeG: the AI is waiting for your approval.", method="POST",
+                                             headers={"Title": "JeeG", "Priority": "high"})
+                urllib.request.urlopen(req, timeout=wait).read(200)
+            except Exception:
+                pass
+        threading.Thread(target=go, daemon=True).start()
+    return send
+
+
 def _kept_secret(state, create: bool) -> str:
     from pathlib import Path
     f = Path(state) / "remote_link"
@@ -699,8 +793,10 @@ def cmd_connect(state, rest: str = "", approver: Approver | None = None, which=s
     approver = approver or Approver()
     if o["phone"] and o["mode"] in ("ask", "god"):
         approver.phone = PhoneApprovals()
+    if o["notify"] and o["mode"] in ("ask", "god"):
+        approver.notify = make_notifier(o["notify"])
     rs = RemoteState(o["mode"], o["minutes"], state, approver, log=log, extra=o["allow"],
-                     secret=_kept_secret(state, True) if o["keep"] else "")
+                     secret=_kept_secret(state, True) if o["keep"] else "", limit=o["limit"])
     port = o["port"]
     try:
         httpd = http.server.ThreadingHTTPServer(("127.0.0.1", port), make_handler(rs))
@@ -762,6 +858,9 @@ def cmd_connect(state, rest: str = "", approver: Approver | None = None, which=s
             print("    Note: there is no internet link, so only this computer can open it. Use a tunnel (drop 'no tunnel') to reach it from a phone.")
     elif o["phone"]:
         print("  Phone approvals only apply to ask and god mode (safe and read never ask), so 'phone' was ignored.")
+    print(f"  Limit: {o['limit']} requests this session, and at most {approver.write_cap} non-safe tasks per minute.")
+    if o["notify"]:
+        print(f"  Ping: when the AI waits for you, a short message (no details) is sent to {o['notify']} (you need the ntfy app subscribed to that topic).")
     if o["allow"]:
         print(f"  Also allowed without asking: every task in {', '.join(o['allow'])}.")
     if o["keep"]:
@@ -783,3 +882,124 @@ def cmd_connect(state, rest: str = "", approver: Approver | None = None, which=s
         stop_tunnel(proc)
         print("\nAI mode closed. The link no longer works.")
     return 0
+
+
+# ------------------------------------------------------------------ ai log
+def cmd_ai_log(state, rest: str = "") -> int:
+    from pathlib import Path
+    d = Path(state) / "ai-sessions"
+    logs = sorted(d.glob("*.log")) if d.is_dir() else []
+    if not logs:
+        print("No AI session log yet. Start AI mode with:  connect ai")
+        return 0
+    arg = (rest or "").strip().lower()
+    if arg in {"list", "all", "ls"}:
+        for f in logs[-30:]:
+            try:
+                n = sum(1 for _ in f.open(encoding="utf-8", errors="replace"))
+            except OSError:
+                n = 0
+            print(f"  {f.stem}   {n} line(s)")
+        print("Show one with:  ai log <date-time>   (or just:  ai log  for the latest)")
+        return 0
+    pick = logs[-1]
+    if arg:
+        m = [f for f in logs if arg in f.stem]
+        if not m:
+            print(f"No session log matches '{arg}'. Try:  ai log list")
+            return 1
+        pick = m[-1]
+    print(f"AI session {pick.stem}  (allowed, denied and refused requests; newest last)\n")
+    try:
+        lines = pick.read_text(encoding="utf-8", errors="replace").splitlines()
+    except OSError as ex:
+        print(f"Could not read it: {ex.strerror or ex}")
+        return 1
+    for ln in lines[-200:]:
+        print("  " + ln)
+    if len(lines) > 200:
+        print(f"  ... {len(lines) - 200} earlier line(s) are in {pick}")
+    return 0
+
+
+# ------------------------------------------------------------------ install into Claude Desktop / Cursor
+def _mcp_targets(base=None):
+    from pathlib import Path
+    home = Path(base) if base else Path.home()
+    if sys.platform == "win32":
+        appdata = Path(os.environ.get("APPDATA") or (home / "AppData" / "Roaming")) if not base else home / "AppData" / "Roaming"
+        desk = appdata / "Claude" / "claude_desktop_config.json"
+    elif sys.platform == "darwin":
+        desk = home / "Library" / "Application Support" / "Claude" / "claude_desktop_config.json"
+    else:
+        desk = home / ".config" / "Claude" / "claude_desktop_config.json"
+    return {"claude-desktop": desk, "cursor": home / ".cursor" / "mcp.json"}
+
+
+def cmd_install_mcp(self_cmd: list, rest: str = "", base=None) -> int:
+    """Add (or remove) JeeG in the MCP config of an AI app on this computer. Without 'yes' it only shows what it would do."""
+    from pathlib import Path
+    words = (rest or "").lower().replace("claude desktop", "claude-desktop").split()
+    yes = "yes" in words or "now" in words
+    remove = any(w in {"remove", "uninstall", "delete"} for w in words)
+    targets = _mcp_targets(base)
+    names = [w for w in words if w in targets]
+    if not names:
+        print("Connect an AI app on this computer to JeeG (it can then use JeeG tasks directly, no link needed).\n"
+              "  install mcp claude-desktop          show what would change\n"
+              "  install mcp claude-desktop yes      do it (a backup of the old file is kept); safe tasks only\n"
+              "  install mcp claude-desktop read yes    also look-only tasks      ...  full yes   every task (careful)\n"
+              "  install mcp cursor yes\n"
+              "  install mcp claude-desktop remove yes\n"
+              "Then restart that app.")
+        return 0
+    rc = 0
+    for n in names:
+        f = targets[n]
+        cfg = {}
+        if f.exists():
+            try:
+                cfg = json.loads(f.read_text(encoding="utf-8") or "{}")
+                if not isinstance(cfg, dict) or not isinstance(cfg.get("mcpServers", {}), dict):
+                    raise ValueError
+            except (ValueError, OSError):
+                print(f"{f} is not a normal settings file, so I did not touch it. Fix it or move it, then try again.")
+                rc = 1
+                continue
+        servers = cfg.setdefault("mcpServers", {})
+        if remove:
+            if "jeeg" not in servers:
+                print(f"{n}: JeeG is not in {f}.")
+                continue
+            servers.pop("jeeg")
+            action = "remove JeeG from"
+        else:
+            scope = "full" if "full" in words else "read" if "read" in words else "safe"
+            only = [] if scope == "full" else sorted(_read_list() if scope == "read" else _safe_list())
+            servers["jeeg"] = {"command": self_cmd[0], "args": list(self_cmd[1:]) + ["--mcp"] + (["--only", ",".join(only)] if only else [])}
+            action = "add JeeG to"
+        print(f"{n}: would {action} {f}" if not yes else f"{n}: {action} {f}")
+        if not remove:
+            print(f"    command: {servers['jeeg']['command']} {' '.join(servers['jeeg']['args'][:3])} ...")
+            print(f"    tasks the app may use: " + {"safe": "the safe list only (calculators, converters, small lists)", "read": "the safe list plus look-only tasks", "full": "EVERY task (tasks that ask for confirmation are still refused)"}[scope])
+        if not yes:
+            print("    (nothing changed; add  yes  to do it)")
+            continue
+        try:
+            f.parent.mkdir(parents=True, exist_ok=True)
+            if f.exists():
+                bak = f.with_name(f.name + time.strftime(".bak-%Y%m%d-%H%M%S"))
+                k = 1
+                while bak.exists():
+                    bak = f.with_name(f.name + time.strftime(".bak-%Y%m%d-%H%M%S") + f"-{k}")
+                    k += 1
+                bak.write_bytes(f.read_bytes())
+                print(f"    backup: {bak}")
+            tmp = f.with_name(f.name + ".jeeg-tmp")
+            tmp.write_text(json.dumps(cfg, indent=2) + "\n", encoding="utf-8")
+            os.replace(tmp, f)
+            print("    done. Restart the app." if not remove else "    done.")
+        except OSError as ex:
+            print(f"    could not write: {ex.strerror or ex}")
+            rc = 1
+    return rc

@@ -44,6 +44,17 @@ Options: `allow files,system` (let those categories run without asking), `keep` 
 - It uses the same tunnel, so it works on mobile data. With `no tunnel` it opens only on this computer.
 - 5 wrong PINs lock it (terminal still works). It closes when the AI link closes.
 
+## Fewer questions, more control
+
+- **Allow always:** on the phone page press "Allow always (this task, this session)", or type `a` in the terminal. That one task then runs without asking until AI mode closes. It never covers confirmation questions (delete, shutdown ...).
+- **Limits:** `connect ai limit 50` stops after 50 requests (default 100). At most 5 non-safe tasks run per minute, whatever the mode.
+- **Ping on your phone:** `connect ai notify ntfy.sh/your-secret-topic` sends "the AI is waiting for your approval" (no details) to the free ntfy app. Choose a long random topic name; anyone who knows it could read the pings. Leave it out and nothing is contacted.
+- **Read the log:** `ai log` shows the last session, `ai log list` all of them.
+
+## Claude Desktop and Cursor without a tunnel
+
+`install mcp claude-desktop` shows what it would write; add `yes` to do it (a backup of your settings is kept). Restart the app and JeeG appears as a tool. By default only the safe list is allowed; `read` adds look-only tasks and `full` allows every task (confirmation tasks are still refused). `install mcp claude-desktop remove yes` takes it out.
+
 ## One link you add only once
 
 1. Run your own named tunnel (for example cloudflared with a free Cloudflare account, or Tailscale Funnel) that points to `http://127.0.0.1:8767`.
