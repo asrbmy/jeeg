@@ -1,4 +1,4 @@
-# JeeG 2.8.0 - How It Works
+# JeeG - How It Works
 
 ![JeeG in a terminal](docs/demo.gif)
 
@@ -390,7 +390,7 @@ j("add expense 250 food lunch")
 - Limit what a program may do: `--only money,text` or `--except files,system`; `--log` keeps a private call log.
 - Full guide: INTEGRATIONS.md. Examples for Node.js, curl and Python: `examples/other_languages/`.
 
-Security notes (version 2.8.0): only safe link types are opened, archives cannot write outside their folder, backups are validated before import, your data folder is private to you on Mac/Linux, over-long or control-character input is refused, and unexpected errors show one plain line (`JEEG_DEBUG=1` for details). Plugins and `--dir` folders run with your permissions, so only use ones you trust.
+Security notes: only safe link types are opened, archives cannot write outside their folder, backups are validated before import, your data folder is private to you on Mac/Linux, over-long or control-character input is refused, and unexpected errors show one plain line (`JEEG_DEBUG=1` for details). Plugins and `--dir` folders run with your permissions, so only use ones you trust.
 
 ## 8. Troubleshooting
 

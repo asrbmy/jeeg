@@ -1,19 +1,19 @@
 [build-system]
-requires = ["setuptools>=61"]
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "jeeg"
 dynamic = ["version"]
-description = "Type a task in plain words and it runs. No AI model, no account, no cloud: 400+ everyday tasks that work offline."
+description = "Type a task in plain words and it runs. No AI model, no account, no cloud: 500+ everyday tasks that work offline."
 readme = "README.md"
 requires-python = ">=3.9"
-license = { text = "MIT" }
+license = "MIT"
+license-files = ["LICENSE"]
 authors = [{ name = "asrbmy" }]
 keywords = ["automation", "cli", "productivity", "offline", "privacy", "india"]
 classifiers = [
   "Programming Language :: Python :: 3",
-  "License :: OSI Approved :: MIT License",
   "Operating System :: OS Independent",
   "Environment :: Console",
   "Topic :: Utilities",
@@ -22,6 +22,8 @@ dependencies = []
 
 [project.optional-dependencies]
 extras = ["pypdf", "pillow", "qrcode[pil]", "psutil"]
+serial = ["pyserial"]
+ocr = ["pytesseract", "pillow"]
 
 [project.urls]
 Homepage = "https://github.com/asrbmy/jeeg"

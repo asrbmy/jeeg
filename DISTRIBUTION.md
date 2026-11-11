@@ -3,7 +3,7 @@
 Step-by-step guides for every place JeeG can be published. Do them in this order:
 each later step is easier once the earlier ones are done.
 
-Replace `X.Y.Z` with the version (for example `2.8.0`). Your GitHub name is `asrbmy`.
+Replace `X.Y.Z` with the version (for example `2.16.0`). Your GitHub name is `asrbmy`.
 
 | # | Place | Who it reaches | Effort | Cost |
 |---|-------|----------------|--------|------|
@@ -27,7 +27,7 @@ Never put a token or password in a file, in a commit, or in the repo. Put it in 
 
 ## 0. Before every release
 
-1. Change `__version__` in `jeeg.py` (for example `2.8.1`).
+1. Change `__version__` in `jeeg.py` (for example `2.16.1`).
 2. Add a `## 2.8.1` section at the top of `CHANGELOG.md`. The release notes are taken from it.
 3. Run the tests: `python jeeg.py selftest` and the files in `tests/`.
 4. Push to `main`. The `publish` workflow does the rest (steps 1 and 2 below).

@@ -1,6 +1,6 @@
 name: build-exe
 # Builds the standalone program (no Python needed) for Windows, Mac and Linux and attaches it to the newest GitHub release.
-# Runs by itself after the "publish" workflow finishes, or press "Run workflow" (you can give a tag like v2.8.0).
+# Runs by itself after the "publish" workflow finishes, or press "Run workflow" (you can give a tag like v2.16.0).
 on:
   workflow_run:
     workflows: [publish]

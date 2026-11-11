@@ -69,8 +69,8 @@ Use it from Python too: `jeeg.rupees_to_paise(12.5)`.
 
 ## Releasing (automatic)
 
-1. Change `__version__` in `jeeg.py` (for example `2.8.1`) and add a `## 2.8.1` section at the top of `CHANGELOG.md`. That section becomes the release notes.
+1. Change `__version__` in `jeeg.py` (for example `2.16.1`) and add a `## 2.16.1` section at the top of `CHANGELOG.md`. That section becomes the release notes.
 2. Commit and push to `main`.
-3. The `publish` workflow runs the tests, builds the package, creates the tag `v2.8.1`, makes the GitHub release with the files attached, and uploads to PyPI.
+3. The `publish` workflow runs the tests, builds the package, creates the tag `v2.16.1`, makes the GitHub release with the files attached, and uploads to PyPI.
 
 Pushes that do not change the version do nothing: a version that already has a tag is skipped. PyPI upload needs the one-time setup in `.github/workflows/publish.yml` (trusted publisher on pypi.org, an environment named `pypi`, and the repository variable `PUBLISH_PYPI` = `true`). You can also run the workflow by hand from the Actions tab.
