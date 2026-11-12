@@ -7,7 +7,7 @@ JeeG finds the matching script in the `scripts` folder and runs it.
 
 - Pure Python 3.9+, nothing to install. Works on Windows, macOS and Linux.
 - Light: about 16 MB of memory, about 65 ms per command, nothing running in the background (except reminders and alarms you set yourself).
-- 538 ready-made tasks. You can add your own by dropping in a file.
+- 542 ready-made tasks. You can add your own by dropping in a file.
 
 ---
 
@@ -297,6 +297,10 @@ A plugin is one `.py` file. Make a starter with `jeeg plugin new my_task`, edit 
 - Host names, ports and package names are checked before being passed to other programs.
 - Critical system processes cannot be killed with `kill process`.
 - No task sends your files or personal data anywhere. Web tasks only open a page in your browser.
+
+## What is new in 2.18
+
+- **Link JeeG to your apps** so an AI (or you) can reach what lives on your own devices: `app login github`, `app read github issues`, `app do telegram send chat=123 text="Done"`. GitHub, Telegram, Discord, Slack and WhatsApp are built in, and `app add` links any web API. Reads are separate from writes, writes always ask, and an AI cannot link or change anything. See APPS.md.
 
 ## What is new in 2.17
 

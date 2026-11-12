@@ -537,3 +537,13 @@ add ~/tools to path => env_variable | add ~/tools to path
 set variable name is Asha Rao => var_define | set variable name is Asha Rao
 set permanent variable API_URL to https://x.com => env_variable | set permanent variable API_URL to https://x.com
 remove env variable API_URL => env_variable | remove env variable API_URL
+# ---- v2.18: linked apps
+apps => linked_apps | apps
+linked apps => linked_apps | linked apps
+apps github => linked_apps | apps github
+what apps can the ai use => linked_apps | what apps can the ai use
+app read github issues => linked_read | app read github issues
+app do telegram send chat=1 hello => linked_do | app do telegram send chat=1 hello
+app login github => linked_setup | app login github
+app add trello https://api.trello.com/1 query:key => linked_setup | app add trello https://api.trello.com/1 query:key
+app do telegram send chat=1 "great work, thanks" => linked_do | app do telegram send chat=1 "great work, thanks"

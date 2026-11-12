@@ -1,5 +1,17 @@
 # Changelog
 
+## 2.18.0
+
+- **Linked apps: connect JeeG, an AI agent and the apps on your devices.** See APPS.md.
+  - `apps`, `app login github`, `app read github issues`, `app do telegram send chat=ID text=...`. Built in: GitHub, Telegram (your own bot), Discord and Slack (webhooks), WhatsApp (opens the chat with your message typed in; you press Send).
+  - `app add <name> <https://base> [bearer|basic|header:NAME|query:NAME|none]` and `app action ...` describe any other web API in a few lines. GET actions are reads; every other method is a write.
+  - Works with AI mode: an AI can read your apps only if you allow `apps`, and every write asks you first. Linking, defining and logging in are terminal-only, so an AI cannot change them even in god mode.
+  - Safety: logins stored 0600 and scrubbed from all output; values only fill encoded slots (path, query, JSON body text), never the address or headers; redirects are never followed; https required except for your own computer and home network; app content is labelled as data with terminal escapes removed.
+- **Engine fix:** a trailing "please" or "thanks" inside quotes is kept (`text="great work, thanks"` used to lose the last word). Unquoted trailing politeness is still dropped.
+- **Security fix found while testing:** a header value containing a line break was not rejected in a custom app definition.
+- New task names: `linked apps`, `linked read`, `linked do`, `linked setup`. Categories `apps`, `apps_write`, `apps_setup` (so `allow apps` never unlocks writing or setup).
+- Tests: `tests/test_v218.py` (171 checks, against a fake app server on this computer).
+
 ## 2.17.0
 
 - **Install and set up programs by name** (all ask first; add `preview` to see the command without running it):

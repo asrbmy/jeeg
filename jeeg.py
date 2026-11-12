@@ -60,7 +60,7 @@ import sys
 import time
 from pathlib import Path
 
-__version__ = "2.17.0"
+__version__ = "2.18.0"
 
 HERE = Path(__file__).resolve().parent
 FROZEN = bool(getattr(sys, "frozen", False))      # True inside the standalone program built with PyInstaller
@@ -355,7 +355,7 @@ def rank(query: str, entries: list[dict]):
         while args and (norm(args[0]) in lead or not norm(args[0])):
             args.pop(0)
         if e.get("raw"):                     # free text (messages, timers): only drop politeness at the end
-            while args and (norm(args[-1]) in POLITE or (not norm(args[-1]) and not full)):   # full keeps symbols such as the * in cron
+            while args and ((norm(args[-1]) in POLITE and not re.search(r"[\"']", args[-1])) or (not norm(args[-1]) and not full)):   # full keeps symbols such as the * in cron; a quoted word is meant exactly
                 args.pop()
         else:
             while args and ((norm(args[-1]) in FILLER and norm(args[-1]) not in KEEP_END) or not norm(args[-1])):

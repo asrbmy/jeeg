@@ -26,7 +26,7 @@ Contents
 
 - A small launcher written in Python (standard library only). It has no background service and does not need an account.
 - It reads every script in `scripts/`, matches your words to a script, and runs it. A script is just a file you can open and edit.
-- 538 tasks are included across apps, websites, files, system, network, reminders, personal records, money calculators, text tools, developer tools and quick searches.
+- 542 tasks are included across apps, websites, files, system, network, reminders, personal records, money calculators, text tools, developer tools and quick searches.
 - It runs on Windows, macOS and Linux. Python 3.9 or newer is required.
 - It is quick (about 56 ms per command including Python start-up, measured on Linux) and light (about 16 MB while a command runs; nothing stays in memory between commands, except reminders and alarms you set).
 
@@ -505,6 +505,15 @@ JeeG knows about 45 popular programs and picks the right package name for your s
 
 Databases are opened read-only: only SELECT works, and the file cannot be changed.
 
+### 8.29 Link JeeG to your apps
+
+    apps                                       what is linked
+    app login github                           paste a token once (stays on this computer)
+    app read github issues                     look, never changes anything
+    app do telegram send chat=123 text="Hi"    changes something, asks first (add "preview" to only look)
+
+Built in: GitHub, Telegram (your bot), Discord, Slack, WhatsApp (opens the chat; you press Send). Add your own with `app add`. An AI in AI mode can read your apps only if you allow `apps`, and every write asks you. Read APPS.md for the full guide.
+
 ## 9. Teaching and checking JeeG
 
 **Aliases: your own short words**
@@ -661,7 +670,7 @@ Run the checks yourself any time:
 
 ## 15. Appendix: every task
 
-538 tasks. In the Usage column, `<...>` is something you fill in and `[...]` is optional. A star means the task asks before running; "online" means it can use the internet.
+542 tasks. In the Usage column, `<...>` is something you fill in and `[...]` is optional. A star means the task asks before running; "online" means it can use the internet.
 
 
 ### ai
@@ -677,6 +686,8 @@ Run the checks yourself any time:
 
 | Task | Usage | What it does |
 |---|---|---|
+| linked apps | `apps \| apps <name>` | List the apps JeeG is linked to (GitHub, Telegram, Discord, Slack, WhatsApp, your own) and what each one can do. "apps github" shows one app's actions. |
+| linked read (online) | `app read <app> <action> [arguments]` | Look at something in a linked app without changing it (app read github issues, app read github repo_issues owner/name). Nothing is ever sent or changed. |
 | open app | `open app <name>` | Open any installed app by name (open app <name>) |
 | open bluetooth settings |  | Open Bluetooth settings |
 | open brave |  | Open Brave browser |
@@ -703,6 +714,18 @@ Run the checks yourself any time:
 | open vscode |  | Open Visual Studio Code |
 | open wifi settings |  | Open Wi-Fi settings |
 | open word |  | Open Microsoft Word / a word processor |
+
+### apps_setup
+
+| Task | Usage | What it does |
+|---|---|---|
+| linked setup (online) | `app login <app> \| app logout <app> \| app add <name> <https://base> [none\|bearer\|basic\|header:NAME\|query:NAME] \| app action <app> <name> <GET\|POST\|...> </path> [params=a,b] [format="{x}"] [list=path] [body='{"k":"{a}"}'] [desc="..."] \| app remove <name>` | Link JeeG to an app: log in (app login github), add your own app by its web address (app add trello https://api.trello.com/1 query:key), define what it can do (app action ...), log out or remove. Terminal only: an AI cannot do this. |
+
+### apps_write
+
+| Task | Usage | What it does |
+|---|---|---|
+| linked do (online) * | `app do <app> <action> [arguments] [preview]` | Do something in a linked app that changes things: comment on GitHub, send a Telegram, Discord or Slack message, open a WhatsApp chat (app do telegram send chat=123 hello). Always asks first; add "preview" to see the request without sending. |
 
 ### backup
 

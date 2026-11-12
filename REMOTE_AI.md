@@ -2,6 +2,10 @@
 
 JeeG has no AI in it. AI mode lets an AI **you already use** (Claude.ai, ChatGPT, an agent) call JeeG over a temporary link.
 
+## Your apps through the AI
+
+If you link apps (APPS.md), an AI in AI mode can use them under the same rules as everything else: `read` mode needs `connect ai read allow apps` and can only look; `ask` mode asks you for every read and write; `god` mode runs reads and still asks for writes. Linking an app, defining one and logging in only work in a terminal window, so the AI cannot do them. Everything an app returns is marked as data for the AI.
+
 ## Quick start
 
 1. Install a tunnel program once (JeeG does not bundle one): `cloudflared` (free, no account) or `ngrok`.

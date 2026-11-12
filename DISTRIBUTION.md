@@ -3,7 +3,7 @@
 Step-by-step guides for every place JeeG can be published. Do them in this order:
 each later step is easier once the earlier ones are done.
 
-Replace `X.Y.Z` with the version (for example `2.17.0`). Your GitHub name is `asrbmy`.
+Replace `X.Y.Z` with the version (for example `2.18.0`). Your GitHub name is `asrbmy`.
 
 | # | Place | Who it reaches | Effort | Cost |
 |---|-------|----------------|--------|------|
