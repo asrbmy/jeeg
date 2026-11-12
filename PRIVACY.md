@@ -13,7 +13,7 @@ JeeG is built so that you can check these statements yourself.
 Only in the `.jeeg` folder in your home directory (or `JEEG_HOME`), readable only by you on Mac and Linux. Notes, expenses, journal, medicines, contacts and the rest are plain files you can open, copy or delete. Tasks marked private (passwords, medicines, clipboard) are not written to your command history.
 
 **When JeeG itself uses the internet**
-Only when you run a task that needs it. Say `privacy` to see the list; `list` marks those tasks with `[online]`. Today that is 41 of 517 tasks: weather, exchange rates, news, dictionary and Wikipedia look-ups, `check website`, `ping host`, `git pull`, the connector tasks you set up yourself (webhooks, mail, GitHub, MQTT, peers ...) and similar. Everything else (calculators, files, notes, reminders, reports, invoices, medicines) works with the network cable unplugged.
+Only when you run a task that needs it. Say `privacy` to see the list; `list` marks those tasks with `[online]`. Today that is 54 of 538 tasks: weather, exchange rates, news, dictionary and Wikipedia look-ups, `check website`, `ping host`, `git pull`, the connector tasks you set up yourself (webhooks, mail, GitHub, MQTT, peers ...), installing programs (your package manager contacts its own servers), watches, RSS feeds, `save page`, `network doctor` and similar. Everything else (calculators, files, notes, reminders, reports, invoices, medicines) works with the network cable unplugged.
 
 Besides tasks, the engine contacts these addresses, only when you type the matching command:
 
@@ -42,6 +42,16 @@ Plugins run as normal programs with your permissions, so they could do anything.
 ## Connectors
 
 `telegram start` contacts api.telegram.org (long polling) while it runs. Connector tasks contact only the service you configured: your webhook address, your mail provider, api.github.com, your calendar link, your MQTT broker or devices on your own network. Nothing is sent until you set a connector up and use it, and tokens go only to the service they belong to. Say `privacy` for the list of tasks that can use the network.
+
+## Network tasks added in 2.17
+
+- `network doctor` opens a TCP connection to 1.1.1.1 and 8.8.8.8 on port 443 (no data is sent) and looks up `example.com`. It pings your router.
+- `who is on my wifi` reads your computer's neighbour table; with `scan` it tries a few ports on addresses next to yours, and only on private networks (192.168.x.x, 10.x.x.x, 172.16-31.x.x).
+- `send <file> to my phone` listens on your local network address with a random secret link, serves that one file once, then stops (or after 10 minutes). Nothing leaves your network.
+- `watch`, `feed` and `save page` fetch only the addresses you give them, and refuse addresses on your own network. Page text is not sent anywhere.
+- `check all computers` and `on <name> run <task>` use your own `ssh`.
+- Installing programs runs your package manager (winget, choco, brew, apt ...), which contacts its own servers. JeeG itself sends nothing.
+- `query database` opens a file on your disk read-only.
 
 ## The local API (`--serve-api`, `--stdio`, `--mcp`)
 

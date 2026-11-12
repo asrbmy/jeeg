@@ -7,7 +7,7 @@ JeeG finds the matching script in the `scripts` folder and runs it.
 
 - Pure Python 3.9+, nothing to install. Works on Windows, macOS and Linux.
 - Light: about 16 MB of memory, about 65 ms per command, nothing running in the background (except reminders and alarms you set yourself).
-- 517 ready-made tasks. You can add your own by dropping in a file.
+- 538 ready-made tasks. You can add your own by dropping in a file.
 
 ---
 
@@ -297,6 +297,12 @@ A plugin is one `.py` file. Make a starter with `jeeg plugin new my_task`, edit 
 - Host names, ports and package names are checked before being passed to other programs.
 - Critical system processes cannot be killed with `kill process`.
 - No task sends your files or personal data anywhere. Web tasks only open a page in your browser.
+
+## What is new in 2.17
+
+- **Install and set up programs by name:** `install vlc`, `install dev bundle`, `uninstall vlc`, `update all apps`, `configure git name Ravi email r@x.com`, `is git installed`, `set env variable ...`, `add <folder> to path`. They ask first, and `preview` shows the command only.
+- **Network:** `network doctor`, `who is on my wifi`, `watch page|price|site|ssl|release`, `read my feeds` (RSS), `save page <url>`, `send file.pdf to my phone` (link and QR code, one download).
+- **Machines and shops:** `check all computers`, sensor readings with alerts and a chart, `printer status`, `print <file>`, `stock add ...` / `low stock`, `query database shop.db select ...` (read only).
 
 ## What is new in 2.16
 

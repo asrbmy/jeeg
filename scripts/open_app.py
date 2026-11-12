@@ -2,6 +2,8 @@
 # desc: Open any installed app by name (open app <name>)
 # category: apps
 # usage: open app <name>
+# patterns: ^\s*(?:open|launch|start|run)\s+(?:the\s+)?(?:app|application|program)\b
+# priority: 3
 import os, shutil, subprocess, sys
 from _lib import MAC, WIN, args_text, fail, spawn
 

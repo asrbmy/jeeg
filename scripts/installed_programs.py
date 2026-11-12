@@ -1,8 +1,10 @@
-# keywords: installed programs, installed apps, list programs, what is installed, installed software, list apps, programs installed, is app installed
+# keywords: installed programs, installed apps, list programs, what is installed, installed software, list apps, programs installed
 # desc: List installed programs, or search them (installed programs chrome)
 # category: system
 # usage: installed programs [name]
 # rawargs: yes
+# patterns: \binstalled\s+(?:programs|apps|software|applications)\b ;; \b(?:list|show)\s+(?:my\s+)?(?:installed\s+)?(?:programs|apps|software)\b ;; \bwhat\s+(?:programs|apps|software)\s+(?:are|do\s+i\s+have)\s+installed\b
+# priority: 4
 import re, shutil
 from pathlib import Path
 from _lib import args_text, WIN, MAC

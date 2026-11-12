@@ -26,7 +26,7 @@ Contents
 
 - A small launcher written in Python (standard library only). It has no background service and does not need an account.
 - It reads every script in `scripts/`, matches your words to a script, and runs it. A script is just a file you can open and edit.
-- 517 tasks are included across apps, websites, files, system, network, reminders, personal records, money calculators, text tools, developer tools and quick searches.
+- 538 tasks are included across apps, websites, files, system, network, reminders, personal records, money calculators, text tools, developer tools and quick searches.
 - It runs on Windows, macOS and Linux. Python 3.9 or newer is required.
 - It is quick (about 56 ms per command including Python start-up, measured on Linux) and light (about 16 MB while a command runs; nothing stays in memory between commands, except reminders and alarms you set).
 
@@ -467,6 +467,44 @@ See `CONNECTORS.md` for the full list. The short version:
 - **From code:** JavaScript `integrations/js`, any language via `integrations/openapi/jeeg-openapi.json`, Python `import jeeg_api`.
 - Secrets are asked for privately, never typed in the command, and kept in files only you can read. Say `computer list`, `webhook list`, `device list` and so on to see what is saved.
 
+### 8.28 Install programs, check your network, run a small shop
+
+**Install and set up** (each asks first; add the word `preview` to see the command only):
+
+    install vlc and git
+    uninstall vlc
+    update all apps
+    install dev bundle          (also: office, media, student, privacy)
+    configure git name Ravi email ravi@example.com
+    is git installed
+    set env variable API_URL to https://example.com
+    add ~/tools to path
+
+JeeG knows about 45 popular programs and picks the right package name for your system (winget or choco on Windows, brew on Mac, apt, dnf, pacman or flatpak on Linux). Any other name is passed to your package manager exactly as typed. On Linux it may ask for your password in the terminal.
+
+**Network and internet**
+
+    network doctor                      why is my internet slow or down?
+    who is on my wifi                   devices your computer has seen; add "scan" to wake the quiet ones
+    watch price https://shop.com/item   tell me when it changes; then:  check watches
+    feed add https://site.com/feed.xml  then:  read my feeds
+    save page https://site.com/article  readable text, for offline
+    send report.pdf to my phone         link and QR code on your Wi-Fi, one download, then it stops
+
+**Machines**
+
+    check all computers                 health of every saved computer (see "computer add")
+    log reading temperature 24.5 c      then:  show readings temperature   readings chart temperature
+    alert when temperature above 30     warns when a logged reading passes it
+    printer status      print report.pdf
+
+**Shop and data**
+
+    stock add rice 20 min 5      stock sell rice 3      low stock      stock list
+    database tables shop.db      query database shop.db select * from sales limit 5
+
+Databases are opened read-only: only SELECT works, and the file cannot be changed.
+
 ## 9. Teaching and checking JeeG
 
 **Aliases: your own short words**
@@ -623,7 +661,7 @@ Run the checks yourself any time:
 
 ## 15. Appendix: every task
 
-517 tasks. In the Usage column, `<...>` is something you fill in and `[...]` is optional. A star means the task asks before running; "online" means it can use the internet.
+538 tasks. In the Usage column, `<...>` is something you fill in and `[...]` is optional. A star means the task asks before running; "online" means it can use the internet.
 
 
 ### ai
@@ -694,12 +732,20 @@ Run the checks yourself any time:
 | show clipboard |  | Show what is on the clipboard |
 | speak text | `speak <text>` | Read text aloud (speak hello there) |
 
+### data
+
+| Task | Usage | What it does |
+|---|---|---|
+| sensor log | `log reading <name> <value> [unit] \| show readings <name> \| readings chart <name> \| alert when <name> above\|below <n> \| list readings` | Keep a log of any measurement (log reading temperature 24.5 c), see stats and a chart (show readings temperature), and get alerted past a limit (alert when temperature above 30) |
+| sqlite query | `database tables <file.db> \| query database <file.db> <select ...>` | Look inside a SQLite database file, read-only (database tables shop.db, query database shop.db select * from sales limit 5) |
+
 ### developer
 
 | Task | Usage | What it does |
 |---|---|---|
 | check versions |  | Show installed versions of Python, Node, Git, Docker, Java |
 | color convert | `color <#hex \| rgb r g b \| hsl h s l>` | Convert colours between hex, RGB and HSL (color #ff8800; color rgb 255 136 0; color hsl 32 100 50) |
+| configure app (online) * | `configure git [name N] [email E] [branch B] \| configure ssh key \| configure vscode extension <id> \| configure python project` | Set up common tools: git name and email, an ssh key, a VS Code extension, a Python virtual environment (configure git name Ravi email r@x.com; add "preview" to see what would run) |
 | count lines of code | `lines of code [folder]` | Count lines of code by language in a folder (lines of code myproject) |
 | create gitignore | `create gitignore [python\|node\|java]` | Create or extend a .gitignore for a language (create gitignore python \| node \| java) |
 | create venv |  | Create a Python virtual environment (.venv) here |
@@ -1024,6 +1070,7 @@ Run the checks yourself any time:
 | hra exemption | `hra basic <amt> hra <amt> rent <amt> [metro]` | HRA tax exemption (hra basic 50000 hra 20000 rent 18000 metro) |
 | income tax | `income tax <income> [deductions <amount>]` | Income tax, new vs old regime (income tax 12 lakh; income tax 18 lakh deductions 2 lakh) |
 | interest tax | `interest tax <interest> tax <rate %>   \|   interest tax deposit <amount> rate <%> tax <%>` | Tax on interest earned (interest tax deposit 10000 rate 5 tax 25; interest tax 800 tax 15) |
+| inventory | `stock add <item> <qty> [min <n>] \| stock sell\|remove <item> <qty> \| stock set <item> <qty> \| stock list \| low stock \| stock delete <item>` | Keep a simple stock list for a shop or home (stock add rice 20 min 5, stock sell rice 3, stock list, low stock) |
 | lend money | `lend <amount> to <name> [note]` | Note money you lent to someone (lend 500 to ravi for lunch) |
 | loan compare | `compare loans <amt> <rate> <years> vs <rate> <years>` | Compare two loan offers side by side (compare loans 500000 8.5% 5y vs 9% 4y). |
 | make invoice | `invoice <customer>: <qty> <item> at <rate>, ... [gst 18]` | Make a simple GST invoice page (invoice Ravi Traders: 3 pens at 10, 2 books at 150 gst 18) |
@@ -1059,20 +1106,28 @@ Run the checks yourself any time:
 | check speed (online) |  | Test internet speed (Speedtest) |
 | check website (online) | `check website <url>` | Check if a website is up (check website github.com) |
 | dns lookup (online) | `dns lookup <domain>` | Look up the IP addresses of a domain |
+| fleet check (online) * | `check all computers` | Ask every saved computer (see "computer add") for its health at once: disk, memory, uptime. Needs JeeG and an ssh key on each. |
 | flush dns * |  | Clear the DNS cache |
 | listening ports |  | Show which programs are listening on network ports |
 | live network speed | `live network speed [seconds]` | Watch your current download/upload speed for a few seconds (live network speed) |
 | mqtt message (online) | `mqtt add <name> <host[:port]> [user] \| mqtt publish <name> <topic> <message> \| mqtt listen <name> <topic> [seconds] \| mqtt list \| mqtt remove <name>` | Send or listen to MQTT messages (mqtt add home 192.168.1.2, mqtt publish home lights/kitchen on, mqtt listen home sensors/#) |
+| network doctor (online) | `network doctor` | Find out why the internet is slow or down: checks your network, router, name lookup and the internet, then says what to try |
 | peer jeeg (online) | `peer add <name> <link from 'connect ai'> \| peer run <name> <task> \| peer list \| peer remove <name>` | Talk to a JeeG on another computer through its AI-mode link (peer add office <link>, peer run office disk space) |
 | ping host (online) | `ping host <name or ip>` | Ping a host (ping google.com) |
 | port check (online) | `port check <host> <port>` | Check if a port is open (port check example.com 443) |
 | port owner | `who uses port <number>` | Which program is using a port (who uses port 3000) |
+| rss feed (online) | `feed add <url> [name] \| feed list \| feed remove <n> \| read feeds [n]` | Follow blogs and news sites by their RSS/Atom feed (feed add https://site/feed, read feeds, feed list, feed remove 2) |
+| save page (online) | `save page <url>` | Save a web page as readable text for offline reading (save page https://example.com/article). Saved in Documents/JeeG pages. |
+| scan network (online) | `who is on my wifi [scan]` | List the devices on your home network (who is on my wifi). Add "scan" to wake the quiet ones first. Only your own private network. |
+| share file (online) | `send <file> to my phone` | Send one file to your phone or another computer on the same Wi-Fi: shows a link and QR code, serves that one file once, then stops |
 | show ip (online) |  | Show your local and public IP address |
 | smart device (online) | `device add <name> <shelly\|tasmota> <ip> \| device on\|off\|toggle\|status <name> \| device list \| device remove <name>` | Control smart plugs on your home network (device add lamp shelly 192.168.1.50, then: device on lamp / device off lamp / device status lamp) |
 | ssh hosts | `computer add <name> <user@host> \| computer list \| computer remove <name>` | Save other computers you can reach with ssh (computer add pi pi@192.168.1.20), then run JeeG tasks on them |
 | ssh task (online) * | `on <name> run <task>` | Run a JeeG task on another computer over ssh (on pi run disk space). Needs JeeG there and an ssh key (no password prompts). |
+| ssl expiry (online) | `ssl expiry <site>` | Show how many days a site's https certificate has left (ssl expiry mysite.com) |
 | trace route (online) | `trace route <host>` | Trace the network route to a host |
 | wake on lan (online) | `wake <name \| MAC address> \| wake add <name> <MAC> \| wake list \| wake remove <name>` | Turn on a computer on your network with a Wake-on-LAN packet (wake add nas AA:BB:CC:DD:EE:FF, then: wake nas) |
+| watch site (online) | `watch page\|price\|site\|ssl\|release <target> [name] \| watch list \| watch remove <n> \| check watches` | Watch a web page, a price, a site being up, a certificate, or a GitHub release; "check watches" reports what changed (watch page https://x.com/news, watch price https://shop.com/item, watch site https://mysite.com, watch ssl mysite.com, watch release owner/repo) |
 | webhook (online) | `webhook add <name> <https address> \| webhook send <name> <text> \| webhook list \| webhook remove <name>` | Save web addresses (Slack, Discord, Zapier, n8n ...) and send them a message (webhook add team https://..., webhook send team deploy done) |
 | wifi info |  | Show the Wi-Fi network you are connected to |
 
@@ -1233,19 +1288,28 @@ Run the checks yourself any time:
 | cpu temperature |  | Show processor temperature (where the computer allows it) |
 | cpu usage |  | Show current CPU load |
 | disk space |  | Show free space on your drives |
+| env variable * | `set env variable NAME to VALUE \| remove env variable NAME \| add <folder> to path` | Save an environment variable for good (set env variable API_URL to https://x.com) or add a folder to PATH (add C:\tools to path). Add "preview" to see what would change. New terminals pick it up. |
+| find software (online) | `search app [words]` | Find an app in your package manager (search app video editor), or list the apps I can install by short name (search app) |
 | gpu info |  | Show graphics card details |
 | health check |  | One-screen check of your computer: disk, memory, CPU, battery, uptime, with warnings |
+| install app (online) * | `install <app> [and <app> ...] [preview]` | Install an app or program by name with your system's package manager (install vlc, install chrome and git; add "preview" to see the command only) |
+| install bundle (online) * | `install <dev\|office\|media\|student\|privacy> bundle [preview]` | Install a set of apps in one go (install dev bundle: git, python, vscode, nodejs; also office, media, student, privacy). Add "preview" to see the commands only. |
 | installed programs | `installed programs [name]` | List installed programs, or search them (installed programs chrome) |
+| is installed | `is <app> installed \| version of <app>` | Check whether a program is installed and which version (is git installed, which version of python, do i have vlc) |
 | keep awake | `keep awake [2 hours]` | Stop the computer sleeping for a while (keep awake 2 hours) |
 | kill process * | `kill process <name>` | Close a program by name (e.g. kill process notepad) |
 | memory usage |  | Show RAM usage |
+| print file * | `print <file> [preview]` | Print a file on your default printer (print report.pdf; add "preview" to see the command only) |
 | restart explorer * |  | Restart Windows Explorer when the taskbar or desktop freezes |
 | running processes |  | List the programs using the most memory |
 | screen off |  | Turn the screen off without sleeping |
 | screen resolution |  | Show your screen resolution |
+| show printers | `show printers` | List your printers and whether they are ready, and the default one |
 | show uptime |  | Show how long the computer has been on |
 | startup programs |  | List programs that start with your computer |
 | system info (online) |  | Show OS, CPU, memory, disk and uptime |
+| uninstall app * | `uninstall <app> [preview]` | Uninstall an app by name with your system's package manager (uninstall vlc; add "preview" to see the command only) |
+| update apps (online) * | `update all apps \| update app <name> [preview]` | Update all your installed apps (update all apps), or one (update app vlc); add "preview" to see the command only |
 | usb devices |  | List connected USB devices |
 
 ### text

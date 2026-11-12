@@ -1,5 +1,26 @@
 # Changelog
 
+## 2.17.0
+
+- **Install and set up programs by name** (all ask first; add `preview` to see the command without running it):
+  - `install vlc`, `install vlc and git`, `uninstall vlc`, `update all apps`, `update app git`, `search app vlc` use winget or choco (Windows), brew (Mac), or apt, dnf, pacman, flatpak (Linux). About 45 well-known apps are mapped to the right package name on each system; any other name is passed to the package manager as you typed it. Commands are always run as a list, never through a shell, and names with spaces or symbols are refused.
+  - `install dev bundle` (also office, media, student, privacy) installs a set of apps in one go.
+  - `configure git name Ravi email r@x.com`, `configure ssh key`, `configure vscode extension <id>`, `configure python project`.
+  - `is git installed`, `which version of python do i have`: looks a program up and shows its version. Only programs JeeG knows by name are ever run (with `--version`).
+  - `set env variable NAME to value`, `remove env variable NAME`, `add <folder> to path`: saved for good (Mac/Linux: a marked block in your shell profile with a backup; Windows: your user environment). Values are quoted so nothing in them can run.
+- **Network and internet:**
+  - `network doctor` checks your connection step by step (this computer, router, name lookup, the internet) and says what to try.
+  - `who is on my wifi` lists devices seen on your network; add `scan` to wake the quiet ones first. Private networks only.
+  - `watch page|price|site|ssl|release ...` and `check watches` tell you when a page changes, a price drops, a site goes down, a certificate is about to expire or a GitHub project has a new release. `ssl expiry mysite.com`.
+  - `feed add <url>`, `read my feeds`: RSS and Atom, with protection against XML bombs.
+  - `save page <url>` keeps the readable text for offline reading.
+  - `send report.pdf to my phone` shows a link and QR code and serves that one file once over your Wi-Fi, then stops.
+- **Machines:** `check all computers` asks every saved computer for its health over ssh; `log reading temperature 24.5`, `show readings temperature`, `readings chart temperature`, `alert when temperature above 30`; `printer status`, `print report.pdf`.
+- **Shop and data:** `stock add rice 20 min 5`, `stock sell rice 3`, `low stock`, `stock list`; `database tables shop.db`, `query database shop.db select ...` (read only: anything that is not a SELECT is refused by SQLite itself).
+- **Fixes found while testing:** the RSS reader no longer accepts an ordinary web page as a feed; `watch page` refuses `file:` and other non-web addresses; a value ending in a quote keeps it.
+- Routing: names that share a common word (`app`, `status`, `set`) made other tasks less sure of themselves, so several new tasks have names of their own (`show printers`, `env variable`, `find software`). `open app` and `installed programs` got explicit patterns.
+- Tests: `tests/test_v217.py` (480 checks, all against this computer: fake servers and fake ssh, lp, lpstat and ip programs; no package manager is ever started). Python 3.9 compatibility check of every script.
+
 ## 2.16.0
 
 - **Connectors** (see `CONNECTORS.md`). Everything is off until you set it up; secrets are asked for privately and kept in files only you can read.
