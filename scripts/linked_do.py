@@ -11,6 +11,7 @@
 import re, webbrowser
 from _adapters import all_adapters, build, get_secret, is_write, parse_args, render, scrub, send, usage
 from _lib import args_text, fail
+import _policy
 
 text = args_text()
 preview = re.search(r"\b(?:preview|dry-run|dryrun)\b", text, re.I) is not None            # a superset of the engine's own test: when in doubt, send nothing
@@ -19,6 +20,9 @@ if not m:
     fail("Say which app and action, for example:  app do telegram send chat=123456 hello      (list them with:  apps)")
 name, an, rest = m.group(1).lower(), m.group(2).lower(), m.group(3)
 ads = all_adapters()
+why_not = _policy.refuse(name)
+if why_not:
+    fail(why_not)
 if name not in ads:
     fail(f"No app called '{name}'. See:  apps")
 d, _ = ads[name]
@@ -54,4 +58,4 @@ try:
     status, out = send(req, secret)
 except RuntimeError as ex:
     fail(str(ex))
-print(render(a, out, secret) if a.get("format") else f"Done (HTTP {status}).")
+print(render(a, out, secret) if a.get("format") or req.get("argv") else f"Done (HTTP {status}).")

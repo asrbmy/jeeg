@@ -19,14 +19,18 @@ const opts = { command: py, args: [path.join(root, "jeeg.py")] };
   // the HTTP client against a real --serve-api
   const home = require("node:fs").mkdtempSync(path.join(require("node:os").tmpdir(), "jeeg-js-"));
   const env = { ...process.env, JEEG_HOME: home, JEEG_API_TOKEN: "t".repeat(40) };
-  const srv = spawn(py, [path.join(root, "jeeg.py"), "--serve-api", "8791"], { env, stdio: "ignore" });
-  await new Promise((r) => setTimeout(r, 1500));
+  const port = await new Promise((res) => { const s = require("node:net").createServer().listen(0, "127.0.0.1", () => { const p = s.address().port; s.close(() => res(p)); }); });   // a free port, so parallel runs never collide
+  const srv = spawn(py, [path.join(root, "jeeg.py"), "--serve-api", String(port)], { env, stdio: "ignore" });
+  const base = `http://127.0.0.1:${port}`;
+  for (let i = 0; i < 100; i++) {                                    // wait until it answers, however slow the machine is
+    try { await new Http("t".repeat(40), base).health(); break; } catch (e) { await new Promise((r) => setTimeout(r, 150)); }
+  }
   try {
-    const api = new Http("t".repeat(40), "http://127.0.0.1:8791");
+    const api = new Http("t".repeat(40), base);
     ok((await api.health()).jeeg, "http health");
     ok((await api.run("gst 100 18")).output.includes("118"), "http run");
     ok((await api.find("disk space", 1))[0].name === "disk_space", "http find");
-    await new Http("wrong".repeat(10), "http://127.0.0.1:8791").run("gst 1 1").then(() => ok(false, "wrong token"), (e) => ok(e instanceof JeegError, "wrong token refused"));
+    await new Http("wrong".repeat(10), base).run("gst 1 1").then(() => ok(false, "wrong token"), (e) => ok(e instanceof JeegError, "wrong token refused"));
   } finally { srv.kill(); }
   console.log(`js client: ${n} passed${process.exitCode ? ", some FAILED" : ""}`);
 })();

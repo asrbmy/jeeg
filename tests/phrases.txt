@@ -547,3 +547,25 @@ app do telegram send chat=1 hello => linked_do | app do telegram send chat=1 hel
 app login github => linked_setup | app login github
 app add trello https://api.trello.com/1 query:key => linked_setup | app add trello https://api.trello.com/1 query:key
 app do telegram send chat=1 "great work, thanks" => linked_do | app do telegram send chat=1 "great work, thanks"
+# ---- v2.19: real-PC test
+real test => realtest | real test
+real test list => realtest | real test list
+real test run system => realtest | real test run system
+real test report => realtest | real test report
+test jeeg on my pc => realtest | test jeeg on my pc
+real test compare => realtest | real test compare
+rules list => event_rules | rules list
+rules run once => event_rules | rules run once
+rule remove watch => event_rules | rule remove watch
+rule add issues when github issues changes then gst 100 18 => event_rules | rule add issues when github issues changes then gst 100 18
+app preset list => linked_setup | app preset list
+app preset add docker => linked_setup | app preset add docker
+app preset add gitlab as=gl => linked_setup | app preset add gitlab as=gl
+app keystore on => linked_setup | app keystore on
+app keystore status => linked_setup | app keystore status
+app ai deny telegram => linked_setup | app ai deny telegram
+app ai list => linked_setup | app ai list
+app ai dry on => linked_setup | app ai dry on
+app login github device client_id=abc => linked_setup | app login github device client_id=abc
+app add box command => linked_setup | app add box command
+app action box ps RUN docker ps read=yes => linked_setup | app action box ps RUN docker ps read=yes

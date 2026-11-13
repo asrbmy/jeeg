@@ -1,5 +1,30 @@
 # Changelog
 
+## 2.20.0
+
+- **Command apps** (APPS.md): link programs that have no web API (docker, adb, git, kubectl, your own tools). `app add box command`, `app action box logs RUN docker logs {name} params=name:word read=yes`. One fixed argument list, never a shell; no shells, interpreters, `sudo`, `ssh`, `rm` and similar as the program; values starting with `-` refused; no batch files; 30 s and 20,000 characters limits. Without `read=yes` an action is a write and asks first.
+- **Read-only POST** (`read=yes`, set by you in a terminal) for search and query APIs such as Notion and GraphQL. Accepted only on POST and command actions.
+- **Keychain** (`app keystore on|off|status`): logins can live in Linux secret-tool, macOS Keychain or Windows Credential Manager. Off by default; a login is moved only after it was read back identical; the secret never appears on a command line; a failing keychain leaves the login in its file. The Windows path is untested on a real machine.
+- **Device login** (`app login github device client_id=...`, RFC 8628): approve in the browser, no token pasting. Handles pending, slow down, denied and expired; the page address must be https.
+- **Presets** (`app preset list|add <name> [base=...] [as=...]`): GitLab, Notion, Linear, Todoist, Home Assistant, Jira Cloud, git, docker, kubectl, adb. Not tried against the live services (labelled so).
+- **Event rules** (`rule add ... when <app> <read-action> changes then <task>`, `rules list|run once|run`, `rule remove`): act on new items. Terminal only; item text is cleaned before use so it can never become a second command; tasks that ask for confirmation are skipped.
+- **AI controls:** per-app allow and deny lists (`app ai allow|deny|list|reset`), preview-only mode (`app ai dry on` or `connect ai ... preview only`: writes show the exact request and change nothing; tasks that cannot preview are refused; chained requests refused), and "always allow" for one app action (`a` in ask mode covers `app do github comment` only).
+- **Real-PC test:** `real test compare` (what got better or worse between two runs, version change noted), a hint after an update, and snapshots of the last 10 runs.
+- **Releases:** build-provenance attestations for the standalone programs as well as the wheel and source archive; DISTRIBUTION.md has a per-release checklist for winget, Scoop and Homebrew and the `gh attestation verify` line.
+- Fix: after an AI session ends inside an interactive JeeG, your own app commands are no longer treated as AI requests.
+- New task names: `event_rules`. `linked setup` also handles `preset`, `keystore`, `ai`.
+- Tests: `tests/test_v220.py` (231 checks against fake servers, fake programs and fake keychains).
+
+## 2.19.0
+
+- **Real-PC test, with or without an AI** (REAL_WORLD_TEST.md). `real test list | run <group|all> | show <id> | report | ai | manual | clear`.
+  - 43 harmless checks in 9 groups (engine, system, files, install, network, devices, env, apps, ai): look-only, or a command shown as a preview. Nothing is installed, changed, sent or deleted. Each linked app gets a read check (it only reports "worked", never shows the app's content) and a write preview.
+  - `real test ai` prints a ready-to-paste brief for Claude.ai (or any MCP AI connected with `connect ai`): the AI runs the groups through JeeG, fetches the report, asks you about what needs your eyes, and explains failures. AI read mode may run it; the check list is fixed code, so an AI cannot add or change a check.
+  - `real test report` writes a markdown report and prints it. User name, computer name, home folder, IP and MAC addresses, e-mail addresses, passwords in addresses and anything token-like are removed.
+  - Time limit friendly: a group stops early (and says how to continue) before an AI connection would time out.
+- **Test flakes fixed:** the JavaScript client test used a fixed port and a fixed wait, and the closed-peer check could meet a reused port; both are now robust when several test runs share a machine (4 parallel runs pass).
+- Tests: `tests/test_v219.py` (185 checks): step audit (every step reaches its task, is look-only or a preview, never chains or auto-confirms), judging, redaction, report, brief, engine runs, linked-app steps against a fake app (content never shown, nothing POSTed), and AI-mode rules.
+
 ## 2.18.0
 
 - **Linked apps: connect JeeG, an AI agent and the apps on your devices.** See APPS.md.

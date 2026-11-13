@@ -2,6 +2,10 @@
 
 JeeG has no AI in it. AI mode lets an AI **you already use** (Claude.ai, ChatGPT, an agent) call JeeG over a temporary link.
 
+## Letting the AI test JeeG on your PC
+
+Run `real test ai`, connect the AI with `connect ai ask`, and paste the printed text into Claude.ai. The AI runs JeeG's harmless real-PC checks, fetches a private report, asks you about the few things it cannot see, and explains failures. See REAL_WORLD_TEST.md.
+
 ## Your apps through the AI
 
 If you link apps (APPS.md), an AI in AI mode can use them under the same rules as everything else: `read` mode needs `connect ai read allow apps` and can only look; `ask` mode asks you for every read and write; `god` mode runs reads and still asks for writes. Linking an app, defining one and logging in only work in a terminal window, so the AI cannot do them. Everything an app returns is marked as data for the AI.
@@ -25,6 +29,10 @@ If you link apps (APPS.md), an AI in AI mode can use them under the same rules a
 | `connect ai god` | Every task. Tasks that delete or change things still need your `y`. |
 
 Options: `allow files,system` (let those categories run without asking), `keep` (same link every time; `forget` deletes it), `no log`, `for 90 minutes` (default 30, max 240), `no tunnel`, `via cloudflared|ngrok|ssh`, `url https://your.address`, `port 8800`.
+
+## Rules for apps, always-allow per action, preview-only (2.20)
+
+See APPS.md. `app ai allow|deny <app>`, `app ai dry on` and `connect ai ... preview only` are set by you in a terminal; the AI cannot change them. In ask mode, `a` allows one app action (for example `app do github comment`) for the session instead of a whole task.
 
 ## Safety notes
 

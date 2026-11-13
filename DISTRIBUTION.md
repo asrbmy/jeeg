@@ -3,7 +3,7 @@
 Step-by-step guides for every place JeeG can be published. Do them in this order:
 each later step is easier once the earlier ones are done.
 
-Replace `X.Y.Z` with the version (for example `2.18.0`). Your GitHub name is `asrbmy`.
+Replace `X.Y.Z` with the version (for example `2.20.0`). Your GitHub name is `asrbmy`.
 
 | # | Place | Who it reaches | Effort | Cost |
 |---|-------|----------------|--------|------|
@@ -19,6 +19,7 @@ Replace `X.Y.Z` with the version (for example `2.18.0`). Your GitHub name is `as
 | 10 | Standalone `.exe` (PyInstaller) | people without Python | 1 hour | free |
 | 11 | Docker / GHCR | server users | 20 min | free |
 | 12 | Docs site (GitHub Pages) | search engines, new users | 5 min | free |
+| 13 | Signed releases + package manager updates | everyone who verifies downloads | 10 min per release | free |
 
 Never put a token or password in a file, in a commit, or in the repo. Put it in GitHub
 **Settings > Secrets and variables** or type it only into the tool that asks for it.
@@ -178,8 +179,8 @@ winget needs an installer or a portable zip. The simplest path is the standalone
 section 10, attached to the GitHub release.
 
 1. Install the tool: `winget install wingetcreate`.
-2. Create the manifest: `wingetcreate new https://github.com/asrbmy/jeeg/releases/download/vX.Y.Z/jeeg-windows.zip`.
-   Answer the questions (Package identifier `asrbmy.JeeG`, type `zip` or `portable`).
+2. Create the manifest: `wingetcreate new https://github.com/asrbmy/jeeg/releases/download/vX.Y.Z/jeeg-windows-x64.exe`.
+   Answer the questions (Package identifier `asrbmy.JeeG`, installer type `portable`, command `jeeg`).
 3. Submit it: `wingetcreate submit` (needs a GitHub token; it opens a pull request on
    `microsoft/winget-pkgs`).
 4. Wait for the automatic checks and a moderator. This can take a few days.
@@ -312,6 +313,34 @@ Only useful for the API bridge on a server.
 3. After about a minute it is live at `https://asrbmy.github.io/jeeg/`. The task search page is
    `https://asrbmy.github.io/jeeg/tasks.html`.
 4. Rebuild the pages after adding tasks: `python tools/make_site.py`, then commit `docs/`.
+
+---
+
+## 13. Signed releases, and keeping winget / Scoop / Homebrew current
+
+**Signed builds.** Both workflows now create a build-provenance attestation (GitHub's signed statement
+that "this file was built by this workflow from this commit"): `publish.yml` for the wheel and the
+source archive, `build-exe.yml` for the three standalone programs. Nothing to set up; it needs a
+public repo and the `attestations: write` permission that is already in the files.
+Anyone can check a download:
+
+```
+gh attestation verify jeeg-windows-x64.exe --repo asrbmy/jeeg
+gh attestation verify jeeg-2.20.0-py3-none-any.whl --repo asrbmy/jeeg
+```
+
+Put that line in the release notes. A wrong or tampered file fails the check.
+
+**Per-release checklist for the package managers** (after the `publish` and `build-exe` workflows are green):
+
+| Where | What to do | Hash comes from |
+|---|---|---|
+| Scoop | `checkver`/`autoupdate` bump it; otherwise edit `version`, `url`, `hash` in `bucket/jeeg.json` | `SHA256SUMS.txt` / `jeeg-*.sha256` on the release |
+| winget | `wingetcreate update asrbmy.JeeG --version X.Y.Z --urls https://github.com/asrbmy/jeeg/releases/download/vX.Y.Z/jeeg-windows-x64.exe --submit` | computed by `wingetcreate` |
+| Homebrew | edit `url` and `sha256` in `Formula/jeeg.rb` of your `homebrew-jeeg` tap, then `brew install --build-from-source` and `brew test jeeg` | `SHA256SUMS.txt` |
+
+All three checks need a real Windows or Mac machine; none of it can be tested from the build workflows.
+After installing from each, run `jeeg real test run all` and `jeeg real test compare` (see `REAL_WORLD_TEST.md`).
 
 ---
 

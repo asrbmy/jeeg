@@ -26,7 +26,7 @@ Contents
 
 - A small launcher written in Python (standard library only). It has no background service and does not need an account.
 - It reads every script in `scripts/`, matches your words to a script, and runs it. A script is just a file you can open and edit.
-- 542 tasks are included across apps, websites, files, system, network, reminders, personal records, money calculators, text tools, developer tools and quick searches.
+- 544 tasks are included across apps, websites, files, system, network, reminders, personal records, money calculators, text tools, developer tools and quick searches.
 - It runs on Windows, macOS and Linux. Python 3.9 or newer is required.
 - It is quick (about 56 ms per command including Python start-up, measured on Linux) and light (about 16 MB while a command runs; nothing stays in memory between commands, except reminders and alarms you set).
 
@@ -514,6 +514,27 @@ Databases are opened read-only: only SELECT works, and the file cannot be change
 
 Built in: GitHub, Telegram (your bot), Discord, Slack, WhatsApp (opens the chat; you press Send). Add your own with `app add`. An AI in AI mode can read your apps only if you allow `apps`, and every write asks you. Read APPS.md for the full guide.
 
+### 8.30 Test JeeG on your own computer
+
+    real test list          what is checked
+    real test run all       run the harmless checks (or one group: real test run system)
+    real test report        a private report (names and addresses removed)
+    real test ai            text to paste into Claude.ai, so it runs the test for you
+
+Read REAL_WORLD_TEST.md for the whole guide, including the few things only you can check by hand.
+
+### 8.31 Programs, presets, keychain, rules (2.20)
+
+    app preset list                  ready-made apps (GitLab, Notion, Todoist, docker...)
+    app add box command              link programs on this computer (then: app action box ... RUN docker ...)
+    app login github device client_id=...   log in by approving in the browser
+    app keystore on                  keep logins in the system keychain
+    rule add x when github issues changes then gst 100 18     act on new items
+    app ai allow github              only these apps for an AI    (app ai dry on = previews only)
+    real test compare                what changed since the last real test
+
+Read APPS.md for the details and the safety rules.
+
 ## 9. Teaching and checking JeeG
 
 **Aliases: your own short words**
@@ -670,7 +691,7 @@ Run the checks yourself any time:
 
 ## 15. Appendix: every task
 
-542 tasks. In the Usage column, `<...>` is something you fill in and `[...]` is optional. A star means the task asks before running; "online" means it can use the internet.
+544 tasks. In the Usage column, `<...>` is something you fill in and `[...]` is optional. A star means the task asks before running; "online" means it can use the internet.
 
 
 ### ai
@@ -719,7 +740,8 @@ Run the checks yourself any time:
 
 | Task | Usage | What it does |
 |---|---|---|
-| linked setup (online) | `app login <app> \| app logout <app> \| app add <name> <https://base> [none\|bearer\|basic\|header:NAME\|query:NAME] \| app action <app> <name> <GET\|POST\|...> </path> [params=a,b] [format="{x}"] [list=path] [body='{"k":"{a}"}'] [desc="..."] \| app remove <name>` | Link JeeG to an app: log in (app login github), add your own app by its web address (app add trello https://api.trello.com/1 query:key), define what it can do (app action ...), log out or remove. Terminal only: an AI cannot do this. |
+| event rules (online) | `rule add <name> when <app> <read-action> [args] changes [every N minutes] then <task words> \| rules list \| rule remove <name> \| rules run once \| rules run` | Run a task when something new shows up in a linked app: rule add issues when github issues changes then say new issue {new}. Lists, removes and runs rules (rules run once \| rules run). Terminal only. |
+| linked setup (online) | `app login <app> [device client_id=...] \| app preset list\|add <name> [base=...] \| app keystore on\|off \| app ai allow\|deny <app> \| app ai list\|reset\|dry on\|off \| app logout <app> \| app add <name> <https://base> [none\|bearer\|basic\|header:NAME\|query:NAME] \| app add <name> command \| app action <app> <name> <GET\|POST\|...> </path> [params=a,b] [format="{x}"] [list=path] [body='{"k":"{a}"}'] [desc="..."] \| app remove <name>` | Link JeeG to an app: log in (app login github), add your own app by its web address (app add trello https://api.trello.com/1 query:key), define what it can do (app action ...), log out or remove, use ready-made presets, keep logins in the system keychain, choose which apps an AI may use. Terminal only: an AI cannot do this. |
 
 ### apps_write
 
@@ -1246,6 +1268,12 @@ Run the checks yourself any time:
 | file hash | `file hash <file> [expected hash]` | Show the SHA-256, SHA-1 and MD5 fingerprint of a file, to check a download (file hash setup.exe) |
 | password strength | `password strength "<password>"` | Rate how strong a password is, privately (password strength "MyPass123") |
 | shred file * | `shred file <file> [preview]` | Overwrite a file with random data and delete it (cannot be undone) |
+
+### selfcheck
+
+| Task | Usage | What it does |
+|---|---|---|
+| realtest (online) | `real test list \| real test run <group\|id\|all> \| real test show <id> \| real test compare \| real test report \| real test ai \| real test manual \| real test clear` | Test JeeG on this real computer, by yourself or with an AI you connected (Claude.ai...). Harmless checks only; makes a private report you can share. real test list \| run <group> \| report \| ai \| manual |
 
 ### shopping
 

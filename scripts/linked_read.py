@@ -9,12 +9,16 @@
 import re, sys
 from _adapters import all_adapters, build, get_secret, is_write, parse_args, render, scrub, send, usage
 from _lib import args_text, fail
+import _policy
 
 m = re.match(r"^\s*(?:app|linked)\s+read\s+([a-z][a-z0-9_\-]*)\s+([a-z][a-z0-9_\-]*)\s*(.*)$", args_text(), re.I | re.S)
 if not m:
     fail("Say which app and action, for example:  app read github issues      (list them with:  apps)")
 name, an, rest = m.group(1).lower(), m.group(2).lower(), m.group(3)
 ads = all_adapters()
+why_not = _policy.refuse(name)
+if why_not:
+    fail(why_not)
 if name not in ads:
     fail(f"No app called '{name}'. See:  apps")
 d, _ = ads[name]

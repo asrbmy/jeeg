@@ -7,7 +7,7 @@ JeeG finds the matching script in the `scripts` folder and runs it.
 
 - Pure Python 3.9+, nothing to install. Works on Windows, macOS and Linux.
 - Light: about 16 MB of memory, about 65 ms per command, nothing running in the background (except reminders and alarms you set yourself).
-- 542 ready-made tasks. You can add your own by dropping in a file.
+- 544 ready-made tasks. You can add your own by dropping in a file.
 
 ---
 
@@ -297,6 +297,16 @@ A plugin is one `.py` file. Make a starter with `jeeg plugin new my_task`, edit 
 - Host names, ports and package names are checked before being passed to other programs.
 - Critical system processes cannot be killed with `kill process`.
 - No task sends your files or personal data anywhere. Web tasks only open a page in your browser.
+
+## What is new in 2.20
+
+- **Link programs and more services:** programs with no web API (`docker`, `git`, `adb`, `kubectl`) as command apps, ready-made presets (GitLab, Notion, Linear, Todoist, Home Assistant, Jira), logins in the system keychain, device login without pasting a token.
+- **Event rules:** `rule add ... when github issues changes then ...` acts on new items.
+- **More control over an AI:** allow or deny each app, "always allow" for one action, preview-only mode. `real test compare` shows what changed after an update. See APPS.md.
+
+## What is new in 2.19
+
+- **Test JeeG on your own computer, with an AI if you like.** `real test run all` runs 43 harmless checks; `real test report` makes a private report; `real test ai` gives you the text to paste into Claude.ai so it runs the test through JeeG and explains any failure. See REAL_WORLD_TEST.md.
 
 ## What is new in 2.18
 

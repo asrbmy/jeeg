@@ -8,14 +8,17 @@
 import re
 from _adapters import all_adapters, get_secret, is_write, usage
 from _lib import args_text, fail
+import _policy
 
 t = re.sub(r"^\s*(?:my\s+)?(?:linked\s+|connected\s+)?apps?\s*(?:list)?\s*", "", args_text(), flags=re.I).strip().lower()
-ads = all_adapters()
+ads = {k: v for k, v in all_adapters().items() if k in _policy.visible(all_adapters())}
 if t:
     if t not in ads:
         fail(f"No app called '{t}'. Known: {', '.join(sorted(ads))}")
     d, built = ads[t]
     print(f"{d.get('title', t)}   ({'built in' if built else 'yours'})")
+    if d.get("local"):
+        print("  runs programs on this computer: one fixed command per action, never through a shell")
     if d["auth"] != "none":
         print("  login: " + ("saved" if get_secret(t, d) else f"not yet.  Run:  app login {t}"))
         if d.get("login_help"):
@@ -27,6 +30,10 @@ if t:
         print(f"          {usage(t, an, a)}")
     raise SystemExit(0)
 print("Apps JeeG is linked to (the AI can use the ones you log in to; write actions always ask you first):")
+pol = _policy.get()
+if (pol["dry"] or pol["ai_allow"] or pol["ai_deny"]) and not _policy.via_ai():
+    print("  AI rules: " + ("previews only; " if pol["dry"] else "") + (("only " + ", ".join(pol["ai_allow"]) + "; ") if pol["ai_allow"] else "") + (("never " + ", ".join(pol["ai_deny"])) if pol["ai_deny"] else "")
+          .rstrip("; "))
 for n, (d, built) in sorted(ads.items()):
     state = "no login needed" if d["auth"] == "none" else "logged in" if get_secret(n, d) else "needs login"
     reads = sum(1 for a in d["actions"].values() if not is_write(a))

@@ -150,7 +150,7 @@ def handle_message(tg: Telegram, msg: dict, st: dict) -> bool:
     return True
 
 
-def cmd_telegram(state, rest: str = "", approver=None, tg_factory=Telegram) -> int:
+def _cmd_telegram(state, rest: str = "", approver=None, tg_factory=Telegram) -> int:
     low = (rest or "").strip().lower()
     cfg = _read(state, "telegram.json")
     if low in {"forget", "remove", "logout"}:
@@ -200,7 +200,9 @@ def cmd_telegram(state, rest: str = "", approver=None, tg_factory=Telegram) -> i
             def log(line, _w=write):
                 print(line, flush=True)
                 _w(line)
-    st = {"mode": o["mode"], "approver": approver or jeeg_remote.Approver(), "state": str(state), "extra": tuple(o["allow"]), "log": log,
+    approver = approver or jeeg_remote.Approver()
+    approver.dry = approver.dry or o.get("dry", False)
+    st = {"mode": o["mode"], "approver": approver, "state": str(state), "extra": tuple(o["allow"]), "log": log,
           "allowed": list(cfg.get("allowed", [])), "code": "".join(secrets.choice("0123456789") for _ in range(6)), "pair_bad": 0,
           "limit": o["limit"], "calls": 0}
     print(f"\n  JeeG on Telegram ({o['mode']}) as @{me.get('username', '?')}  - closes in {o['minutes']} minutes, on /stop, or Ctrl+C")
@@ -237,6 +239,17 @@ def cmd_telegram(state, rest: str = "", approver=None, tg_factory=Telegram) -> i
 
 
 # ------------------------------------------------------------------ incoming hooks
+def cmd_telegram(state, rest: str = "", approver=None, tg_factory=Telegram) -> int:
+    old = os.environ.get("JEEG_VIA_AI")
+    try:
+        return _cmd_telegram(state, rest, approver, tg_factory)
+    finally:
+        if old is None:
+            os.environ.pop("JEEG_VIA_AI", None)
+        else:
+            os.environ["JEEG_VIA_AI"] = old
+
+
 def cmd_hook(state, rest: str = "", tunnel_which=None) -> int:
     rest = (rest or "").strip()
     hooks = _read(state, "hooks.json")

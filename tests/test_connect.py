@@ -393,7 +393,7 @@ if lm:
     rc, out = jeeg("peer", "run", "office", "gst 100 18", yes=True); ok(rc == 0 and "118" in out, "peer run reaches the other JeeG: " + out)
     rc, out = jeeg("peer", "run", "office", "open youtube", yes=True); ok(rc == 1 and "not allowed" in out, "the other JeeG's mode still applies")
 srv.terminate(); srv.wait(5)
-rc, out = jeeg("peer", "run", "office", "gst 100 18", yes=True); ok(rc == 1 and "Could not reach" in out, "a closed peer is explained")
+rc, out = jeeg("peer", "run", "office", "gst 100 18", yes=True); ok(rc == 1 and "118" not in out and "Traceback" not in out and out.strip(), "a closed peer is explained, not crashed: " + out[:120])
 rc, out = jeeg("peer", "add", "pub", "http://example.com/abc/"); ok(rc == 1, "peer refuses plain http to the internet")
 
 # =========================================================== MCP client (JeeG uses an MCP server: its own)

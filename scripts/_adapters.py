@@ -6,12 +6,16 @@ Safety rules that live here:
   - values the caller supplies only ever fill the path (percent-encoded), query values (encoded) and JSON body strings; never the host or headers
   - redirects are never followed (a login header must not travel to another site)
   - https everywhere; plain http only to this computer or your home network
-  - secrets are stored in conn_*.json (0600), never printed, and scrubbed from every message
+  - secrets are stored in conn_*.json (0600) or, if you switch it on, in the system keychain; never printed, and scrubbed from every message
+  - a local command action runs one program with a fixed list of arguments: never through a shell, never a shell or interpreter, never a value that starts with "-"
+  - only you (in a terminal) can say that a POST action only reads (read=yes); without that it is a write action
 """
 import base64
 import json
 import os
 import re
+import shutil
+import subprocess
 import urllib.error
 import urllib.request
 from urllib.parse import quote, urlparse, urlencode
@@ -27,6 +31,10 @@ HOLE = re.compile(r"\{(\w+)\}")
 DEFAULT_PAT = r"[^\x00-\x1f\x7f]{1,2000}"
 MAX_BODY = 1_000_000
 UA = "JeeG-apps"
+MAX_OUT = 20000
+SHELLS = re.compile(r"^(?:(?:ba|z|k|c|tc|fi|da|a)?sh|cmd|powershell|pwsh|python[0-9.]*|pypy[0-9.]*|node|nodejs|deno|bun|perl|ruby|php|lua|env|sudo|su|doas|xargs|eval|exec|nohup|start|"
+                    r"wscript|cscript|mshta|rundll32|regsvr32|osascript|wsl|busybox|nc|ncat|netcat|telnet|ssh|scp|sftp|rm|rmdir|del|mkfs|dd|shred|format|diskpart|reg|schtasks|crontab|at)$", re.I)
+PROG = re.compile(r"[A-Za-z0-9][A-Za-z0-9._\-]{0,59}$")
 
 
 def _p(pat="", **kw):
@@ -139,11 +147,14 @@ def check_def(name, d):
         return "login style must be one of: " + ", ".join(sorted(AUTHS))
     if len(d["actions"]) > 40:
         return "too many actions (40 at most)"
+    local = bool(d.get("local"))
+    if local and d["auth"] != "none":
+        return "a local-command app has no login"
     if d["auth"] == "header" and not re.fullmatch(r"[A-Za-z][A-Za-z0-9\-]{0,40}", str(d.get("header", ""))):
         return "header login needs a header name"
     if d["auth"] == "query" and not re.fullmatch(r"[A-Za-z][A-Za-z0-9_\-]{0,40}", str(d.get("header", ""))):
         return "query login needs a parameter name"
-    if not d["actions"] or not all(isinstance(x, dict) and x.get("kind") == "open" for x in d["actions"].values()):
+    if not local and (not d["actions"] or not all(isinstance(x, dict) and x.get("kind") == "open" for x in d["actions"].values())):
         why = check_base(str(d.get("base", "")), d["auth"])
         if why:
             return why
@@ -161,7 +172,20 @@ def check_def(name, d):
                 re.compile(pd.get("pat", DEFAULT_PAT))
             except (re.error, AttributeError):
                 return f"{an}: parameter {pn} has a broken pattern"
-        if a.get("kind") == "open":
+        if bool(a.get("kind") == "command") != local:
+            return f"{an}: " + ("a local-command app only has command actions" if local else "command actions belong to a local-command app (app add <name> command)")
+        if "read" in a and (not isinstance(a["read"], bool) or (a.get("kind") not in {"command"} and str(a.get("method", "GET")).upper() != "POST")):
+            return f"{an}: read=yes is only for POST actions and local commands"
+        if a.get("kind") == "command":
+            argv = a.get("argv")
+            if not isinstance(argv, list) or not 1 <= len(argv) <= 30 or not all(isinstance(x, str) and 0 < len(x) <= 300 and not re.search(r"[\x00-\x1f\x7f]", x) for x in argv):
+                return f"{an}: the command is a short list of arguments"
+            if not PROG.match(argv[0]) or SHELLS.match(re.sub(r"\.exe$", "", argv[0], flags=re.I)):
+                return f"{an}: '{argv[0]}' is not allowed (no shells, interpreters or tools that delete or disguise)"
+            used = {h for x in argv[1:] for h in holes(x)}
+            if holes(argv[0]):
+                return f"{an}: the program name cannot be filled in"
+        elif a.get("kind") == "open":
             if not str(a.get("url", "")).startswith("https://") or not a.get("params"):
                 return f"{an}: an 'open' action needs an https:// link and parameters"
             used = holes(a["url"])
@@ -184,7 +208,15 @@ def check_def(name, d):
 
 
 def is_write(a):
-    return a.get("kind") == "open" or str(a.get("method", "GET")).upper() not in {"GET", "HEAD"}
+    """Everything that is not a plain GET/HEAD is a write. Two things only you can switch off: read=yes on a POST (search and query APIs) or on a local command."""
+    if a.get("kind") == "open":
+        return True
+    if a.get("kind") == "command":
+        return a.get("read") is not True
+    m = str(a.get("method", "GET")).upper()
+    if m in {"GET", "HEAD"}:
+        return False
+    return not (m == "POST" and a.get("read") is True)
 
 
 # ------------------------------------------------------------------ secrets
@@ -193,23 +225,39 @@ def _store_for(name, d):
     return (ref[0], ref[1]) if ref else ("appsecrets", name)
 
 
+KS = "@keychain"                       # what the file holds when the real secret is in the system keychain
+
+
 def get_secret(name, d):
     reg, key = _store_for(name, d)
     v = load_reg(reg).get(key, "")
-    return v if isinstance(v, str) else ""
+    if v == KS and reg == "appsecrets":
+        import _keystore
+        return _keystore.get(name) or ""
+    return v if isinstance(v, str) and v != KS else ""
 
 
 def set_secret(name, d, value):
+    """Returns 'keychain' or 'file': where the secret went."""
     reg, key = _store_for(name, d)
     r = load_reg(reg)
+    where = "file"
+    if reg == "appsecrets":
+        import _keystore
+        if _keystore.enabled() and _keystore.put(name, value):             # only trusted after reading it back
+            value, where = KS, "keychain"
     r[key] = value
     save_reg(reg, r)
+    return where
 
 
 def drop_secret(name, d):
     reg, key = _store_for(name, d)
     r = load_reg(reg)
     had = key in r
+    if r.get(key) == KS and reg == "appsecrets":
+        import _keystore
+        _keystore.remove(name)
     r.pop(key, None)
     save_reg(reg, r)
     return had
@@ -269,6 +317,8 @@ def parse_args(action, text):
             return None, f"{k} has a control character"
         if not re.fullmatch(pd.get("pat", DEFAULT_PAT), v):
             return None, f"{k} is not in the expected form" + (f" ({pd['help']})" if pd.get("help") else "")
+        if action.get("kind") == "command" and v.startswith("-") and not pd.get("dash"):
+            return None, f"{k} cannot start with - (it would be read as an option of the program)"
         if pd.get("slash") and any(seg in {".", ".."} for seg in v.split("/")):
             return None, f"{k} is not allowed"
         vals[k] = v
@@ -281,6 +331,10 @@ def parse_args(action, text):
 def usage(name, an, a):
     ps = " ".join(f"{k}=<{(v.get('help') or k)}>" for k, v in (a.get("params") or {}).items())
     return f"app {'do' if is_write(a) else 'read'} {name} {an} {ps}".strip()
+
+
+def shown_command(argv):
+    return subprocess.list2cmdline(argv) if os.name == "nt" else " ".join(x if re.fullmatch(r"[\w@%+=:,./\-]+", x) else "'" + x.replace("'", "'\\''") + "'" for x in argv)
 
 
 # ------------------------------------------------------------------ requests
@@ -302,6 +356,9 @@ def build(name, d, an, vals, secret):
     """The exact request, as a dict (method, url, headers, body). Does not send anything."""
     a = d["actions"][an]
     params = a.get("params") or {}
+    if a.get("kind") == "command":
+        argv = [a["argv"][0]] + [HOLE.sub(lambda m: vals.get(m.group(1), ""), x) for x in a["argv"][1:]]
+        return {"method": "RUN", "url": shown_command(argv), "headers": {}, "body": None, "argv": argv}
     if a.get("kind") == "open":
         url = a["url"]
         url = HOLE.sub(lambda m: quote(vals.get(m.group(1), ""), safe=""), url)
@@ -353,8 +410,29 @@ def scrub(text, secret):
     return CONTROL.sub("", t)
 
 
+def run_command(req, timeout=30):
+    argv = req["argv"]
+    exe = shutil.which(argv[0])
+    if not exe:
+        raise RuntimeError(f"'{argv[0]}' is not installed here (or not on the PATH).")
+    if exe.lower().endswith((".bat", ".cmd")):
+        raise RuntimeError("Batch files are not run from here.")
+    try:
+        r = subprocess.run([exe] + argv[1:], stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=timeout, shell=False)
+    except subprocess.TimeoutExpired:
+        raise RuntimeError(f"The command took longer than {timeout} seconds and was stopped.")
+    except OSError as ex:
+        raise RuntimeError(f"Could not start '{argv[0]}': {ex.strerror or ex}")
+    out = r.stdout.decode("utf-8", "replace")[:MAX_OUT]
+    if r.returncode:
+        raise RuntimeError(f"The command failed (exit {r.returncode}). " + re.sub(r"\s+", " ", CONTROL.sub("", out))[:300])
+    return 0, out
+
+
 def send(req, secret="", timeout=15):
     """Returns (status, text). Raises RuntimeError with a plain-words message on failure."""
+    if req.get("argv"):
+        return run_command(req)
     r = urllib.request.Request(req["url"], data=req["body"], method=req["method"], headers=req["headers"])
     opener = urllib.request.build_opener(_NoRedirect)
     try:

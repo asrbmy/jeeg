@@ -13,7 +13,7 @@ JeeG is built so that you can check these statements yourself.
 Only in the `.jeeg` folder in your home directory (or `JEEG_HOME`), readable only by you on Mac and Linux. Notes, expenses, journal, medicines, contacts and the rest are plain files you can open, copy or delete. Tasks marked private (passwords, medicines, clipboard) are not written to your command history.
 
 **When JeeG itself uses the internet**
-Only when you run a task that needs it. Say `privacy` to see the list; `list` marks those tasks with `[online]`. Today that is 57 of 542 tasks: weather, exchange rates, news, dictionary and Wikipedia look-ups, `check website`, `ping host`, `git pull`, the connector tasks you set up yourself (webhooks, mail, GitHub, MQTT, peers ...), installing programs (your package manager contacts its own servers), watches, RSS feeds, `save page`, `network doctor` and similar. Everything else (calculators, files, notes, reminders, reports, invoices, medicines) works with the network cable unplugged.
+Only when you run a task that needs it. Say `privacy` to see the list; `list` marks those tasks with `[online]`. Today that is 59 of 544 tasks: weather, exchange rates, news, dictionary and Wikipedia look-ups, `check website`, `ping host`, `git pull`, the connector tasks you set up yourself (webhooks, mail, GitHub, MQTT, peers ...), installing programs (your package manager contacts its own servers), watches, RSS feeds, `save page`, `network doctor` and similar. Everything else (calculators, files, notes, reminders, reports, invoices, medicines) works with the network cable unplugged.
 
 Besides tasks, the engine contacts these addresses, only when you type the matching command:
 
@@ -43,11 +43,25 @@ Plugins run as normal programs with your permissions, so they could do anything.
 
 `telegram start` contacts api.telegram.org (long polling) while it runs. Connector tasks contact only the service you configured: your webhook address, your mail provider, api.github.com, your calendar link, your MQTT broker or devices on your own network. Nothing is sent until you set a connector up and use it, and tokens go only to the service they belong to. Say `privacy` for the list of tasks that can use the network.
 
+## The real-PC test (2.19)
+
+- `real test` runs harmless checks on this computer and saves the results in your JeeG data folder. Nothing is sent anywhere by JeeG.
+- The report removes your user name, computer name, home folder, IP and MAC addresses, e-mail addresses, passwords in web addresses and anything that looks like a secret. Read it before you share it.
+- For linked apps it only records whether a read worked; the app's content is never saved or shown.
+
 ## Linked apps (2.18)
 
 - `app login` stores your token or webhook address on this computer in a file only your user can read. It is never printed, never saved in history, and removed from every message.
 - `app read` and `app do` contact only the app you named, at the address in its definition, and never follow redirects. JeeG has no server in between.
 - What you send through `app do` is not saved in the history.
+
+## What 2.20 adds
+
+- **Command apps** run only programs you named, on this computer, with fixed arguments and no shell. They send nothing anywhere by themselves.
+- **Keychain** storage (off by default) talks only to your system's own keychain tool.
+- **Device login** talks only to the login address of the app you are logging in to (https), and shows you the code.
+- **Event rules** look at your linked apps on a timer you started in a terminal, and nothing else; results stay in `rules.json` on this computer (only short fingerprints of what was seen, plus the last status line).
+- **AI rules** (`app_policy.json`) are only ever changed by you in a terminal.
 
 ## Network tasks added in 2.17
 

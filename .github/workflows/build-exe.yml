@@ -1,6 +1,6 @@
 name: build-exe
 # Builds the standalone program (no Python needed) for Windows, Mac and Linux and attaches it to the newest GitHub release.
-# Runs by itself after the "publish" workflow finishes, or press "Run workflow" (you can give a tag like v2.18.0).
+# Runs by itself after the "publish" workflow finishes, or press "Run workflow" (you can give a tag like v2.20.0).
 on:
   workflow_run:
     workflows: [publish]
@@ -12,6 +12,8 @@ on:
         required: false
 permissions:
   contents: write
+  id-token: write
+  attestations: write
 jobs:
   tag:
     if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
@@ -55,6 +57,10 @@ jobs:
           ./${{ matrix.exe }} --version
           ./${{ matrix.exe }} "calculate 12 times 7" | grep -q "84"
           ./${{ matrix.exe }} selfcheck
+      - name: Sign the program (build provenance)
+        uses: actions/attest-build-provenance@v1
+        with:
+          subject-path: ${{ matrix.exe }}
       - name: Attach to the release
         shell: bash
         env:

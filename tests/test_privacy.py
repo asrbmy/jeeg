@@ -33,7 +33,7 @@ def net_imports(path):
 # 1. only these files outside the task scripts may use network modules
 ALLOWED_HELPERS = {"_net.py", "_lib.py"}          # _lib: urllib.parse only (not in NET)
 helpers = {p.name for p in SCR.glob("_*.py") if net_imports(p)}
-check("only _net.py (and nothing else) among helpers uses network modules", helpers <= {"_net.py", "_sys.py", "_worker.py", "_mqtt.py", "_conn.py", "_mcpclient.py", "_web.py", "_netdoc.py", "_adapters.py"} | ALLOWED_HELPERS, str(helpers))
+check("only _net.py (and nothing else) among helpers uses network modules", helpers <= {"_net.py", "_sys.py", "_worker.py", "_mqtt.py", "_conn.py", "_mcpclient.py", "_web.py", "_netdoc.py", "_adapters.py", "_device.py"} | ALLOWED_HELPERS, str(helpers))
 engine = {p.name for p in ROOT.glob("*.py") if net_imports(p)}
 check("engine network use is limited to jeeg.py (doctor), jeeg_cmds.py (update, library, plugin install, local web page), jeeg_bridge.py (local API), jeeg_remote.py (AI mode) and jeeg_connect.py (Telegram bot, hooks)",
       engine <= {"jeeg.py", "jeeg_cmds.py", "jeeg_bridge.py", "jeeg_remote.py", "jeeg_connect.py"}, str(engine))

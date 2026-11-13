@@ -60,7 +60,7 @@ import sys
 import time
 from pathlib import Path
 
-__version__ = "2.18.0"
+__version__ = "2.20.0"
 
 HERE = Path(__file__).resolve().parent
 FROZEN = bool(getattr(sys, "frozen", False))      # True inside the standalone program built with PyInstaller
