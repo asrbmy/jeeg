@@ -133,6 +133,18 @@ The AI is told which apps exist ("apps" lists them). It never sees your tokens.
 - **Press `a` to always allow one action:** in ask mode the question offers `a` for `app do github comment` only. It covers that app and action for the session, not other actions and not other tasks.
 - **Preview-only mode:** `connect ai ask preview only` (or `app ai dry on`). Writes show exactly what would happen and send or change nothing; tasks that cannot preview are refused; reading still works. Messages that contain "and", "then", `;` or `&` are refused in this mode, so it is certain that the preview covers the whole request.
 
+## MCP tools for your apps (Claude Desktop, Cursor, Claude.ai link)
+
+The JeeG MCP server (`install mcp claude-desktop`, or the link from `connect ai`) now has three typed tools besides `jeeg_run`:
+
+| Tool | What it does |
+|---|---|
+| `jeeg_apps` | lists your linked apps and their actions (`app` for one app) |
+| `jeeg_app_read` | `app`, `action`, `args`: looks, never changes |
+| `jeeg_app_do` | `app`, `action`, `args`: a write; asks you first (or only previews) |
+
+The tools turn into the same plain words you would type (`app read github issues repo="o/r"`), so every rule above applies: reads cannot write, writes ask, per-app allow/deny, preview-only mode, "always allow" for one action. Names and argument keys are checked, values are quoted. Over `install mcp` (stdio) without AI mode, a write is reported as "needs confirmation" and is not run; use `connect ai ask` for approvals.
+
 ## What keeps this safe
 
 - **Setting up is for you only.** `app login`, `app add`, `app action`, `app remove` work only in a real terminal window. A program or an AI cannot link an app, define one, or read a login, even in god mode.

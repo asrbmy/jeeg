@@ -12,6 +12,7 @@
 - **Real-PC test:** `real test compare` (what got better or worse between two runs, version change noted), a hint after an update, and snapshots of the last 10 runs.
 - **Releases:** build-provenance attestations for the standalone programs as well as the wheel and source archive; DISTRIBUTION.md has a per-release checklist for winget, Scoop and Homebrew and the `gh attestation verify` line.
 - Fix: after an AI session ends inside an interactive JeeG, your own app commands are no longer treated as AI requests.
+- **MCP tools for linked apps:** `jeeg_apps`, `jeeg_app_read`, `jeeg_app_do` on both the stdio MCP server (`install mcp`) and the link from `connect ai`. They become the same plain words as typing, so all app rules, approvals, previews and allow/deny lists apply.
 - New task names: `event_rules`. `linked setup` also handles `preset`, `keystore`, `ai`.
 - Tests: `tests/test_v220.py` (231 checks against fake servers, fake programs and fake keychains).
 

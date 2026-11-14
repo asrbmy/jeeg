@@ -93,7 +93,7 @@ ok(req(port, rs.base_path + "run", method="DELETE")[0] == 405, "DELETE refused")
 m = mcp(port, rs, "initialize", {"protocolVersion": "2025-03-26"})
 ok(m["result"]["serverInfo"]["name"] == "jeeg" and "instructions" in m["result"], "mcp initialize carries instructions")
 m = mcp(port, rs, "tools/list")
-ok({t["name"] for t in m["result"]["tools"]} == {"jeeg_run", "jeeg_find", "jeeg_list"}, "mcp tools")
+ok({t["name"] for t in m["result"]["tools"]} == {"jeeg_run", "jeeg_find", "jeeg_list", "jeeg_apps", "jeeg_app_read", "jeeg_app_do"}, "mcp tools")
 m = mcp(port, rs, "tools/call", {"name": "jeeg_run", "arguments": {"query": "gst 100 18"}})
 ok(not m["result"]["isError"] and "18" in m["result"]["content"][0]["text"], "mcp run")
 asked.clear(); answers["yes"] = False

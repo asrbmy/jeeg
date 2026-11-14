@@ -513,6 +513,73 @@ finally:
     os.environ.pop("JEEG_VIA_AI", None)
 ok("preview" in (ROOT / "jeeg_remote.py").read_text(encoding="utf-8").lower(), "instructions mention preview")
 
+# ================================================================ MCP: typed tools for linked apps
+import jeeg_bridge as B
+
+
+def mcp(*calls, extra=None, args=()):
+    lines = [json.dumps({"jsonrpc": "2.0", "id": i + 1, "method": m, "params": p}) for i, (m, p) in enumerate(calls)]
+    r = subprocess.run([sys.executable, str(ROOT / "jeeg.py"), "--mcp", *args], input="\n".join(lines) + "\n", capture_output=True, text=True, timeout=60, env=env(extra), cwd=WORK)
+    return [json.loads(x) for x in r.stdout.splitlines() if x.strip()]
+
+
+def tool(app_tool, **a):
+    return ("tools/call", {"name": app_tool, "arguments": a})
+
+
+names = [t["name"] for t in B.MCP_TOOLS]
+ok({"jeeg_apps", "jeeg_app_read", "jeeg_app_do"} <= set(names), "the MCP tool list has the app tools")
+ok(all(t["inputSchema"]["type"] == "object" for t in B.MCP_TOOLS), "every tool has a schema")
+q = B.app_query("jeeg_app_do", {"app": "github", "action": "comment", "args": {"repo": "o/r", "text": 'say "hi"\nthere; rm -rf /'}})
+ok(q[0] == 'app do github comment repo="o/r" text="say \\"hi\\" there; rm -rf /"' and q[1] is None, "arguments become plain words, quoted: " + str(q))
+for bad in ({"app": "Git Hub", "action": "x"}, {"app": "github", "action": "a b"}, {"app": "github", "action": "comment", "args": {"BAD key": "1"}},
+            {"app": "github", "action": "comment", "args": {"k": ["list"]}}, {"app": "github", "action": "comment", "args": {"k": True}}, {"app": "github", "action": "comment", "args": "text"},
+            {"app": "github", "action": "c" * 30}, {"app": 5, "action": "x"}, {"app": "github", "action": "comment", "args": {f"k{i}": "v" for i in range(13)}}):
+    ok(B.app_query("jeeg_app_read", bad)[0] is None, f"bad app tool input refused: {bad}")
+ok(B.app_query("jeeg_apps", {})[0] == "apps" and B.app_query("jeeg_apps", {"app": "github"})[0] == "apps github" and B.app_query("jeeg_apps", {"app": "x y"})[0] is None, "jeeg_apps")
+out = mcp(("initialize", {}), ("tools/list", {}), tool("jeeg_apps"), tool("jeeg_app_read", app="box", action="hello", args={"name": "world"}),
+          tool("jeeg_app_do", app="box", action="wipe", args={"name": "x"}), tool("jeeg_app_read", app="box", action="wipe", args={"name": "x"}),
+          tool("jeeg_app_read", app="box", action="hello", args={"name": "-rf"}), tool("jeeg_app_read", app="no spaces allowed", action="hello"))
+txt = lambda i: out[i]["result"]["content"][0]["text"]
+err = lambda i: out[i]["result"].get("isError")
+LOG.unlink() if LOG.exists() else None
+ok("jeeg_app_do" in json.dumps(out[1]), "tools/list over stdio")
+ok("box" in txt(2) and not err(2), "jeeg_apps over stdio: " + txt(2)[:80])
+ok("not instructions" in txt(3) and "ran: world" in txt(3) and not err(3), "jeeg_app_read over stdio: " + txt(3)[:100])
+ok(err(4) and "confirmation" in txt(4) and "wipe" not in calls(), "jeeg_app_do is not run without the person: " + txt(4)[:100])
+ok(err(5) and "not a read action" in txt(5), "a read tool cannot do a write: " + txt(5)[:100])
+ok(err(6) and "cannot start with -" in txt(6), "option injection refused: " + txt(6)[:100])
+ok(err(7) and "short names" in txt(7), "bad names refused: " + txt(7)[:100])
+# the person's app rules reach MCP too
+has("app ai deny box", "never these:     box", tty=True)
+out = mcp(tool("jeeg_app_read", app="box", action="hello", args={"name": "w"}), tool("jeeg_apps"))
+ok(err(0) if False else out[0]["result"]["isError"] and "turned box off" in out[0]["result"]["content"][0]["text"], "stdio MCP honours app rules: " + out[0]["result"]["content"][0]["text"][:100])
+ok("box " not in out[1]["result"]["content"][0]["text"], "denied apps are hidden from jeeg_apps")
+has("app read box hello world", "ran: world")                                        # you are not limited
+has("app ai reset", "any app", tty=True)
+# over the link (HTTP MCP): same tools, same approvals
+try:
+    ap = R.Approver(ask_fn=ask)
+    rs = type("RS", (), {})()
+    rs.mode, rs.approver, rs.state, rs.log, rs.extra, rs.limit = "ask", ap, HOME, (lambda *a: None), ["apps"], 100
+    rs.count_call = lambda: True
+    rs.policy = lambda: {}
+    rs.base = lambda host="": "http://x/"
+    asked.clear(); answers["yes"] = False
+    LOG.unlink() if LOG.exists() else None
+    m = R._mcp(rs, {"jsonrpc": "2.0", "id": 9, "method": "tools/call", "params": {"name": "jeeg_app_do", "arguments": {"app": "box", "action": "wipe", "args": {"name": "x"}}}}, "h")
+    ok(m["result"]["isError"] and asked and "wipe" not in calls(), "over the link a write asks the person, and a no stops it: " + str(m)[:160])
+    answers["yes"] = True
+    m = R._mcp(rs, {"jsonrpc": "2.0", "id": 10, "method": "tools/call", "params": {"name": "jeeg_app_do", "arguments": {"app": "box", "action": "wipe", "args": {"name": "x"}}}}, "h")
+    ok(not m["result"]["isError"] and "wiped" in str(m) or "ran" in str(m) or "x" in str(m), "and a yes lets it run: " + str(m)[:160])
+    m = R._mcp(rs, {"jsonrpc": "2.0", "id": 11, "method": "tools/call", "params": {"name": "jeeg_app_read", "arguments": {"app": "box", "action": "hello", "args": {"name": "q"}}}}, "h")
+    ok(not m["result"]["isError"] and "ran: q" in str(m), "over the link a read works: " + str(m)[:120])
+    m = R._mcp(rs, {"jsonrpc": "2.0", "id": 12, "method": "tools/call", "params": {"name": "jeeg_app_read", "arguments": {"app": "box", "action": "hello", "args": {"name": "-x"}}}}, "h")
+    ok(m["result"]["isError"], "over the link bad input is refused")
+finally:
+    os.environ.pop("JEEG_VIA_AI", None)
+ok(os.environ.get("JEEG_VIA_AI") is None, "the AI marker is not left behind")
+
 # ================================================================ real test: compare
 RH = Path(HOME) / "realtest_history.json"
 has("real test compare", "needs two runs", rc=1)

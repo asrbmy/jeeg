@@ -57,7 +57,7 @@ Examples for Node.js, curl and Python are in `examples/other_languages/`.
 
 ## 4. MCP: let an app use JeeG as a tool
 
-`jeeg --mcp` is a Model Context Protocol server over stdio with three tools: `jeeg_run`, `jeeg_find` and `jeeg_list`. In Claude Desktop add this to its config file (see `examples/other_languages/claude_desktop_mcp.json`) and restart the app:
+`jeeg --mcp` is a Model Context Protocol server over stdio with six tools: `jeeg_run`, `jeeg_find`, `jeeg_list`, and (for apps you linked, see APPS.md) `jeeg_apps`, `jeeg_app_read` and `jeeg_app_do`. In Claude Desktop add this to its config file (see `examples/other_languages/claude_desktop_mcp.json`) and restart the app:
 
 ```json
 { "mcpServers": { "jeeg": { "command": "jeeg", "args": ["--mcp"] } } }

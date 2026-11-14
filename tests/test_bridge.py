@@ -42,7 +42,7 @@ def rpc(method, params=None, id=1):
     return B.mcp_handle({"jsonrpc": "2.0", "id": id, "method": method, "params": params or {}})
 ok(rpc("initialize", {"protocolVersion": "2025-03-26"})["result"]["serverInfo"]["name"] == "jeeg", "mcp initialize")
 ok(B.mcp_handle({"jsonrpc": "2.0", "method": "notifications/initialized"}) is None, "mcp notification")
-ok([t["name"] for t in rpc("tools/list")["result"]["tools"]] == ["jeeg_run", "jeeg_find", "jeeg_list"], "mcp tools")
+ok([t["name"] for t in rpc("tools/list")["result"]["tools"]] == ["jeeg_run", "jeeg_find", "jeeg_list", "jeeg_apps", "jeeg_app_read", "jeeg_app_do"], "mcp tools")
 r = rpc("tools/call", {"name": "jeeg_run", "arguments": {"query": "gst 2500 18"}})["result"]
 ok(not r["isError"] and "2,950.00" in r["content"][0]["text"], "mcp run")
 r = rpc("tools/call", {"name": "jeeg_run", "arguments": {"query": "shutdown pc"}})["result"]
