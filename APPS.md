@@ -57,7 +57,8 @@ If an app has a web API, you can describe it in three lines. In a terminal:
     app preset add homeassistant base=http://homeassistant.local:8123/api
     app preset add docker
 
-Presets: GitLab, Notion, Linear, Todoist, Home Assistant, Jira Cloud, and local programs `git`, `docker`, `kubectl`, `adb`. `as=<name>` renames one.
+Presets (27): GitLab, Bitbucket, Notion, Linear, Todoist, Asana, Box, monday.com, Jira, Confluence, Stripe (look only), Shopify, Salesforce, Cloudflare, Vercel, Grafana, Home Assistant, Spotify, X (look only), Gmail, Google Drive, Google Calendar (look only), Outlook / Microsoft 365 (look only), and local programs `git`, `docker`, `kubectl`, `adb`.
+Some need your own address (`base=`), and some need a login you get elsewhere: Google and Spotify give short-lived (about an hour) tokens and have no pasteable key, so for those the AI app's own connector is usually the better choice. Outlook can log in without pasting (`app login outlook device client_id=...`; you register a public app in Microsoft Entra) but its login also lasts about an hour; JeeG does not refresh logins yet. `as=<name>` renames one.
 They were written from each service's public documentation and **have not been tried against the live services**: after logging in, run one read action first (for example `app read gitlab me`). Presets go through the same safety check as your own definitions.
 
 ## Programs on this computer (no web API needed)

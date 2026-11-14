@@ -580,6 +580,321 @@ finally:
     os.environ.pop("JEEG_VIA_AI", None)
 ok(os.environ.get("JEEG_VIA_AI") is None, "the AI marker is not left behind")
 
+# ================================================================ MCP servers: catalog, login, read marks, web servers, more AI apps
+import contextlib, io
+from _mcpcatalog import CATALOG
+import _mcpclient
+
+FAKELOG = WORK / "mcp.log"
+script("fakemcp", f"""#!{sys.executable}
+import sys, json, os
+for line in sys.stdin:
+    m = json.loads(line); i = m.get("id"); meth = m.get("method")
+    if i is None: continue
+    if meth == "initialize": r = {{"protocolVersion": "2024-11-05", "capabilities": {{}}, "serverInfo": {{"name": "fake"}}}}
+    elif meth == "tools/list": r = {{"tools": [{{"name": "get_note", "description": "reads", "inputSchema": {{"type": "object", "properties": {{"id": {{}}}}}}}}, {{"name": "put_note", "description": "writes", "inputSchema": {{"type": "object", "properties": {{"text": {{}}}}}}}}]}}
+    elif meth == "tools/call":
+        n, a = m["params"]["name"], m["params"]["arguments"]
+        open(r"{FAKELOG}", "a").write(n + " " + json.dumps(a) + "\\n")
+        r = {{"content": [{{"type": "text", "text": ("note %s token=%s argv=%s" % (a.get("id"), os.environ.get("FAKE_TOKEN", "none"), " ".join(sys.argv[1:]))) if n == "get_note" else "stored"}}], "isError": n == "boom"}}
+    else: r = {{}}
+    print(json.dumps({{"jsonrpc": "2.0", "id": i, "result": r}}), flush=True)
+""")
+MSEEN = []
+MODE = {"sse": False}
+
+
+class Mcp(http.server.BaseHTTPRequestHandler):
+    def log_message(self, *a):
+        pass
+
+    def do_POST(self):
+        n = int(self.headers.get("Content-Length") or 0)
+        m = json.loads(self.rfile.read(n))
+        MSEEN.append({"m": m.get("method"), "auth": self.headers.get("Authorization"), "sid": self.headers.get("Mcp-Session-Id"), "path": self.path})
+        if self.headers.get("Authorization") != "Bearer webtok999":
+            self.send_response(401); self.send_header("Content-Length", "0"); self.end_headers(); return
+        if "id" not in m:
+            self.send_response(202); self.send_header("Content-Length", "0"); self.end_headers(); return
+        meth = m["method"]
+        if meth != "initialize" and self.headers.get("Mcp-Session-Id") != "SESS1":
+            self.send_response(400); self.send_header("Content-Length", "0"); self.end_headers(); return
+        r = {"initialize": {"protocolVersion": "2025-03-26", "capabilities": {}},
+             "tools/list": {"tools": [{"name": "web_search", "description": "looks", "inputSchema": {"type": "object", "properties": {"q": {}}}}]},
+             "tools/call": {"content": [{"type": "text", "text": "web says " + json.dumps(m.get("params", {}).get("arguments"))}], "isError": False}}.get(meth, {})
+        body = json.dumps({"jsonrpc": "2.0", "id": m["id"], "result": r})
+        if MODE["sse"] and meth == "tools/call":
+            body = "event: message\ndata: " + json.dumps({"jsonrpc": "2.0", "method": "notifications/progress", "params": {}}) + "\n\nevent: message\ndata: " + body + "\n\n"
+            ct = "text/event-stream"
+        else:
+            ct = "application/json"
+        b = body.encode()
+        self.send_response(200); self.send_header("Content-Type", ct); self.send_header("Content-Length", str(len(b)))
+        if meth == "initialize":
+            self.send_header("Mcp-Session-Id", "SESS1")
+        self.end_headers(); self.wfile.write(b)
+
+
+msrv = http.server.ThreadingHTTPServer(("127.0.0.1", 0), Mcp)
+threading.Thread(target=msrv.serve_forever, daemon=True).start()
+MBASE = f"http://127.0.0.1:{msrv.server_address[1]}"
+ME = {"JEEG_MCP_BASE": MBASE}
+
+# ---- the catalog is well-formed
+for k, v in CATALOG.items():
+    good = (v.get("url", "").startswith("https://") and "cmd" not in v) or (isinstance(v.get("cmd"), list) and v["cmd"] and all(isinstance(x, str) for x in v["cmd"]) and not re.match(r"^(?:ba|z)?sh$|^cmd$|^powershell$", v["cmd"][0]))
+    ok(good and isinstance(v.get("read", []), list) and v.get("note"), f"catalog entry {k} is well-formed")
+    ok(not v.get("env") or v["env"] == "@bearer" or re.fullmatch(r"[A-Z][A-Z0-9_]+(,[A-Z][A-Z0-9_]+)*", v["env"]), f"catalog entry {k}: login variable")
+    ok(not any("{arg}" in x for x in v.get("cmd", [])) or v.get("arg"), f"catalog entry {k}: a placeholder has a hint")
+has("mcp catalog", "filesystem", "github", "Not here, because they sign in through the AI app itself", "linked apps")
+has("mcp list", "None saved")
+has("mcp add files = fakemcp", "terminal", rc=1)
+has("mcp add files = fakemcp --flag", "Saved files", "mcp tools files", tty=True)
+has("mcp add files = fakemcp", "already", rc=1, tty=True)
+has("mcp add sh1 = bash -c id", "not an MCP server", rc=1, tty=True)
+has("mcp add web1 = http://example.com/mcp", "https", rc=1, tty=True)
+has("mcp add web1 = https://192.168.1.4/mcp", "public", rc=1, tty=True)
+has("mcp add filesystem", "needs a folder", rc=1, tty=True)
+has("mcp add nothere", "Usage", rc=1, tty=True)
+has("mcp add filesystem /tmp", "Saved filesystem", "marked as only reading", tty=True)
+reg = json.loads((Path(HOME) / "conn_mcp.json").read_text())
+ok(reg["filesystem"] == ["npx", "-y", "@modelcontextprotocol/server-filesystem", "/tmp"], "the catalog command was filled in: " + str(reg.get("filesystem")))
+has("mcp add notes from filesystem /var", "Saved notes", tty=True)
+has("mcp remove notes", "Removed", tty=True)
+has("mcp remove notes", "No server", rc=1, tty=True)
+has("mcp add github", "Saved github", "mcp login github", tty=True)
+has("mcp list", "files", "program", "filesystem", "github", "web", "NEEDS LOGIN")
+# ---- a program server: tools, marks, look, call
+has("mcp tools files", "[WRITE] get_note", "[WRITE] put_note", "mcp look")
+has("mcp look files get_note {\"id\": 1}", "not marked as only reading", rc=1)
+has("mcp mark files get_note read", "terminal", rc=1)
+has("mcp mark files get_note read", "1 tool(s) marked read", tty=True)
+has("mcp mark files bad;name read", "Tool names", rc=1, tty=True)
+has("mcp tools files", "[read ] get_note", "[WRITE] put_note")
+has("mcp look files get_note {\"id\": 7}", "not instructions", "note 7 token=none argv=--flag")
+has("mcp look files put_note {\"text\": \"x\"}", "not marked as only reading", rc=1)
+has("mcp look files get_note {bad json}", "JSON object", rc=1)
+has("mcp look nosuch get_note", "No server named", rc=1)
+FAKELOG.unlink() if FAKELOG.exists() else None
+has("mcp call files put_note {\"text\": \"hello\"}", rc=3)
+ok(not FAKELOG.exists(), "a call asks first")
+has("mcp call files put_note {\"text\": \"hello\"}", "stored", yes=True)
+ok("put_note" in FAKELOG.read_text(), "after confirming, it was sent")
+FAKELOG.unlink()
+has("mcp call files put_note {\"text\": \"hello\"} preview", "Preview only: nothing was sent", "hello")
+has("mcp call files put_note preview", "Preview only")
+ok(not FAKELOG.exists(), "preview sends nothing")
+has("mcp call files put_note {\"text\": \"say preview\"}", "stored", yes=True)
+ok("say preview" in FAKELOG.read_text(), "the word preview inside the JSON is just text")
+has("mcp mark files get_note write", "0 tool(s) marked read", tty=True)
+has("mcp mark files get_note read", "1 tool(s)", tty=True)
+# ---- a login goes to the server as an environment variable, and nowhere else
+has("mcp login files", "no login variable", rc=1, tty=True)
+has("mcp login files lowercase", "capital letters", rc=1, tty=True)
+has("mcp login files FAKE_TOKEN", "Saved the login", "FAKE_TOKEN", tty=True, stdin="envtok777\n")
+has("mcp look files get_note {\"id\": 2}", "token=envtok777")
+ok("envtok777" not in (Path(HOME) / "conn_mcp.json").read_text() and (Path(HOME) / "conn_mcpsecrets.json").exists(), "the token is only in its private file")
+has("mcp login files FAKE_TOKEN", "does not look right", rc=1, tty=True, stdin="two words\n")
+has("mcp logout files", "Forgot", tty=True)
+has("mcp look files get_note {\"id\": 3}", "needs a login", rc=1)
+has("mcp login files", "Saved the login", tty=True, stdin="envtok777\n")
+# ---- a web server
+has("mcp add webby = https://mcp.example.com/api/mcp", "Saved webby", "mcp login webby", tty=True, extra=ME)
+has("mcp mark webby web_search read", "marked read", tty=True)
+MSEEN.clear()
+has("mcp tools webby", "did not accept the login", rc=1, extra=ME)
+has("mcp login webby", "as a bearer token", tty=True, stdin="wrongtok\n", extra=ME)
+has("mcp tools webby", "did not accept the login", rc=1, extra=ME)
+has("mcp login webby", "bearer", tty=True, stdin="webtok999\n", extra=ME)
+MSEEN.clear()
+has("mcp tools webby", "[read ] web_search", extra=ME)
+ok([x["m"] for x in MSEEN][:3] == ["initialize", "notifications/initialized", "tools/list"] and MSEEN[2]["sid"] == "SESS1" and all(x["auth"] == "Bearer webtok999" for x in MSEEN) and MSEEN[0]["path"] == "/api/mcp", "web server: session id and bearer token are carried: " + str(MSEEN))
+has("mcp look webby web_search {\"q\": \"cats\"}", "web says", "cats", extra=ME)
+MODE["sse"] = True
+has("mcp look webby web_search {\"q\": \"dogs\"}", "web says", "dogs", extra=ME)
+MODE["sse"] = False
+ok("webtok999" not in (Path(HOME) / "conn_mcp.json").read_text(), "the web token is not in the server list")
+# a web server may not redirect or reach the local network in real use
+try:
+    _mcpclient.HTTPServer._check("https://127.0.0.1/mcp")
+    ok(False, "local address refused")
+except _mcpclient.MCPError:
+    ok(True, "local address refused")
+# ---- the person's rules for an AI reach MCP servers
+try:
+    ap = R.Approver(ask_fn=ask)
+    out_, e_ = R.run_for_ai("mcp look files get_note {\"id\": 9}", "read", ap, HOME, extra=["apps"])
+    ok(not e_ and "note 9" in out_, "an AI can use a read-marked tool: " + out_[:80])
+    out_, e_ = R.run_for_ai("mcp look files put_note {\"text\": \"x\"}", "read", ap, HOME, extra=["apps"])
+    ok(e_ and "not marked as only reading" in out_, "but not another tool: " + out_[:80])
+    out_, e_ = R.run_for_ai("mcp add evil = sh -c id", "god", R.Approver(ask_fn=ask), HOME)
+    ok(e_ and "terminal" in out_, "an AI cannot add servers: " + out_[:80])
+    out_, e_ = R.run_for_ai("mcp login files FAKE_TOKEN", "god", R.Approver(ask_fn=ask), HOME)
+    ok(e_, "or log in")
+    out_, e_ = R.run_for_ai("mcp mark files put_note read", "god", R.Approver(ask_fn=ask), HOME)
+    ok(e_, "or mark tools as read")
+    has("app ai deny mcp:files", "mcp:files", tty=True)
+    out_, e_ = R.run_for_ai("mcp look files get_note {\"id\": 9}", "read", ap, HOME, extra=["apps"])
+    ok(e_ and "turned mcp:files off" in out_, "denied server: refused: " + out_[:80])
+    FAKELOG.unlink() if FAKELOG.exists() else None
+    out_, e_ = R.run_for_ai("mcp call files put_note {\"text\": \"x\"}", "god", R.Approver(ask_fn=lambda *a: True), HOME)
+    ok(e_ and not FAKELOG.exists(), "denied server: calls refused too")
+    has("mcp look files get_note {\"id\": 1}", "note 1")                              # you are not limited
+    has("app ai reset", "any app", tty=True)
+    has("app ai allow mcp:nosuch", "not known", rc=1, tty=True)
+    has("app ai allow mcp:files github", "only these apps: github, mcp:files", tty=True)
+    out_, e_ = R.run_for_ai("mcp look webby web_search {\"q\": \"x\"}", "read", ap, HOME, extra=["apps"])
+    ok(e_ and "not on the list" in out_, "allow list: other servers shut out")
+    has("app ai reset", "any app", tty=True)
+    ok(R._action_key('mcp call files put_note {"text": "x"}') == "mcp_call:files:put_note", "mcp action key")
+    ap = R.Approver(ask_fn=ask)
+    ap.always.add("mcp_call:files:put_note")
+    asked.clear(); answers["yes"] = False; FAKELOG.unlink() if FAKELOG.exists() else None
+    out_, e_ = R.run_for_ai('mcp call files put_note {"text": "twice"}', "ask", ap, HOME)
+    ok(not e_ and not asked and "twice" in FAKELOG.read_text(), "always-allow for one MCP tool")
+    asked.clear(); FAKELOG.unlink()
+    out_, e_ = R.run_for_ai('mcp call files other_tool {"text": "x"}', "ask", ap, HOME)
+    ok(e_ and asked and not FAKELOG.exists(), "another tool still asks")
+    ap2 = R.Approver(ask_fn=ask); ap2.dry = True; asked.clear()
+    out_, e_ = R.run_for_ai('mcp call files put_note {"text": "ghost"}', "god", ap2, HOME)
+    ok(not e_ and "Preview only" in out_ and not FAKELOG.exists() and not asked, "preview-only mode covers MCP calls: " + out_[:100])
+finally:
+    os.environ.pop("JEEG_VIA_AI", None)
+msrv.shutdown()
+
+# ---- install mcp: more AI apps
+base = tempfile.mkdtemp(prefix="jeeg-v220-inst-")
+
+
+def inst(words):
+    b = io.StringIO()
+    with contextlib.redirect_stdout(b):
+        rc = R.cmd_install_mcp(["py", "jeeg.py"], words, base)
+    return rc, b.getvalue()
+
+
+paths = R._mcp_targets(base)
+ok({"claude-desktop", "cursor", "windsurf", "gemini-cli", "amazon-q", "claude-code", "vscode"} <= set(paths), "install targets")
+rc, out_ = inst("")
+ok(rc == 0 and "Edited for you" in out_ and "Shown, you paste" in out_ and "Need the web link" in out_, "help lists every group")
+for app in ("windsurf", "gemini cli", "amazon q", "cursor"):
+    key = app.replace(" ", "-")
+    rc, out_ = inst(app)
+    ok(rc == 0 and "nothing changed" in out_ and not paths[key].exists(), f"{app}: shows first, changes nothing")
+    rc, out_ = inst(app + " yes")
+    d = json.loads(paths[key].read_text())
+    ok(rc == 0 and d["mcpServers"]["jeeg"]["command"] == "py" and "--mcp" in d["mcpServers"]["jeeg"]["args"], f"{app}: added")
+    rc, out_ = inst(app + " remove yes")
+    ok(rc == 0 and "jeeg" not in json.loads(paths[key].read_text()).get("mcpServers", {}), f"{app}: removed")
+rc, out_ = inst("vs code yes")
+d = json.loads(paths["vscode"].read_text())
+ok(rc == 0 and d["servers"]["jeeg"]["type"] == "stdio" and "mcpServers" not in d, "vscode uses 'servers' with type stdio")
+paths["claude-code"].write_text(json.dumps({"numStartups": 5, "projects": {"/x": {"a": 1}}, "mcpServers": {"other": {"command": "x"}}}))
+rc, out_ = inst("claude code yes")
+d = json.loads(paths["claude-code"].read_text())
+ok(rc == 0 and d["numStartups"] == 5 and d["projects"] == {"/x": {"a": 1}} and set(d["mcpServers"]) == {"other", "jeeg"}, "claude code: its other settings are kept")
+ok(any(p.name.startswith(".claude.json.bak-") for p in paths["claude-code"].parent.iterdir()), "and a backup was made")
+paths["gemini-cli"].write_text('{ // comment\n "a": 1}')
+rc, out_ = inst("gemini-cli yes")
+ok(rc == 1 and "paste form" in out_ and paths["gemini-cli"].read_text().startswith("{ //"), "a settings file with comments is left alone")
+for app, needle in (("zed", "context_servers"), ("codex", "config.toml"), ("goose", "goose configure"), ("continue", "mcpServers"), ("cline", "Configure"), ("jetbrains", "Settings"), ("warp", "MCP Servers")):
+    rc, out_ = inst(app)
+    ok(rc == 0 and needle in out_ and '"command"' in out_ and "args:" in out_, f"{app}: shows what to enter")
+for app in ("chatgpt", "claude.ai", "gemini web", "copilot", "perplexity"):
+    rc, out_ = inst(app)
+    ok(rc == 0 and "connect ai" in out_ and "https address" in out_, f"{app}: points to the web link")
+rc, out_ = inst("roo code")
+ok("Roo Code" in out_, "alias: roo code")
+
+
+# ================================================================ second batch: more presets and servers
+BATCH = ("asana", "box", "monday", "bitbucket", "stripe", "shopify", "cloudflare", "vercel", "spotify", "twitter", "salesforce", "confluence", "grafana", "gmail", "gdrive", "gcal", "outlook")
+ok(set(BATCH) <= set(_presets.PRESETS), "all second-batch presets exist")
+out = has("app preset list", *BATCH)
+READS = {"asana": ("me", "/users/me"), "box": ("me", "/users/me"), "bitbucket": ("me", "/user"), "stripe": ("balance", "/balance"), "cloudflare": ("verify", "/user/tokens/verify"),
+         "vercel": ("me", "/v2/user"), "spotify": ("me", "/me"), "gmail": ("me", "/profile"), "gcal": ("calendars", "/users/me/calendarList"), "outlook": ("me", "/me")}
+for app, (act, path) in READS.items():
+    nm = "boxapp" if app == "box" else app
+    has(f"app preset add {app} as={nm}", f"Added {nm}", tty=True)
+    has(f"app login {nm}", "Saved", tty=True, stdin="tok-" + app + "\n")
+    SEEN.clear()
+    jg("app", "read", nm, act, extra={f"JEEG_APPS_BASE_{nm.upper()}": BASE})
+    want = "Basic " + base64.b64encode(("tok-" + app).encode()).decode() if app == "bitbucket" else "Bearer tok-" + app
+    ok(SEEN and SEEN[-1]["p"].split("?")[0].endswith(path) and SEEN[-1]["m"] == "GET" and SEEN[-1]["h"].get("authorization") == want, f"{app}: {act} sends GET {path} with the bearer login: {SEEN[-1:] }")
+for app in ("stripe", "twitter", "gmail", "gdrive", "gcal", "outlook"):
+    ads = A.all_adapters() if False else None
+    dd = _presets.PRESETS[app]
+    ok(all(not A.is_write(a) for a in dd["actions"].values()), f"{app} is look-only")
+# monday: a raw-token header and a read-only POST
+has("app preset add monday", "Added monday", tty=True)
+has("app login monday", "Saved", tty=True, stdin="mon-raw-token\n")
+SEEN.clear()
+jg("app", "read", "monday", "me", extra={"JEEG_APPS_BASE_MONDAY": BASE})
+ok(SEEN and SEEN[-1]["m"] == "POST" and SEEN[-1]["p"] == "/v2" and SEEN[-1]["h"].get("authorization") == "mon-raw-token" and SEEN[-1]["h"].get("api-version") and "me" in SEEN[-1]["b"], "monday: raw token header, read-only POST, version header")
+# shopify: its own header, needs a base
+has("app preset add shopify", "needs your own address", rc=1, tty=True)
+has("app preset add shopify base=https://demo.myshopify.com/admin/api/2024-10", "Added shopify", tty=True)
+has("app login shopify", "Saved", tty=True, stdin="shpat_abc\n")
+SEEN.clear()
+jg("app", "read", "shopify", "shop", extra={"JEEG_APPS_BASE_SHOPIFY": BASE})
+ok(SEEN and SEEN[-1]["h"].get("x-shopify-access-token") == "shpat_abc" and "authorization" not in SEEN[-1]["h"] and SEEN[-1]["p"] == "/shop.json", "shopify: its own header")
+# params with spaces and the odd names
+has("app preset add gdrive", "Added gdrive", tty=True)
+has("app login gdrive", "Saved", tty=True, stdin="gd-tok\n")
+SEEN.clear()
+jg("app", "read", "gdrive", "search", "q=\"name contains 'tax' & x\"", extra={"JEEG_APPS_BASE_GDRIVE": BASE})
+ok(SEEN and "q=name%20contains%20%27tax%27%20%26%20x" in SEEN[-1]["p"], "a search with spaces and & is encoded, not injected: " + str(SEEN[-1:]))
+has("app preset add gcal", "already", rc=1, tty=True)
+SEEN.clear()
+jg("app", "read", "gcal", "events", "from=2026-11-14T00:00:00Z", extra={"JEEG_APPS_BASE_GCAL": BASE})
+ok(SEEN and "timeMin=2026-11-14T00%3A00%3A00Z" in SEEN[-1]["p"], "calendar: a time parameter: " + str(SEEN[-1:]))
+has("app read gcal events from=tomorrow", "expected form", rc=1)
+# Microsoft device login uses the preset's own addresses
+DEV.update(mode="ok", polls=0)
+has("app login outlook device", "client id", rc=1, tty=True)
+has("app login outlook device client_id=ms-app-id", "WXYZ-1234", "Logged in to outlook", tty=True, absent=("gho_DEVICETOKEN987",))
+ok(DEV["client"] == "ms-app-id" and json.loads((Path(HOME) / "conn_appsecrets.json").read_text())["outlook"] == "gho_DEVICETOKEN987", "outlook device login saved its token")
+dd = {"title": "t", "base": "https://api.example.com", "auth": "bearer", "device": {"code_url": "http://x.com/c", "token_url": "https://x.com/t"}, "actions": {"me": {"method": "GET", "path": "/me"}}}
+ok(A.check_def("devapp", dd) is not None, "device login addresses must be https")
+dd["device"]["code_url"] = "https://x.com/c"
+ok(A.check_def("devapp", dd) is None, "a good device block is accepted")
+# a client secret goes only in the token request
+import _device
+DEV.update(mode="ok", polls=0)
+os.environ.update({"JEEG_DEVICE_BASE": DBASE, "JEEG_DEVICE_INTERVAL": "0.05"})
+tok_ = _device.login("github", "cid", client_secret="sec-xyz", out=lambda *a: None)
+os.environ.pop("JEEG_DEVICE_BASE"); os.environ.pop("JEEG_DEVICE_INTERVAL")
+ok(tok_ == "gho_DEVICETOKEN987", "device login with a client secret works")
+
+# MCP servers with several login variables
+script("fakemcp2", f"""#!{sys.executable}
+import sys, json, os
+for line in sys.stdin:
+    m = json.loads(line); i = m.get("id"); meth = m.get("method")
+    if i is None: continue
+    if meth == "tools/call":
+        r = {{"content": [{{"type": "text", "text": "host=%s user=%s pw=%s" % (os.environ.get("MYSQL_HOST"), os.environ.get("MYSQL_USER"), os.environ.get("MYSQL_PASSWORD"))}}]}}
+    else: r = {{"protocolVersion": "2024-11-05", "capabilities": {{}}, "tools": []}}
+    print(json.dumps({{"jsonrpc": "2.0", "id": i, "result": r}}), flush=True)
+""")
+has("mcp add db = fakemcp2", "Saved db", tty=True)
+has("mcp mark db query read", "marked read", tty=True)
+has("mcp login db MYSQL_HOST MYSQL_USER MYSQL_PASSWORD", "MYSQL_HOST, MYSQL_USER, MYSQL_PASSWORD", tty=True, stdin="dbhost\ndbuser\ndbpass\n")
+has("mcp look db query {}", "host=dbhost user=dbuser pw=dbpass")
+sec = (Path(HOME) / "conn_mcpsecrets.json").read_text()
+ok("db:MYSQL_PASSWORD" in sec and "dbpass" not in (Path(HOME) / "conn_mcp.json").read_text() + (Path(HOME) / "conn_mcpenv.json").read_text(), "each variable is saved on its own, only in the secrets file")
+has("mcp login db MYSQL_HOST MYSQL_USER MYSQL_PASSWORD", "does not look right", rc=1, tty=True, stdin="a\nb\nsp ace\n")
+has("mcp list", "db", "NEEDS LOGIN")
+has("mcp login db MYSQL_HOST MYSQL_USER MYSQL_PASSWORD", "Saved", tty=True, stdin="dbhost\ndbuser\ndbpass\n")
+has("mcp logout db", "Forgot", tty=True)
+has("mcp look db query {}", "needs a login", rc=1)
+has("mcp remove db", "Removed", tty=True)
+ok("db:" not in (Path(HOME) / "conn_mcpsecrets.json").read_text(), "removing a server removes all its logins")
+has("mcp add mysql", "Saved mysql", "mcp login mysql", tty=True)
+has("mcp add redis", "needs redis://", rc=1, tty=True)
+has("mcp add neo4j", "Saved neo4j", "2 tool(s) are marked" if False else "marked as only reading", tty=True)
+has("mcp catalog", "slack", "mysql", "neo4j", "Bitbucket", "Asana", "Outlook")
+
 # ================================================================ real test: compare
 RH = Path(HOME) / "realtest_history.json"
 has("real test compare", "needs two runs", rc=1)

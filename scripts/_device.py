@@ -33,9 +33,9 @@ def _post(url, data):
         raise RuntimeError("Could not reach the login service: " + str(getattr(ex, "reason", ex)))
 
 
-def urls_for(app, code_url="", token_url=""):
+def urls_for(app, code_url="", token_url="", defaults=None):
     base = local_only_override("JEEG_DEVICE_BASE", "")          # tests only: this computer
-    d = DEFAULTS.get(app, {})
+    d = defaults or DEFAULTS.get(app, {})
     c, t = code_url or d.get("code_url", ""), token_url or d.get("token_url", "")
     if base:
         c, t = base + "/device/code", base + "/token"
@@ -45,14 +45,14 @@ def urls_for(app, code_url="", token_url=""):
     return c, t
 
 
-def login(app, client_id, code_url="", token_url="", scope="", out=print):
+def login(app, client_id, code_url="", token_url="", scope="", out=print, defaults=None, client_secret=""):
     """Returns the access token. Raises RuntimeError with a plain-words reason."""
-    c, t = urls_for(app, code_url, token_url)
+    c, t = urls_for(app, code_url, token_url, defaults)
     if not c:
         raise RuntimeError("This app has no device login address. Give them:  code_url=https://... token_url=https://...")
     if not client_id:
         raise RuntimeError("Give the app's client id:  client_id=...  (create an OAuth app in the service's settings and tick 'Device flow')")
-    scope = scope or DEFAULTS.get(app, {}).get("scope", "")
+    scope = scope or (defaults or DEFAULTS.get(app, {})).get("scope", "")
     r = _post(c, {"client_id": client_id, "scope": scope})
     if r.get("error") or not r.get("device_code"):
         raise RuntimeError("The service refused the login request: " + str(r.get("error_description") or r.get("error") or "no device code"))
@@ -66,7 +66,7 @@ def login(app, client_id, code_url="", token_url="", scope="", out=print):
     end = time.time() + min(int(r.get("expires_in") or 900), 900)
     while time.time() < end:
         time.sleep(interval)
-        p = _post(t, {"client_id": client_id, "device_code": r["device_code"], "grant_type": GRANT})
+        p = _post(t, {"client_id": client_id, "device_code": r["device_code"], "grant_type": GRANT, **({"client_secret": client_secret} if client_secret else {})})
         e = p.get("error")
         if not e and p.get("access_token"):
             return str(p["access_token"])

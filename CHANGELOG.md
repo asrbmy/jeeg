@@ -13,7 +13,10 @@
 - **Releases:** build-provenance attestations for the standalone programs as well as the wheel and source archive; DISTRIBUTION.md has a per-release checklist for winget, Scoop and Homebrew and the `gh attestation verify` line.
 - Fix: after an AI session ends inside an interactive JeeG, your own app commands are no longer treated as AI requests.
 - **MCP tools for linked apps:** `jeeg_apps`, `jeeg_app_read`, `jeeg_app_do` on both the stdio MCP server (`install mcp`) and the link from `connect ai`. They become the same plain words as typing, so all app rules, approvals, previews and allow/deny lists apply.
-- New task names: `event_rules`. `linked setup` also handles `preset`, `keystore`, `ai`.
+- **More AI apps and MCP servers (MCP.md):** `install mcp` now edits Windsurf, VS Code, Gemini CLI, Amazon Q and Claude Code (plus Claude Desktop and Cursor), prints exact snippets for Zed, Codex, Goose, Continue, Cline, Roo Code, JetBrains, Warp and others, and explains the web link for Claude.ai, ChatGPT, Gemini, Copilot and Perplexity.
+- **MCP servers for JeeG:** `mcp catalog` (filesystem, fetch, git, sqlite, postgres, playwright, github and more), `mcp login`, web (https) servers, and `mcp look` for tools you marked read. `mcp call` asks first and has `preview`. AI rules: `app ai deny mcp:<name>`, per-tool always-allow, preview-only. Only you add, log in or mark.
+- **More services:** 17 more linked-app presets (Asana, Box, monday.com, Bitbucket, Stripe, Shopify, Cloudflare, Vercel, Spotify, X, Salesforce, Confluence, Grafana, Gmail, Google Drive, Google Calendar, Outlook), Outlook device login, `client_secret=` for device login, and 14 more MCP catalog servers; MCP servers with several login values. Fix: placeholders in the fixed query part of an action's path were not filled in.
+- New task names: `mcp_look`; `event_rules`. `linked setup` also handles `preset`, `keystore`, `ai`.
 - Tests: `tests/test_v220.py` (231 checks against fake servers, fake programs and fake keychains).
 
 ## 2.19.0

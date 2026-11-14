@@ -267,7 +267,7 @@ class Approver:
                         self._start_reader()
                     while not self._q.empty():              # forget anything typed earlier
                         self._q.get_nowait()
-                where = ("type y then Enter here" + ((" (a = allow this app action always this session)" if key.startswith("linked_do:") else " (a = allow this task always this session)") if key else "") + (" or press Allow on your phone" if pend else "")) if tty else "press Allow on your phone"
+                where = ("type y then Enter here" + ((" (a = allow this action always this session)" if key.startswith(("linked_do:", "mcp_call:")) else " (a = allow this task always this session)") if key else "") + (" or press Allow on your phone" if pend else "")) if tty else "press Allow on your phone"
                 print(f"\n  >>> {text}\n  >>> Allow? {where} (no answer in {self._wait:.0f}s = no): ", end="", flush=True)
                 end = time.time() + self._wait
                 while time.time() < end:
@@ -303,14 +303,20 @@ def _first_word(q: str) -> str:
 
 
 # tasks that understand the word "preview" (they show what they would do and change nothing)
-DRY_OK = frozenset({"linked_do", "install_app", "uninstall_app", "update_apps", "install_bundle", "configure_app", "env_variable", "print_file",
+DRY_OK = frozenset({"linked_do", "mcp_call", "install_app", "uninstall_app", "update_apps", "install_bundle", "configure_app", "env_variable", "print_file",
                     "clean_temp_files", "empty_trash", "shred_file", "replace_in_files"})
 _DO_KEY = re.compile(r"^\s*(?:app|linked)\s+do\s+([a-z][a-z0-9_\-]*)\s+([a-z][a-z0-9_\-]*)\b", re.I)
 
 
+_MCP_KEY = re.compile(r"^\s*mcp\s+call\s+([A-Za-z0-9_\-]+)\s+([A-Za-z0-9_.\-]+)", re.I)
+
+
 def _action_key(q: str) -> str:
     m = _DO_KEY.match(q or "")
-    return f"linked_do:{m.group(1).lower()}:{m.group(2).lower()}" if m else ""
+    if m:
+        return f"linked_do:{m.group(1).lower()}:{m.group(2).lower()}"
+    m = _MCP_KEY.match(q or "")
+    return f"mcp_call:{m.group(1).lower()}:{m.group(2)}" if m else ""
 
 
 def policy_dry(state) -> bool:
@@ -386,7 +392,7 @@ def run_for_ai(query, mode: str, approver: Approver, state, log=print, source: s
     log(f"{_ts()}  AI ({mode})  {q}")
     d = dispatch({"op": "run", "query": q, "timeout": 120}, allow_confirm=False, home=home, source=source + "-" + mode)
     if d.get("ok") and d["result"].get("needs_confirmation"):
-        if not approver.ask(f"'{q}' asks for confirmation (it can change or delete things). Really run it?", key if key.startswith("linked_do:") else ""):
+        if not approver.ask(f"'{q}' asks for confirmation (it can change or delete things). Really run it?", key if key.startswith(("linked_do:", "mcp_call:")) else ""):
             log(f"{_ts()}  AI ({mode}) confirmation DENIED  {q}")
             return "That task needs the person's confirmation and they did not give it.", True
         log(f"{_ts()}  AI ({mode}) confirmed  {q}")
@@ -979,51 +985,93 @@ def cmd_ai_log(state, rest: str = "") -> int:
     return 0
 
 
-# ------------------------------------------------------------------ install into Claude Desktop / Cursor
+# ------------------------------------------------------------------ install into AI apps (MCP clients)
 def _mcp_targets(base=None):
+    """AI apps whose settings are a plain JSON file we can edit safely (with a backup). Name -> path."""
     from pathlib import Path
     home = Path(base) if base else Path.home()
     if sys.platform == "win32":
         appdata = Path(os.environ.get("APPDATA") or (home / "AppData" / "Roaming")) if not base else home / "AppData" / "Roaming"
-        desk = appdata / "Claude" / "claude_desktop_config.json"
+        desk, code = appdata / "Claude" / "claude_desktop_config.json", appdata / "Code" / "User" / "mcp.json"
     elif sys.platform == "darwin":
         desk = home / "Library" / "Application Support" / "Claude" / "claude_desktop_config.json"
+        code = home / "Library" / "Application Support" / "Code" / "User" / "mcp.json"
     else:
-        desk = home / ".config" / "Claude" / "claude_desktop_config.json"
-    return {"claude-desktop": desk, "cursor": home / ".cursor" / "mcp.json"}
+        desk, code = home / ".config" / "Claude" / "claude_desktop_config.json", home / ".config" / "Code" / "User" / "mcp.json"
+    return {"claude-desktop": desk, "cursor": home / ".cursor" / "mcp.json", "windsurf": home / ".codeium" / "windsurf" / "mcp_config.json",
+            "gemini-cli": home / ".gemini" / "settings.json", "amazon-q": home / ".aws" / "amazonq" / "mcp.json", "claude-code": home / ".claude.json", "vscode": code}
+
+
+_JSON_KEY = {"vscode": "servers"}                       # every other app above uses "mcpServers"
+# apps where the settings are not a plain JSON file (YAML, TOML, a settings screen): we print exactly what to enter instead of editing
+_SNIPPET_APPS = {"zed": "Zed: Settings (JSON), key \"context_servers\"", "codex": "OpenAI Codex CLI: ~/.codex/config.toml", "goose": "Goose: run  goose configure  > Add Extension > Command-line Extension",
+                 "continue": "Continue: a file in .continue/mcpServers/", "cline": "Cline: MCP Servers icon > Configure", "roo-code": "Roo Code: MCP settings > Edit Global MCP",
+                 "jetbrains": "JetBrains IDEs: Settings > Tools > AI Assistant > Model Context Protocol (MCP)", "warp": "Warp: Settings > MCP Servers", "replit": "Replit: the MCP / integrations panel",
+                 "cherry-studio": "Cherry Studio: Settings > MCP Servers", "librechat": "LibreChat: mcpServers in librechat.yaml", "witsy": "Witsy: Settings > MCP", "open-webui": "Open WebUI: Settings > Tools (needs the web link, see below)",
+                 "cody": "Sourcegraph Cody: its MCP settings", "nextchat": "NextChat: its MCP settings"}
+# apps that run in the cloud: they need the https link from  connect ai
+_WEB_APPS = {"claude-web": "Claude.ai: Settings > Connectors > Add custom connector", "chatgpt": "ChatGPT: Settings > Connectors (developer mode) > add an MCP server", "gemini": "Gemini: its MCP / extensions settings",
+             "copilot": "Microsoft Copilot / Copilot Studio: add an MCP server as a tool", "perplexity": "Perplexity: Settings > Connectors"}
+_ALIASES = {"claude desktop": "claude-desktop", "gemini cli": "gemini-cli", "amazon q": "amazon-q", "claude code": "claude-code", "vs code": "vscode", "visual studio code": "vscode", "vs-code": "vscode",
+            "roo code": "roo-code", "roo": "roo-code", "cherry studio": "cherry-studio", "open webui": "open-webui", "codex cli": "codex", "claude.ai": "claude-web", "claude web": "claude-web",
+            "claude": "claude-desktop", "gemini": "gemini-cli", "gemini web": "gemini", "gemini.google.com": "gemini", "chat gpt": "chatgpt", "ms copilot": "copilot"}
+
+
+def _install_help():
+    print("Connect an AI app to JeeG (it can then use JeeG tasks and your linked apps directly).\n"
+          "  install mcp <app>              show what would change\n"
+          "  install mcp <app> yes          do it (a backup of the old file is kept); safe tasks only\n"
+          "  install mcp <app> read yes     also look-only tasks      ...  full yes   every task (careful)\n"
+          "  install mcp <app> remove yes\n"
+          "Edited for you:     " + ", ".join(sorted(_mcp_targets())) + "\n"
+          "Shown, you paste:   " + ", ".join(sorted(_SNIPPET_APPS)) + "\n"
+          "Need the web link:  " + ", ".join(sorted(_WEB_APPS)) + "   (run  connect ai ask  and use the https address it shows)\n"
+          "Then restart that app. The file paths and menu names come from each app's documentation and can change; if one is wrong, use the 'paste' form.")
+
+
+def _norm_apps(rest):
+    low = " " + (rest or "").lower() + " "
+    pat = re.compile(r"(?<=\s)(" + "|".join(re.escape(k) for k in sorted(_ALIASES, key=len, reverse=True)) + r")(?=\s)")
+    return pat.sub(lambda m: _ALIASES[m.group(1)], low).split()                    # one pass, so an alias is never rewritten twice
 
 
 def cmd_install_mcp(self_cmd: list, rest: str = "", base=None) -> int:
-    """Add (or remove) JeeG in the MCP config of an AI app on this computer. Without 'yes' it only shows what it would do."""
-    from pathlib import Path
-    words = (rest or "").lower().replace("claude desktop", "claude-desktop").split()
+    """Add (or remove) JeeG in the MCP settings of an AI app on this computer. Without 'yes' it only shows what it would do."""
+    words = _norm_apps(rest)
     yes = "yes" in words or "now" in words
     remove = any(w in {"remove", "uninstall", "delete"} for w in words)
     targets = _mcp_targets(base)
     names = [w for w in words if w in targets]
-    if not names:
-        print("Connect an AI app on this computer to JeeG (it can then use JeeG tasks directly, no link needed).\n"
-              "  install mcp claude-desktop          show what would change\n"
-              "  install mcp claude-desktop yes      do it (a backup of the old file is kept); safe tasks only\n"
-              "  install mcp claude-desktop read yes    also look-only tasks      ...  full yes   every task (careful)\n"
-              "  install mcp cursor yes\n"
-              "  install mcp claude-desktop remove yes\n"
-              "Then restart that app.")
+    others = [w for w in words if w in _SNIPPET_APPS or w in _WEB_APPS]
+    scope = "full" if "full" in words else "read" if "read" in words else "safe"
+    only = [] if scope == "full" else sorted(_read_list() if scope == "read" else _safe_list())
+    entry = {"command": self_cmd[0], "args": list(self_cmd[1:]) + ["--mcp"] + (["--only", ",".join(only)] if only else [])}
+    if not names and not others:
+        _install_help()
         return 0
+    for o in others:
+        if o in _WEB_APPS:
+            print(f"{o}: this app runs in the cloud, so it needs JeeG's web link, not a program on this computer.\n"
+                  f"    1. run:  connect ai ask       (it prints an https address ending in /mcp)\n    2. in the app: {_WEB_APPS[o]}\n    3. paste that address.\n"
+                  "    (The menu names change often; I could not check them for you.)")
+        else:
+            print(f"{o}: {_SNIPPET_APPS[o]}\n    add a server named jeeg with:\n      command: {entry['command']}\n      args:    {json.dumps(entry['args'])}\n"
+                  f"    (JSON form: {json.dumps({'jeeg': entry})})")
     rc = 0
     for n in names:
         f = targets[n]
+        key = _JSON_KEY.get(n, "mcpServers")
         cfg = {}
         if f.exists():
             try:
                 cfg = json.loads(f.read_text(encoding="utf-8") or "{}")
-                if not isinstance(cfg, dict) or not isinstance(cfg.get("mcpServers", {}), dict):
+                if not isinstance(cfg, dict) or not isinstance(cfg.get(key, {}), dict):
                     raise ValueError
             except (ValueError, OSError):
-                print(f"{f} is not a normal settings file, so I did not touch it. Fix it or move it, then try again.")
+                print(f"{f} is not a normal settings file (or has comments in it), so I did not touch it. Fix it or move it, then try again. Or use the paste form:  {json.dumps({'jeeg': entry})}")
                 rc = 1
                 continue
-        servers = cfg.setdefault("mcpServers", {})
+        servers = cfg.setdefault(key, {})
         if remove:
             if "jeeg" not in servers:
                 print(f"{n}: JeeG is not in {f}.")
@@ -1031,13 +1079,11 @@ def cmd_install_mcp(self_cmd: list, rest: str = "", base=None) -> int:
             servers.pop("jeeg")
             action = "remove JeeG from"
         else:
-            scope = "full" if "full" in words else "read" if "read" in words else "safe"
-            only = [] if scope == "full" else sorted(_read_list() if scope == "read" else _safe_list())
-            servers["jeeg"] = {"command": self_cmd[0], "args": list(self_cmd[1:]) + ["--mcp"] + (["--only", ",".join(only)] if only else [])}
+            servers["jeeg"] = ({"type": "stdio"} if n == "vscode" else {}) | entry
             action = "add JeeG to"
         print(f"{n}: would {action} {f}" if not yes else f"{n}: {action} {f}")
         if not remove:
-            print(f"    command: {servers['jeeg']['command']} {' '.join(servers['jeeg']['args'][:3])} ...")
+            print(f"    command: {entry['command']} {' '.join(entry['args'][:3])} ...")
             print(f"    tasks the app may use: " + {"safe": "the safe list only (calculators, converters, small lists)", "read": "the safe list plus look-only tasks", "full": "EVERY task (tasks that ask for confirmation are still refused)"}[scope])
         if not yes:
             print("    (nothing changed; add  yes  to do it)")

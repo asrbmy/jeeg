@@ -397,13 +397,15 @@ rc, out = jeeg("peer", "run", "office", "gst 100 18", yes=True); ok(rc == 1 and 
 rc, out = jeeg("peer", "add", "pub", "http://example.com/abc/"); ok(rc == 1, "peer refuses plain http to the internet")
 
 # =========================================================== MCP client (JeeG uses an MCP server: its own)
+rc, out = jeeg("mcp", "add", "self", "=", f'"{sys.executable}" "{ROOT / "jeeg.py"}" --mcp'); ok(rc == 1 and "terminal" in out, "an AI or program cannot add a server")
+ENV["JEEG_TEST_TTY"] = "1"                                            # you, in a terminal
 rc, out = jeeg("mcp", "add", "self", "=", f'"{sys.executable}" "{ROOT / "jeeg.py"}" --mcp'); ok(rc == 0, "mcp add")
 rc, out = jeeg("mcp", "list"); ok("self" in out, "mcp list")
 rc, out = jeeg("mcp", "tools", "self"); ok("jeeg_run" in out and "jeeg_find" in out, "mcp tools: " + out[:200])
 rc, out = jeeg("mcp", "call", "self", "jeeg_run", '{"query": "gst 100 18"}', yes=True); ok(rc == 0 and "118" in out, "mcp call: " + out[:200])
 rc, out = jeeg("mcp", "call", "self", "jeeg_run", "[1,2]", yes=True); ok(rc == 1, "mcp call needs a JSON object")
 rc, out = jeeg("mcp", "call", "self", "nope_tool", "{}", yes=True); ok(rc == 1, "mcp unknown tool reported")
-rc, out = jeeg("mcp", "add", "dead", "=", "/nonexistent/server"); rc, out = jeeg("mcp", "tools", "dead"); ok(rc == 1 and "Could not talk" in out, "a missing server is explained")
+rc, out = jeeg("mcp", "add", "dead", "=", "/nonexistent/server"); ENV.pop("JEEG_TEST_TTY", None); rc, out = jeeg("mcp", "tools", "dead"); ok(rc == 1 and "Could not talk" in out, "a missing server is explained")
 rc, out = jeeg("mcp", "call", "self", "jeeg_run", '{"query": "gst 100 18"}'); ok("118" not in out, "mcp call asks for confirmation without --yes")
 
 # =========================================================== OpenAPI file and JavaScript client

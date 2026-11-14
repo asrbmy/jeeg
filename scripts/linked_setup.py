@@ -49,7 +49,7 @@ if cmd in {"login", "logout"}:
     if len(toks) > 1 and toks[1].lower() == "device":
         kv = dict(t.split("=", 1) for t in toks[2:] if "=" in t)
         try:
-            s = _device.login(n, kv.get("client_id", ""), kv.get("code_url", ""), kv.get("token_url", ""), kv.get("scope", ""))
+            s = _device.login(n, kv.get("client_id", ""), kv.get("code_url", ""), kv.get("token_url", ""), kv.get("scope", ""), defaults=d.get("device"), client_secret=kv.get("client_secret", ""))
         except RuntimeError as ex:
             fail(str(ex))
         why = check_secret(d, s)
@@ -107,9 +107,10 @@ if cmd == "keystore":
 if cmd == "ai":
     sub = (toks[0].lower() if toks else "list")
     p = _policy.get()
-    names = [t.lower().strip(",") for t in toks[1:]]
+    names = [t.lower().strip(",") for t in toks[1:]]          # app names, or mcp:<saved server>
     if sub in {"allow", "deny"}:
-        bad = [x for x in names if x not in ads]
+        import _mcpsaved
+        bad = [x for x in names if x not in ads and not (x.startswith("mcp:") and x[4:] in _mcpsaved.servers())]
         if not names or bad:
             fail("Say which apps: app ai " + sub + " github telegram" + (f"   (not known: {', '.join(bad)})" if bad else ""))
         for x in names:

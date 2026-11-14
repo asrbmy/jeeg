@@ -26,7 +26,7 @@ Contents
 
 - A small launcher written in Python (standard library only). It has no background service and does not need an account.
 - It reads every script in `scripts/`, matches your words to a script, and runs it. A script is just a file you can open and edit.
-- 544 tasks are included across apps, websites, files, system, network, reminders, personal records, money calculators, text tools, developer tools and quick searches.
+- 545 tasks are included across apps, websites, files, system, network, reminders, personal records, money calculators, text tools, developer tools and quick searches.
 - It runs on Windows, macOS and Linux. Python 3.9 or newer is required.
 - It is quick (about 56 ms per command including Python start-up, measured on Linux) and light (about 16 MB while a command runs; nothing stays in memory between commands, except reminders and alarms you set).
 
@@ -691,7 +691,7 @@ Run the checks yourself any time:
 
 ## 15. Appendix: every task
 
-544 tasks. In the Usage column, `<...>` is something you fill in and `[...]` is optional. A star means the task asks before running; "online" means it can use the internet.
+545 tasks. In the Usage column, `<...>` is something you fill in and `[...]` is optional. A star means the task asks before running; "online" means it can use the internet.
 
 
 ### ai
@@ -709,6 +709,7 @@ Run the checks yourself any time:
 |---|---|---|
 | linked apps | `apps \| apps <name>` | List the apps JeeG is linked to (GitHub, Telegram, Discord, Slack, WhatsApp, your own) and what each one can do. "apps github" shows one app's actions. |
 | linked read (online) | `app read <app> <action> [arguments]` | Look at something in a linked app without changing it (app read github issues, app read github repo_issues owner/name). Nothing is ever sent or changed. |
+| mcp look (online) | `mcp look <name> <tool> [json arguments]` | Use a read-only tool of a saved MCP server (mcp look files read_file {"path": "notes.txt"}). Only tools you marked as read run; nothing is changed. |
 | open app | `open app <name>` | Open any installed app by name (open app <name>) |
 | open bluetooth settings |  | Open Bluetooth settings |
 | open brave |  | Open Brave browser |
@@ -821,8 +822,8 @@ Run the checks yourself any time:
 | json to yaml | `json to yaml <file.json>` | Convert a JSON file to YAML (json to yaml config.json) |
 | jwt decode | `jwt <token>` | Read what is inside a JWT token, without sending it anywhere (jwt eyJ...) |
 | kill port * | `kill port <number>` | Stop whatever is listening on a port (kill port 3000) |
-| mcp call * | `mcp call <name> <tool> [json arguments]` | Use a tool from a saved MCP server (mcp call files read_file {"path": "notes.txt"}). It runs that server's tool on this computer. |
-| mcp servers | `mcp add <name> = <command> \| mcp list \| mcp tools <name> \| mcp remove <name>` | Let JeeG use tools from other MCP servers (mcp add files = npx some-server, mcp tools files, then: mcp call files <tool> {json}) |
+| mcp call (online) * | `mcp call <name> <tool> [json arguments] [preview]` | Use any tool of a saved MCP server (mcp call files write_file {"path": "a.txt", "content": "hi"}). Asks first. Add the word preview to see what would be sent. |
+| mcp servers (online) | `mcp catalog \| mcp add <catalog name> [argument] \| mcp add <name> = <command or https address> \| mcp list \| mcp tools <name> \| mcp login <name> [ENV_VAR ...] \| mcp logout <name> \| mcp mark <name> <tool,tool> read\|write \| mcp remove <name>` | Let JeeG use other MCP servers (mcp catalog, mcp add filesystem ~/Documents, mcp add files = npx some-server, mcp login <name>, mcp tools <name>, mcp mark <name> <tool> read) |
 | new project | `new project <name> [python\|node\|html\|flask]` | Create a starter project folder (new project myapp python \| node \| html \| flask) |
 | open codepen |  | Open CodePen |
 | open dockerhub | `open dockerhub <words>` | Open Docker Hub |

@@ -158,6 +158,9 @@ def check_def(name, d):
         why = check_base(str(d.get("base", "")), d["auth"])
         if why:
             return why
+    dv = d.get("device")
+    if dv is not None and not (isinstance(dv, dict) and all(isinstance(dv.get(k), str) and dv[k].startswith("https://") for k in ("code_url", "token_url")) and isinstance(dv.get("scope", ""), str)):
+        return "device login needs https code_url and token_url"
     for hk, hv in (d.get("headers") or {}).items():
         if not re.fullmatch(r"[A-Za-z][A-Za-z0-9\-]{0,40}", str(hk)) or re.search(r"[\x00-\x1f\x7f]", str(hv)) or str(hk).lower() in {"authorization", "cookie", "host", "content-length"}:
             return f"header {hk!r} is not allowed"
@@ -370,6 +373,7 @@ def build(name, d, an, vals, secret):
     path = a.get("path", "")
     pth, _, lit_q = path.partition("?")
     pth = HOLE.sub(lambda m: quote(vals.get(m.group(1), ""), safe="/" if params.get(m.group(1), {}).get("slash") else ""), pth)
+    lit_q = HOLE.sub(lambda m: quote(vals.get(m.group(1), ""), safe=""), lit_q)          # placeholders in the fixed query part are encoded too
     q = [lit_q] if lit_q else []
     for qk, qv in (a.get("query") or {}).items():
         q.append(urlencode({qk: _fill_raw(qv, vals)}))

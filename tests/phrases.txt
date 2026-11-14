@@ -569,3 +569,9 @@ app ai dry on => linked_setup | app ai dry on
 app login github device client_id=abc => linked_setup | app login github device client_id=abc
 app add box command => linked_setup | app add box command
 app action box ps RUN docker ps read=yes => linked_setup | app action box ps RUN docker ps read=yes
+mcp catalog => mcp_servers | mcp catalog
+mcp add filesystem ~/Documents => mcp_servers | mcp add filesystem ~/Documents
+mcp login github => mcp_servers | mcp login github
+mcp mark files get_note read => mcp_servers | mcp mark files get_note read
+mcp look files read_file {"path": "a.txt"} => mcp_look | mcp look files read_file {"path": "a.txt"}
+mcp call files write_file {"path": "a.txt"} => mcp_call | mcp call files write_file {"path": "a.txt"}
