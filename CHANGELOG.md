@@ -2,6 +2,8 @@
 
 ## 2.20.0
 
+- **Real web browser** (BROWSER.md): `browser open|look|read|find|click|type|press|select|tick|screenshot|tabs|back` drive a real Chrome, Edge, Brave or Chromium with its own profile, over the browser's local debugging connection (standard library only, no extra install). Clicking and typing ask first and can preview; passwords are typed only by you (`browser secret`). For an AI: only http(s), never this computer or your network, your allow/deny lists, page text labelled as data, no "always allow" for clicks. Pop-ups are dismissed and reported, never accepted; `browser wait for <text>`, `browser click text <words>`, `browser hover`, and `browser upload` (terminal only: you pick the file). Tested with a real Chromium here; not on real Windows or macOS.
+
 - **Command apps** (APPS.md): link programs that have no web API (docker, adb, git, kubectl, your own tools). `app add box command`, `app action box logs RUN docker logs {name} params=name:word read=yes`. One fixed argument list, never a shell; no shells, interpreters, `sudo`, `ssh`, `rm` and similar as the program; values starting with `-` refused; no batch files; 30 s and 20,000 characters limits. Without `read=yes` an action is a write and asks first.
 - **Read-only POST** (`read=yes`, set by you in a terminal) for search and query APIs such as Notion and GraphQL. Accepted only on POST and command actions.
 - **Keychain** (`app keystore on|off|status`): logins can live in Linux secret-tool, macOS Keychain or Windows Credential Manager. Off by default; a login is moved only after it was read back identical; the secret never appears on a command line; a failing keychain leaves the login in its file. The Windows path is untested on a real machine.
@@ -16,6 +18,7 @@
 - **More AI apps and MCP servers (MCP.md):** `install mcp` now edits Windsurf, VS Code, Gemini CLI, Amazon Q and Claude Code (plus Claude Desktop and Cursor), prints exact snippets for Zed, Codex, Goose, Continue, Cline, Roo Code, JetBrains, Warp and others, and explains the web link for Claude.ai, ChatGPT, Gemini, Copilot and Perplexity.
 - **MCP servers for JeeG:** `mcp catalog` (filesystem, fetch, git, sqlite, postgres, playwright, github and more), `mcp login`, web (https) servers, and `mcp look` for tools you marked read. `mcp call` asks first and has `preview`. AI rules: `app ai deny mcp:<name>`, per-tool always-allow, preview-only. Only you add, log in or mark.
 - **More services:** 17 more linked-app presets (Asana, Box, monday.com, Bitbucket, Stripe, Shopify, Cloudflare, Vercel, Spotify, X, Salesforce, Confluence, Grafana, Gmail, Google Drive, Google Calendar, Outlook), Outlook device login, `client_secret=` for device login, and 14 more MCP catalog servers; MCP servers with several login values. Fix: placeholders in the fixed query part of an action's path were not filled in.
+- **Refreshing logins:** a device login that returns a refresh token is renewed automatically when an app answers 401 (read, do and rules), once per call. Kept in a private file, forgotten on logout or a pasted login.
 - New task names: `mcp_look`; `event_rules`. `linked setup` also handles `preset`, `keystore`, `ai`.
 - Tests: `tests/test_v220.py` (231 checks against fake servers, fake programs and fake keychains).
 

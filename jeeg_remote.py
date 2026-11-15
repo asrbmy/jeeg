@@ -304,7 +304,7 @@ def _first_word(q: str) -> str:
 
 # tasks that understand the word "preview" (they show what they would do and change nothing)
 DRY_OK = frozenset({"linked_do", "mcp_call", "install_app", "uninstall_app", "update_apps", "install_bundle", "configure_app", "env_variable", "print_file",
-                    "clean_temp_files", "empty_trash", "shred_file", "replace_in_files"})
+                    "clean_temp_files", "empty_trash", "shred_file", "replace_in_files", "browser_do"})
 _DO_KEY = re.compile(r"^\s*(?:app|linked)\s+do\s+([a-z][a-z0-9_\-]*)\s+([a-z][a-z0-9_\-]*)\b", re.I)
 
 
@@ -368,6 +368,8 @@ def run_for_ai(query, mode: str, approver: Approver, state, log=print, source: s
         try:
             pl = jeeg_api.plan(q, home=home)
             key = _action_key(q) or (pl[0] if pl else "")
+            if key == "browser_do":
+                key = ""                                          # clicking and typing on a real website is asked about every single time
         except Exception:
             key = ""
     if getattr(approver, "dry", False) or policy_dry(home):       # preview-only: show what would happen, change nothing

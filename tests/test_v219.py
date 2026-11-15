@@ -4,6 +4,8 @@ import http.server, json, os, re, stat, subprocess, sys, tempfile, threading
 from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT)); sys.path.insert(0, str(ROOT / "scripts"))
+PRIV_TMP = tempfile.mkdtemp(prefix="jeeg-v219-tmp-")          # a private temp folder, so another test run at the same time cannot confuse the "removed" check
+os.environ["TMPDIR"] = PRIV_TMP; tempfile.tempdir = PRIV_TMP
 HOME = tempfile.mkdtemp(prefix="jeeg-v219-")
 USERHOME = tempfile.mkdtemp(prefix="jeeg-v219-home-")
 WORK = Path(tempfile.mkdtemp(prefix="jeeg-v219-w-"))

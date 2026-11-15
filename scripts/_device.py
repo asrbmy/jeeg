@@ -45,7 +45,7 @@ def urls_for(app, code_url="", token_url="", defaults=None):
     return c, t
 
 
-def login(app, client_id, code_url="", token_url="", scope="", out=print, defaults=None, client_secret=""):
+def login(app, client_id, code_url="", token_url="", scope="", out=print, defaults=None, client_secret="", full=False):
     """Returns the access token. Raises RuntimeError with a plain-words reason."""
     c, t = urls_for(app, code_url, token_url, defaults)
     if not c:
@@ -69,6 +69,8 @@ def login(app, client_id, code_url="", token_url="", scope="", out=print, defaul
         p = _post(t, {"client_id": client_id, "device_code": r["device_code"], "grant_type": GRANT, **({"client_secret": client_secret} if client_secret else {})})
         e = p.get("error")
         if not e and p.get("access_token"):
+            if full:
+                return {"access_token": str(p["access_token"]), "refresh_token": str(p.get("refresh_token") or ""), "token_url": t}
             return str(p["access_token"])
         if e == "authorization_pending":
             continue
@@ -81,3 +83,18 @@ def login(app, client_id, code_url="", token_url="", scope="", out=print, defaul
             raise RuntimeError("The code ran out. Start again.")
         raise RuntimeError("The login failed: " + str(p.get("error_description") or e or "no token"))
     raise RuntimeError("Waited 15 minutes and nobody approved. Start again.")
+
+
+def refresh(token_url, client_id, refresh_token, client_secret=""):
+    """Trade a refresh token for a new access token. Returns {'access_token', 'refresh_token'} or None."""
+    base = local_only_override("JEEG_DEVICE_BASE", "")
+    url = base + "/token" if base else token_url
+    if not (url.startswith("https://") or (base and url.startswith(base))):
+        return None
+    try:
+        r = _post(url, {"grant_type": "refresh_token", "refresh_token": refresh_token, "client_id": client_id, **({"client_secret": client_secret} if client_secret else {})})
+    except RuntimeError:
+        return None
+    if r.get("error") or not r.get("access_token"):
+        return None
+    return {"access_token": str(r["access_token"]), "refresh_token": str(r.get("refresh_token") or refresh_token)}

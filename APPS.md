@@ -58,7 +58,7 @@ If an app has a web API, you can describe it in three lines. In a terminal:
     app preset add docker
 
 Presets (27): GitLab, Bitbucket, Notion, Linear, Todoist, Asana, Box, monday.com, Jira, Confluence, Stripe (look only), Shopify, Salesforce, Cloudflare, Vercel, Grafana, Home Assistant, Spotify, X (look only), Gmail, Google Drive, Google Calendar (look only), Outlook / Microsoft 365 (look only), and local programs `git`, `docker`, `kubectl`, `adb`.
-Some need your own address (`base=`), and some need a login you get elsewhere: Google and Spotify give short-lived (about an hour) tokens and have no pasteable key, so for those the AI app's own connector is usually the better choice. Outlook can log in without pasting (`app login outlook device client_id=...`; you register a public app in Microsoft Entra) but its login also lasts about an hour; JeeG does not refresh logins yet. `as=<name>` renames one.
+Some need your own address (`base=`), and some need a login you get elsewhere: Google and Spotify give short-lived (about an hour) tokens and have no pasteable key, so for those the AI app's own connector is usually the better choice. Outlook can log in without pasting (`app login outlook device client_id=...`; you register a public app in Microsoft Entra) but its login lasts about an hour, but JeeG now refreshes it by itself (see below). `as=<name>` renames one.
 They were written from each service's public documentation and **have not been tried against the live services**: after logging in, run one read action first (for example `app read gitlab me`). Presets go through the same safety check as your own definitions.
 
 ## Programs on this computer (no web API needed)
@@ -92,6 +92,10 @@ Some APIs (Notion search, Linear/GraphQL) use POST even to look. Mark such an ac
     app keystore status
 
 Off by default. When switched on, every login is moved into the keychain and the file keeps only a marker. A login is moved only after JeeG read it back and got the same text; if the keychain fails, the login stays in its file. The secret goes in over standard input, never on a command line. Covers linked-app logins (not the older `github login` file). The Windows path is written from Microsoft's documentation and has not been tested on a real Windows computer.
+
+## Logins that run out are refreshed
+
+When a device login also gives a *refresh token* (Outlook/Microsoft 365 does when the scope includes `offline_access`; GitHub OAuth apps with expiring tokens do too), JeeG keeps it in a private file (`conn_apprefresh.json`, readable only by you). If an app answers "login not accepted" (HTTP 401), JeeG trades the refresh token for a new login once and tries again. A 401 means nothing was done, so retrying a write is safe; a write still needs your OK first. If the refresh fails you are told to log in again. A pasted login has no refresh token, and logging out forgets it. Refresh tokens are not moved to the system keychain.
 
 ## Log in without pasting a token (device login)
 

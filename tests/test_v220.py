@@ -36,7 +36,13 @@ class App(http.server.BaseHTTPRequestHandler):
         body = self.rfile.read(n).decode() if n else ""
         SEEN.append({"m": self.command, "p": self.path, "h": {k.lower(): v for k, v in self.headers.items()}, "b": body})
         path = self.path.split("?")[0]
-        data = {"/api/items": {"items": ITEMS}, "/user": {"login": "asha", "name": "Asha"}, "/repos/o/r/issues/3/comments": {"html_url": "https://github.com/o/r/issues/3#c1"}}.get(path)
+        if path == "/expiring":
+            if self.headers.get("Authorization") != "Bearer NEWACCESS1":
+                self.send_response(401); self.send_header("Content-Length", "0"); self.end_headers(); return
+            data = {"name": "fresh"}
+        else:
+            data = None
+        data = data or {"/api/items": {"items": ITEMS}, "/user": {"login": "asha", "name": "Asha"}, "/repos/o/r/issues/3/comments": {"html_url": "https://github.com/o/r/issues/3#c1"}}.get(path)
         if path in {"/graphql", "/search"} or path.startswith("/rest"):
             data = {"data": {"viewer": {"name": "Lin", "email": "l@x"}}, "results": []}
         if data is None:
@@ -76,6 +82,11 @@ class Dev(http.server.BaseHTTPRequestHandler):
                 return self._send({"error": "unauthorized_client", "error_description": "no device flow"}, 400)
             uri = "http://evil.example.com/x" if DEV["mode"] == "httpuri" else "https://example.com/device"
             return self._send({"device_code": "DEVCODE123", "user_code": "WXYZ-1234", "verification_uri": uri, "interval": 1, "expires_in": 60})
+        if form.get("grant_type") == "refresh_token":
+            DEV["refreshes"] = DEV.get("refreshes", 0) + 1
+            if form.get("refresh_token") != DEV.get("good_refresh", "REFRESH1") or form.get("client_id") != "refcid":
+                return self._send({"error": "invalid_grant"}, 400)
+            return self._send({"access_token": "NEWACCESS1", "refresh_token": "REFRESH2", "token_type": "bearer"})
         DEV["polls"] += 1
         if form.get("device_code") != "DEVCODE123" or "device_code" not in form.get("grant_type", "").replace("%3A", ":") + "device_code":
             return self._send({"error": "bad_verification_code"}, 400)
@@ -87,7 +98,7 @@ class Dev(http.server.BaseHTTPRequestHandler):
             return self._send({"error": "authorization_pending"}, 400)
         if DEV["polls"] == 2:
             return self._send({"error": "slow_down"}, 400)
-        return self._send({"access_token": "gho_DEVICETOKEN987", "token_type": "bearer"})
+        return self._send({"access_token": "gho_DEVICETOKEN987", "refresh_token": "REFRESH1", "token_type": "bearer"})
 
 
 srv = http.server.ThreadingHTTPServer(("127.0.0.1", 0), App)
@@ -865,6 +876,42 @@ os.environ.update({"JEEG_DEVICE_BASE": DBASE, "JEEG_DEVICE_INTERVAL": "0.05"})
 tok_ = _device.login("github", "cid", client_secret="sec-xyz", out=lambda *a: None)
 os.environ.pop("JEEG_DEVICE_BASE"); os.environ.pop("JEEG_DEVICE_INTERVAL")
 ok(tok_ == "gho_DEVICETOKEN987", "device login with a client secret works")
+
+
+# ================================================================ logins that run out are refreshed
+has("app add ms " + BASE + " bearer", "Added ms", tty=True)
+has("app action ms exp GET /expiring format=\"{name}\"", "Saved", tty=True)
+has("app action ms post POST /expiring body='{\"a\":1}' format=\"{name}\"", "Saved", tty=True)
+DEV.update(mode="ok", polls=0, refreshes=0, good_refresh="REFRESH1")
+RX = {"JEEG_APPS_BASE_MS": BASE}
+has("app login ms device client_id=refcid code_url=https://example.com/c token_url=https://example.com/t", "Logged in to ms", tty=True, extra=RX)
+rf = json.loads((Path(HOME) / "conn_apprefresh.json").read_text())["ms"]
+ok(rf["refresh"] == "REFRESH1" and rf["client_id"] == "refcid", "the refresh token was kept")
+ok((Path(HOME) / "conn_apprefresh.json").stat().st_mode & 0o077 == 0 or os.name == "nt", "in a private file")
+SEEN.clear()
+has("app read ms exp", "fresh", extra=RX)
+ok(DEV["refreshes"] == 1 and [x["h"].get("authorization") for x in SEEN if x["p"] == "/expiring"] == ["Bearer gho_DEVICETOKEN987", "Bearer NEWACCESS1"], "a 401 was fixed by one refresh and a second try: " + str([x["h"].get("authorization") for x in SEEN]))
+ok(json.loads((Path(HOME) / "conn_apprefresh.json").read_text())["ms"]["refresh"] == "REFRESH2" and json.loads((Path(HOME) / "conn_appsecrets.json").read_text())["ms"] == "NEWACCESS1", "the new logins were saved")
+SEEN.clear()
+has("app read ms exp", "fresh", extra=RX)
+ok(DEV["refreshes"] == 1 and len(SEEN) == 1, "the next call just works")
+# a write is refreshed too (a 401 means nothing was done), after the person said yes
+has("app login ms device client_id=refcid code_url=https://example.com/c token_url=https://example.com/t", "Logged in", tty=True, extra=RX)
+DEV.update(polls=0, good_refresh="REFRESH1")
+has("app do ms post", "fresh", yes=True, extra=RX)
+# a refresh token that no longer works: the person is told to log in again
+f_ = Path(HOME) / "conn_apprefresh.json"
+d_ = json.loads(f_.read_text()); d_["ms"]["refresh"] = "bad"; f_.write_text(json.dumps(d_))
+has("app login ms", "Saved", tty=True, stdin="gho_DEVICETOKEN987\n", extra=RX)       # a pasted login has no refresh token: the old one is dropped
+ok("ms" not in json.loads(f_.read_text()), "a pasted login drops the old refresh token")
+has("app read ms exp", "refused the login", rc=1, extra=RX)
+has("app login ms device client_id=refcid code_url=https://example.com/c token_url=https://example.com/t", "Logged in", tty=True, extra=RX)
+DEV["polls"] = 0
+d_ = json.loads(f_.read_text()); d_["ms"]["refresh"] = "bad"; f_.write_text(json.dumps(d_))
+has("app read ms exp", "refused the login", rc=1, extra=RX)
+has("app logout ms", "Logged out", tty=True, extra=RX)
+ok("ms" not in json.loads(f_.read_text()), "logout forgets the refresh token")
+ok(all("REFRESH" not in p.read_text(errors="replace") for p in Path(HOME).glob("*") if p.is_file() and not p.name.startswith("conn_")), "refresh tokens only live in the private file")
 
 # MCP servers with several login variables
 script("fakemcp2", f"""#!{sys.executable}

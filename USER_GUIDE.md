@@ -26,7 +26,7 @@ Contents
 
 - A small launcher written in Python (standard library only). It has no background service and does not need an account.
 - It reads every script in `scripts/`, matches your words to a script, and runs it. A script is just a file you can open and edit.
-- 545 tasks are included across apps, websites, files, system, network, reminders, personal records, money calculators, text tools, developer tools and quick searches.
+- 548 tasks are included across apps, websites, files, system, network, reminders, personal records, money calculators, text tools, developer tools and quick searches.
 - It runs on Windows, macOS and Linux. Python 3.9 or newer is required.
 - It is quick (about 56 ms per command including Python start-up, measured on Linux) and light (about 16 MB while a command runs; nothing stays in memory between commands, except reminders and alarms you set).
 
@@ -535,6 +535,17 @@ Read REAL_WORLD_TEST.md for the whole guide, including the few things only you c
 
 Read APPS.md for the details and the safety rules.
 
+### 8.32 A real web browser (2.20)
+
+    browser open example.com         start a browser of its own and open the page
+    browser look                     list buttons, links and boxes with numbers
+    browser click 4                  click item 4 (asks first; add "preview" to only see it)
+    browser type 2 hello             type into item 2 (asks first)
+    browser secret 3                 you type a password in a terminal; JeeG never sees it
+    connect ai ... allow browser     an AI may browse (never your own network, never passwords)
+
+Read BROWSER.md for the details and the safety rules.
+
 ## 9. Teaching and checking JeeG
 
 **Aliases: your own short words**
@@ -691,7 +702,7 @@ Run the checks yourself any time:
 
 ## 15. Appendix: every task
 
-545 tasks. In the Usage column, `<...>` is something you fill in and `[...]` is optional. A star means the task asks before running; "online" means it can use the internet.
+548 tasks. In the Usage column, `<...>` is something you fill in and `[...]` is optional. A star means the task asks before running; "online" means it can use the internet.
 
 
 ### ai
@@ -766,6 +777,14 @@ Run the checks yourself any time:
 | add birthday | `add birthday <name> <date>` | Save a birthday (add birthday mom 14 aug, add birthday raj 3 march 1999) |
 | remove birthday | `remove birthday <name>` | Delete a saved birthday |
 | upcoming birthdays |  | Show birthdays in the next 60 days |
+
+### browser
+
+| Task | Usage | What it does |
+|---|---|---|
+| browser do (online) * | `browser click <number> \| browser type <number> <text> \| browser press <key> \| browser select <number> <option> \| browser tick <number> \| browser hover <number> \| browser click text <words>  (add the word preview to only see what it would do)` | Act on a page in the real browser, by the numbers that  browser look  shows (browser click 4, browser type 2 hello, browser press enter, browser select 3 Red, browser tick 5). Asks first. |
+| browser look (online) | `browser open <address> \| browser look \| browser read \| browser find <text> \| browser tabs \| browser tab <number> \| browser newtab [address] \| browser screenshot \| browser back \| browser forward \| browser scroll down\|up \| browser wait <seconds> \| browser wait for <text> \| browser status` | Look at websites in a real browser (browser open example.com, browser look, browser read, browser find price, browser tabs, browser screenshot, browser back). Nothing on the page is changed. |
+| browser setup (online) | `browser start [hidden] \| browser close \| browser allow <site> \| browser deny <site> \| browser forget <site> \| browser policy \| browser secret <number> \| browser upload <number> <file>` | Set up the real browser (browser start, browser start hidden, browser close, browser allow example.com, browser deny example.com, browser policy, browser secret 3 to type a password yourself). You do this in a terminal. |
 
 ### clipboard
 

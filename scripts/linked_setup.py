@@ -49,13 +49,16 @@ if cmd in {"login", "logout"}:
     if len(toks) > 1 and toks[1].lower() == "device":
         kv = dict(t.split("=", 1) for t in toks[2:] if "=" in t)
         try:
-            s = _device.login(n, kv.get("client_id", ""), kv.get("code_url", ""), kv.get("token_url", ""), kv.get("scope", ""), defaults=d.get("device"), client_secret=kv.get("client_secret", ""))
+            tr = _device.login(n, kv.get("client_id", ""), kv.get("code_url", ""), kv.get("token_url", ""), kv.get("scope", ""), defaults=d.get("device"), client_secret=kv.get("client_secret", ""), full=True)
+            s = tr["access_token"]
         except RuntimeError as ex:
             fail(str(ex))
         why = check_secret(d, s)
         if why:
             fail(why)
         where = set_secret(n, d, s)
+        from _adapters import save_refresh
+        save_refresh(n, {"refresh": tr["refresh_token"], "token_url": tr["token_url"], "client_id": kv.get("client_id", ""), **({"client_secret": kv["client_secret"]} if kv.get("client_secret") else {})} if tr["refresh_token"] and d["auth"] == "bearer" else None)
         print(f"Logged in to {n}. The login is kept {'in the system keychain' if where == 'keychain' else 'in a private file'}.")
         raise SystemExit(0)
     if d.get("login_help"):
@@ -65,6 +68,8 @@ if cmd in {"login", "logout"}:
     if why:
         fail(why)
     where = set_secret(n, d, s)
+    from _adapters import save_refresh
+    save_refresh(n, None)                                          # a pasted login has no refresh token: forget an older one
     print(f"Saved your {n} login (" + ("in the system keychain" if where == "keychain" else "private to you, in a file only your user can read") + ").")
     act = d["actions"].get("me")
     if act and not is_write(act):

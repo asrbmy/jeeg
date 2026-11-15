@@ -7,7 +7,7 @@ JeeG finds the matching script in the `scripts` folder and runs it.
 
 - Pure Python 3.9+, nothing to install. Works on Windows, macOS and Linux.
 - Light: about 16 MB of memory, about 65 ms per command, nothing running in the background (except reminders and alarms you set yourself).
-- 545 ready-made tasks. You can add your own by dropping in a file.
+- 548 ready-made tasks. You can add your own by dropping in a file.
 
 ---
 
@@ -303,6 +303,7 @@ A plugin is one `.py` file. Make a starter with `jeeg plugin new my_task`, edit 
 - **Link programs and more services:** programs with no web API (`docker`, `git`, `adb`, `kubectl`) as command apps, ready-made presets (GitLab, Notion, Linear, Todoist, Home Assistant, Jira), logins in the system keychain, device login without pasting a token.
 - **MCP tools for your apps:** Claude Desktop, Cursor and Claude.ai get `jeeg_apps`, `jeeg_app_read` and `jeeg_app_do` (reads look, writes ask).
 - **27 ready-made linked apps and 31 ready-made MCP servers** (Stripe, Asana, Shopify, Outlook, Slack, Redis, MySQL...), see `app preset list` and `mcp catalog`.
+- **A real web browser (BROWSER.md):** `browser open example.com`, `browser look`, `browser click 3`, `browser type 2 hello`. JeeG drives your Chrome, Edge or Brave with its own profile, locally; clicks ask first; an AI never reaches your own network or types passwords.
 - **MCP both ways (MCP.md):** connect more AI apps (`install mcp windsurf|vscode|gemini cli|...`) and use other MCP servers from JeeG (`mcp catalog`, `mcp add filesystem ~/Documents`, `mcp look`).
 - **Event rules:** `rule add ... when github issues changes then ...` acts on new items.
 - **More control over an AI:** allow or deny each app, "always allow" for one action, preview-only mode. `real test compare` shows what changed after an update. See APPS.md.

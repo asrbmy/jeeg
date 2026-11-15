@@ -9,7 +9,7 @@
 # patterns: ^\s*(?:app|linked)\s+do\b
 # priority: 5
 import re, webbrowser
-from _adapters import all_adapters, build, get_secret, is_write, parse_args, render, scrub, send, usage
+from _adapters import all_adapters, build, get_secret, is_write, parse_args, render, scrub, send, send_auto, usage
 from _lib import args_text, fail
 import _policy
 
@@ -55,7 +55,7 @@ if preview:
     print("Preview only: nothing was sent.")
     raise SystemExit(0)
 try:
-    status, out = send(req, secret)
+    status, out = send_auto(name, d, an, vals, secret, req)
 except RuntimeError as ex:
     fail(str(ex))
 print(render(a, out, secret) if a.get("format") or req.get("argv") else f"Done (HTTP {status}).")

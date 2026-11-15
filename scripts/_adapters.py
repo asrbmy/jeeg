@@ -255,6 +255,7 @@ def set_secret(name, d, value):
 
 
 def drop_secret(name, d):
+    save_refresh(name, None)
     reg, key = _store_for(name, d)
     r = load_reg(reg)
     had = key in r
@@ -433,6 +434,44 @@ def run_command(req, timeout=30):
     return 0, out
 
 
+class AuthRefused(RuntimeError):
+    """HTTP 401: the login was not accepted (maybe it only ran out)."""
+
+
+def save_refresh(name, info):
+    r = load_reg("apprefresh")
+    if info:
+        r[name] = info
+    else:
+        r.pop(name, None)
+    save_reg("apprefresh", r)
+
+
+def refresh_login(name, d):
+    """If this app was logged in with a device login that gave a refresh token, get a new access token. Returns it, or ''."""
+    info = load_reg("apprefresh").get(name)
+    if d.get("auth") != "bearer" or not isinstance(info, dict) or not info.get("refresh"):
+        return ""
+    import _device
+    new = _device.refresh(str(info.get("token_url", "")), str(info.get("client_id", "")), str(info["refresh"]), str(info.get("client_secret", "")))
+    if not new:
+        return ""
+    set_secret(name, d, new["access_token"])
+    save_refresh(name, {**info, "refresh": new["refresh_token"]})
+    return new["access_token"]
+
+
+def send_auto(name, d, an, vals, secret, req=None, timeout=15):
+    """send(), and when the login ran out and a refresh token is saved: refresh once and try again (a 401 means nothing was done)."""
+    try:
+        return send(req or build(name, d, an, vals, secret), secret, timeout)
+    except AuthRefused:
+        new = refresh_login(name, d)
+        if not new:
+            raise
+        return send(build(name, d, an, vals, new), new, timeout)
+
+
 def send(req, secret="", timeout=15):
     """Returns (status, text). Raises RuntimeError with a plain-words message on failure."""
     if req.get("argv"):
@@ -453,7 +492,7 @@ def send(req, secret="", timeout=15):
         if 300 <= ex.code < 400:
             msg = "The app redirected the request. JeeG does not follow redirects, so your login is never sent elsewhere."
         detail = re.sub(r"\s+", " ", scrub(body, secret))[:200]
-        raise RuntimeError(f"HTTP {ex.code}. " + (msg or "The app returned an error.") + (f"  ({detail})" if detail and ex.code not in {401} else ""))
+        raise (AuthRefused if ex.code == 401 else RuntimeError)(f"HTTP {ex.code}. " + (msg or "The app returned an error.") + (f"  ({detail})" if detail and ex.code not in {401} else ""))
     except (urllib.error.URLError, OSError, ValueError) as ex:
         raise RuntimeError("Could not reach the app: " + scrub(getattr(ex, "reason", ex), secret))
 

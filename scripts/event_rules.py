@@ -10,7 +10,7 @@
 import hashlib, json, os, re, subprocess, sys, time
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from _adapters import all_adapters, build, get_secret, is_write, parse_args, render, scrub, send
+from _adapters import all_adapters, build, get_secret, is_write, parse_args, render, scrub, send, send_auto
 from _lib import args_text, fail
 from _store import load, save
 
@@ -51,7 +51,7 @@ def fetch(r):
     secret = get_secret(r["app"], d) if d["auth"] != "none" else ""
     if d["auth"] != "none" and not secret:
         raise RuntimeError(f"not logged in to {r['app']}")
-    _, text = send(build(r["app"], d, r["action"], vals, secret), secret)
+    _, text = send_auto(r["app"], d, r["action"], vals, secret)
     return [x.strip() for x in render(a, text, secret).splitlines() if x.strip() and not x.startswith("... and ")]
 
 

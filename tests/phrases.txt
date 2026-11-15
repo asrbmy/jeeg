@@ -575,3 +575,12 @@ mcp login github => mcp_servers | mcp login github
 mcp mark files get_note read => mcp_servers | mcp mark files get_note read
 mcp look files read_file {"path": "a.txt"} => mcp_look | mcp look files read_file {"path": "a.txt"}
 mcp call files write_file {"path": "a.txt"} => mcp_call | mcp call files write_file {"path": "a.txt"}
+browser open example.com => browser_look | browser open example.com
+browser look => browser_look | browser look
+browser click 3 => browser_do | browser click 3
+browser type 2 hello => browser_do | browser type 2 hello
+browser allow example.com => browser_setup | browser allow example.com
+
+browser click text Sign in => browser_do | browser click text Sign in
+browser upload 2 cv.pdf => browser_setup | browser upload 2 cv.pdf
+browser hover 3 => browser_do | browser hover 3
