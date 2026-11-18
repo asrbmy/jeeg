@@ -1,0 +1,30 @@
+# Glossary
+
+- **Task**: one script in `scripts/` that JeeG can run.
+- **Header**: the comment lines at the top of a script (`keywords`, `desc`, `category` ...) that describe it.
+- **Category**: a group of tasks (`money`, `files`, `browser` ...). `list <category>`; `pack off <category>`.
+- **Index**: cache of headers (`index.json`). `reindex` rebuilds it. Different from `index folder` (search inside your files).
+- **Alias**: your own short phrase for another phrase.
+- **Routine**: a named list of phrases run in order.
+- **Variable**: a saved value used as `$name`.
+- **Chain**: several tasks in one line with `and`, `then`, `;`, `&`.
+- **Confirmation**: the `[y/N]` question before risky tasks. `--yes` answers it.
+- **Preview / dry-run**: show what would happen without doing it.
+- **Private task**: one that is never written to history.
+- **Pack**: a category switched on or off.
+- **Plugin**: an extra task dropped into the plugins folder.
+- **Data folder**: `~/.jeeg`, where your records live (`JEEG_HOME`).
+- **Tunnel**: a program (`cloudflared`, `ngrok`) that gives your computer a temporary web address for AI mode.
+- **MCP**: Model Context Protocol; a standard for AI apps to call tools. JeeG can be a server (tools for AI apps) and a client (use other servers).
+- **AI mode**: `connect ai`; modes safe, read, ask, god.
+- **Linked app**: an account or program JeeG can read from or write to (`app ...`).
+- **Preset**: a ready-made linked-app definition.
+- **Command app**: a linked app that runs one fixed local program.
+- **Keychain**: the system secret store (secret-tool, macOS Keychain, Windows Credential Manager).
+- **Device login**: logging in by approving in a browser instead of pasting a token.
+- **Event rule**: "when this read action shows something new, run this task".
+- **Hook**: an incoming link that starts one saved task.
+- **Peer**: another computer's JeeG reached through its AI-mode link.
+- **CDP**: Chrome DevTools Protocol; how JeeG drives a real browser.
+- **Browser profile**: the separate folder where JeeG's browser keeps its logins.
+- **Real test**: `real test ...`, checks that run on your own computer.
