@@ -2,7 +2,8 @@
 # desc: List active background reminders and alarms
 # category: reminders
 import time
-from _time import load_reminders, save_reminders
+from _time import load_reminders, save_reminders, revive
+revive()
 items = load_reminders()
 save_reminders(items)
 if not items:

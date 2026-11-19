@@ -2,7 +2,7 @@
 
 Dates, time zones, reminders and timers, routines, to-dos, notes, journal, habits, birthdays, lists and reports.
 
-63 tasks. Each entry shows the **usage** (`<x>` you fill in, `[x]` optional), what the task does, how it behaves, other words that also find it, and the script file you can read or edit. Say the task name, or the usage with your words filled in. `explain <words>` shows how any phrase is matched; `<task> preview` or `--dry-run` shows what would happen without doing it.
+67 tasks. Each entry shows the **usage** (`<x>` you fill in, `[x]` optional), what the task does, how it behaves, other words that also find it, and the script file you can read or edit. Say the task name, or the usage with your words filled in. `explain <words>` shows how any phrase is matched; `<task> preview` or `--dry-run` shows what would happen without doing it.
 
 Categories on this page: [time](#time), [reminders](#reminders), [routines](#routines), [productivity](#productivity), [lists](#lists), [shopping](#shopping), [journal](#journal), [habits](#habits), [birthdays](#birthdays), [personal](#personal), [work](#work)
 
@@ -338,8 +338,40 @@ Categories on this page: [time](#time), [reminders](#reminders), [routines](#rou
 **Your words:** passed through untouched  
 **Script:** `scripts/weekly_summary.py`
 
+### work tracker
+
+**Usage:** `track start <task> | track stop | track status | track report [today|week]`  
+**What it does:** Track how long you work on things (track start report, track stop, track status, track report week)  
+**Also found by:** `track start`, `track stop`, `track status`, `track report`, `start tracking`, `stop tracking`  
+**Your words:** the whole sentence is passed (quotes kept)  
+**Script:** `scripts/work_tracker.py`
+
 
 ## lists
+
+### document expiry
+
+**Usage:** `add document <name> <expiry date> | documents | remove document <name>`  
+**What it does:** Remember when passports, licences and IDs expire (add document passport 12 mar 2031, documents, remove document passport)  
+**Also found by:** `passport expiry`, `licence expiry`, `license expiry`, `add document`, `my documents`, `remove document`, `id expiry`, `document expires`  
+**Your words:** the whole sentence is passed (quotes kept)  
+**Script:** `scripts/document_expiry.py`
+
+### meal planner
+
+**Usage:** `meal plan <day> <meals> | meal plan | meal today | meal clear`  
+**What it does:** Plan the week's meals (meal plan monday dal rice, meal plan, meal today, meal clear)  
+**Also found by:** `meal plan`, `weekly meals`, `what to cook`, `menu plan`, `dinner plan`  
+**Your words:** the whole sentence is passed (quotes kept)  
+**Script:** `scripts/meal_planner.py`
+
+### my calendar
+
+**Usage:** `calendar file <title> <date> [time] [for <minutes>]`  
+**What it does:** Make a .ics calendar event file that opens in any calendar app (calendar file dentist 25 dec 4pm)  
+**Also found by:** `calendar file`, `ics file`, `make ics`, `calendar event file`, `save event calendar`, `add to calendar file`  
+**Your words:** the whole sentence is passed (quotes kept)  
+**Script:** `scripts/my_calendar.py`
 
 ### shopping add
 

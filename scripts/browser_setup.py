@@ -1,11 +1,11 @@
 # keywords: browser setup, browser start, browser close, browser allow, browser deny, browser policy, browser secret, browser password
 # desc: Set up the real browser (browser start, browser start hidden, browser close, browser allow example.com, browser deny example.com, browser policy, browser secret 3 to type a password yourself). You do this in a terminal.
 # category: browser
-# usage: browser start [hidden] | browser close | browser allow <site> | browser deny <site> | browser forget <site> | browser policy | browser secret <number> | browser upload <number> <file>
+# usage: browser start [hidden] | browser close | browser allow <site> | browser deny <site> | browser forget <site> | browser policy | browser secret <number> | browser flow add <name> = <step> | <step> | browser flow list|show|remove <name> | browser upload <number> <file>
 # rawargs: full
 # private: yes
 # network: yes
-# patterns: ^\s*browser\s+(?:start|close|quit|stop|allow|deny|forget|policy|secret|password|upload)\b
+# patterns: ^\s*browser\s+(?:start|close|quit|stop|allow|deny|forget|policy|secret|password|upload|flow\s+(?:add|remove|list|show))\b
 # priority: 5
 import os, re, sys
 from _lib import args_text, fail
@@ -15,7 +15,8 @@ parts = t.split(None, 1)
 cmd = parts[0].lower() if parts else "policy"
 rest = parts[1].strip() if len(parts) > 1 else ""
 tty = (sys.stdin is not None and sys.stdin.isatty()) or os.environ.get("JEEG_TEST_TTY") == "1"
-if (not tty or os.environ.get("JEEG_VIA_AI") == "1") and cmd != "policy":
+readonly = cmd == "policy" or (cmd == "flow" and rest.split()[:1] in (["list"], ["show"]))
+if (not tty or os.environ.get("JEEG_VIA_AI") == "1") and not readonly:
     fail("Starting and closing the browser, choosing sites for an AI, and typing passwords are done by you, in a terminal window. A program or an AI cannot. Open a terminal and run the same words there.")
 
 
@@ -70,6 +71,43 @@ try:
             print("Typed it. (JeeG did not keep it.)")
         finally:
             pg.close()
+    elif cmd == "flow":
+        sub, _, body = rest.partition(" ")
+        sub, body = sub.lower(), body.strip()
+        flows = _cdp.load_flows()
+        if sub == "list":
+            print("\n".join(f"  {k}  ({len(v)} steps)" for k, v in sorted(flows.items())) or "No flows yet. Make one:  browser flow add shop = open example.com | click text Sign in")
+        elif sub == "show":
+            if body not in flows:
+                fail("No such flow. Say  browser flow list")
+            for i, st in enumerate(flows[body], 1):
+                print(f"  {i}. {'(you type a password here)' if st.split()[0].lower() == 'secret' else st}")
+        elif sub == "remove":
+            if body not in flows:
+                fail("No such flow. Say  browser flow list")
+            del flows[body]
+            _cdp.save_flows(flows)
+            print(f"Removed flow {body}.")
+        elif sub == "add":
+            m = re.match(r"^([a-z][a-z0-9_\-]{1,23})\s*=\s*(.+)$", body, re.I | re.S)
+            if not m:
+                fail("Say: browser flow add <name> = <step> | <step> | ...   for example:  browser flow add news = open example.com | find headline")
+            steps = [x.strip() for x in m.group(2).split("|") if x.strip()]
+            if not 1 <= len(steps) <= 30:
+                fail("A flow needs 1 to 30 steps.")
+            for st in steps:
+                verb = st.split()[0].lower()
+                if verb not in _cdp.FLOW_VERBS:
+                    fail(f"'{verb}' cannot be a step. Steps start with one of: " + ", ".join(sorted(_cdp.FLOW_VERBS)))
+                if len(st) > 300:
+                    fail("A step is too long.")
+            if len(flows) >= 40 and m.group(1).lower() not in flows:
+                fail("You have 40 flows already (the limit).")
+            flows[m.group(1).lower()] = steps
+            _cdp.save_flows(flows)
+            print(f"Saved flow {m.group(1).lower()} ({len(steps)} steps). Run it with:  browser flow run {m.group(1).lower()}   (add 'preview' to see the steps first)")
+        else:
+            fail("Say: browser flow add <name> = <steps> | list | show <name> | remove <name>")
     elif cmd == "upload":
         m = re.match(r"^\[?(\d{1,3})\]?\s+(.+)$", rest)
         if not m:

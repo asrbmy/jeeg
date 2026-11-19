@@ -105,7 +105,7 @@ Categories on this page: [health](#health), [study](#study), [learning](#learnin
 ### water log
 
 **Usage:** `water log <amount> [ml|glasses|bottles] | water today | water goal <ml>`  
-**What it does:** Log water you drank and see today's total (water log 500 ml, water log 2 glasses, water today, water goal 3000)  
+**What it does:** Log water you drank and see today's total; a glass is 250 ml, a bottle 500 ml (water log 500 ml, water log 2 glasses, water today, water goal 3000)  
 **Also found by:** `log water`, `drank water`, `water intake`, `water today`, `how much water`, `water goal`, `hydration log`, `track water`  
 **Your words:** passed through untouched  
 **Script:** `scripts/water_log.py`

@@ -1,12 +1,12 @@
 # Task Catalog
 
-Every task in JeeG, by category (548 tasks). Generated from the real task list; do not edit by hand (`python tools/make_wiki.py`).
+Every task in JeeG, by category (556 tasks). Generated from the real task list; do not edit by hand (`python tools/make_wiki.py`).
 
 In **Usage**, `<...>` is something you fill in and `[...]` is optional. A star `*` means the task asks before running; *online* means it can use the internet. For more detail on each task (flags, other wording that finds it, script file) see the reference pages: [Money and business](Reference-Money-and-Business), [Files, folders, backups and the clipboard](Reference-Files-and-Folders), [System, power, hardware and home](Reference-System-and-Hardware), [Network, web, search and travel](Reference-Network-Web-and-Search), [Developer tools](Reference-Developer-Tools), [Apps, launchers and linked apps](Reference-Apps-and-Launchers), [Time, reminders and personal records](Reference-Time-Reminders-and-Records), [Health, study, media and fun](Reference-Health-Study-and-Fun). In the terminal, `list <category>` shows the same, and `explain <words>` shows how a phrase would be matched.
 
 ## Categories
 
-[ai (4)](#ai) | [apps (29)](#apps) | [apps_setup (2)](#apps-setup) | [apps_write (1)](#apps-write) | [backup (4)](#backup) | [birthdays (3)](#birthdays) | [browser (3)](#browser) | [clipboard (6)](#clipboard) | [data (2)](#data) | [developer (64)](#developer) | [email (6)](#email) | [entertainment (12)](#entertainment) | [files (40)](#files) | [folders (9)](#folders) | [food (2)](#food) | [fun (5)](#fun) | [habits (2)](#habits) | [hardware (13)](#hardware) | [health (13)](#health) | [home (6)](#home) | [info (12)](#info) | [journal (3)](#journal) | [learning (5)](#learning) | [links (4)](#links) | [lists (4)](#lists) | [maps (4)](#maps) | [media (14)](#media) | [money (46)](#money) | [network (28)](#network) | [personal (1)](#personal) | [power (7)](#power) | [productivity (10)](#productivity) | [reference (1)](#reference) | [reminders (13)](#reminders) | [routines (9)](#routines) | [search (8)](#search) | [security (4)](#security) | [selfcheck (1)](#selfcheck) | [shopping (3)](#shopping) | [snippets (4)](#snippets) | [social (16)](#social) | [study (12)](#study) | [system (28)](#system) | [text (15)](#text) | [time (13)](#time) | [tools (4)](#tools) | [travel (7)](#travel) | [utility (18)](#utility) | [web (2)](#web) | [work (2)](#work) | [workspace (24)](#workspace)
+[ai (4)](#ai) | [apps (29)](#apps) | [apps_setup (2)](#apps-setup) | [apps_write (1)](#apps-write) | [backup (4)](#backup) | [birthdays (3)](#birthdays) | [browser (3)](#browser) | [clipboard (6)](#clipboard) | [data (2)](#data) | [developer (64)](#developer) | [email (6)](#email) | [entertainment (12)](#entertainment) | [files (40)](#files) | [folders (9)](#folders) | [food (2)](#food) | [fun (5)](#fun) | [habits (2)](#habits) | [hardware (13)](#hardware) | [health (13)](#health) | [home (6)](#home) | [info (12)](#info) | [journal (3)](#journal) | [learning (5)](#learning) | [links (4)](#links) | [lists (7)](#lists) | [maps (4)](#maps) | [media (14)](#media) | [money (50)](#money) | [network (28)](#network) | [personal (1)](#personal) | [power (7)](#power) | [productivity (11)](#productivity) | [reference (1)](#reference) | [reminders (13)](#reminders) | [routines (9)](#routines) | [search (8)](#search) | [security (4)](#security) | [selfcheck (1)](#selfcheck) | [shopping (3)](#shopping) | [snippets (4)](#snippets) | [social (16)](#social) | [study (12)](#study) | [system (28)](#system) | [text (15)](#text) | [time (13)](#time) | [tools (4)](#tools) | [travel (7)](#travel) | [utility (18)](#utility) | [web (2)](#web) | [work (2)](#work) | [workspace (24)](#workspace)
 
 ## ai
 
@@ -85,9 +85,9 @@ In **Usage**, `<...>` is something you fill in and `[...]` is optional. A star `
 
 | Task | Usage | What it does |
 |---|---|---|
-| browser do *(online)* \* | `browser click <number> \| browser type <number> <text> \| browser press <key> \| browser select <number> <option> \| browser tick <number> \| browser hover <number> \| browser click text <words>  (add the word preview to only see what it would do)` | Act on a page in the real browser, by the numbers that  browser look  shows (browser click 4, browser type 2 hello, browser press enter, browser select 3 Red, browser tick 5). Asks first. |
-| browser look *(online)* | `browser open <address> \| browser look \| browser read \| browser find <text> \| browser tabs \| browser tab <number> \| browser newtab [address] \| browser screenshot \| browser back \| browser forward \| browser scroll down\|up \| browser wait <seconds> \| browser wait for <text> \| browser status` | Look at websites in a real browser (browser open example.com, browser look, browser read, browser find price, browser tabs, browser screenshot, browser back). Nothing on the page is changed. |
-| browser setup *(online)* | `browser start [hidden] \| browser close \| browser allow <site> \| browser deny <site> \| browser forget <site> \| browser policy \| browser secret <number> \| browser upload <number> <file>` | Set up the real browser (browser start, browser start hidden, browser close, browser allow example.com, browser deny example.com, browser policy, browser secret 3 to type a password yourself). You do this in a terminal. |
+| browser do *(online)* \* | `browser click <number> \| browser type <number> <text> \| browser press <key> \| browser select <number> <option> \| browser flow run <name> \| browser type text <label> = <words> \| browser tick <number> \| browser hover <number> \| browser click text <words>  (add the word preview to only see what it would do)` | Act on a page in the real browser, by the numbers that  browser look  shows (browser click 4, browser type 2 hello, browser press enter, browser select 3 Red, browser tick 5). Asks first. |
+| browser look *(online)* | `browser table [n] \| browser pdf \| browser watch <address> \| browser changes \| browser open <address> \| browser look \| browser read \| browser find <text> \| browser tabs \| browser tab <number> \| browser newtab [address] \| browser screenshot \| browser back \| browser forward \| browser scroll down\|up \| browser wait <seconds> \| browser wait for <text> \| browser status` | Look at websites in a real browser (browser open example.com, browser look, browser read, browser find price, browser tabs, browser screenshot, browser back). Nothing on the page is changed. |
+| browser setup *(online)* | `browser start [hidden] \| browser close \| browser allow <site> \| browser deny <site> \| browser forget <site> \| browser policy \| browser secret <number> \| browser flow add <name> = <step> \| <step> \| browser flow list\|show\|remove <name> \| browser upload <number> <file>` | Set up the real browser (browser start, browser start hidden, browser close, browser allow example.com, browser deny example.com, browser policy, browser secret 3 to type a password yourself). You do this in a terminal. |
 
 ## clipboard
 
@@ -320,7 +320,7 @@ In **Usage**, `<...>` is something you fill in and `[...]` is optional. A star `
 | medicine today | `medicine today \| medicine taken <name> \| medicine remind \| remove medicine <name>` | Today's medicine list; tick one off, or get alerts for the rest of today (medicine today, medicine taken metformin, medicine remind, remove medicine metformin) |
 | sleep log | `sleep log <hours> \| sleep show` | Log how long you slept and see your recent average (sleep log 7.5 hours, sleep show) |
 | vaccine tracker | `add vaccine <person> <name> <date> \| vaccines \| remove vaccine <person> <name>` | Keep vaccine due dates for the family (add vaccine asha polio 12 nov 2026, vaccines, remove vaccine asha polio) |
-| water log | `water log <amount> [ml\|glasses\|bottles] \| water today \| water goal <ml>` | Log water you drank and see today's total (water log 500 ml, water log 2 glasses, water today, water goal 3000) |
+| water log | `water log <amount> [ml\|glasses\|bottles] \| water today \| water goal <ml>` | Log water you drank and see today's total; a glass is 250 ml, a bottle 500 ml (water log 500 ml, water log 2 glasses, water today, water goal 3000) |
 | weight log | `weight <kg> \| weight history \| weight goal <kg>` | Log your weight and see the trend (weight 72.5 kg, weight history, weight goal 70) |
 
 ## home
@@ -382,6 +382,9 @@ In **Usage**, `<...>` is something you fill in and `[...]` is optional. A star `
 
 | Task | Usage | What it does |
 |---|---|---|
+| document expiry | `add document <name> <expiry date> \| documents \| remove document <name>` | Remember when passports, licences and IDs expire (add document passport 12 mar 2031, documents, remove document passport) |
+| meal planner | `meal plan <day> <meals> \| meal plan \| meal today \| meal clear` | Plan the week's meals (meal plan monday dal rice, meal plan, meal today, meal clear) |
+| my calendar | `calendar file <title> <date> [time] [for <minutes>]` | Make a .ics calendar event file that opens in any calendar app (calendar file dentist 25 dec 4pm) |
 | shopping add | `shopping add <items>` | Add items to the shopping list (shopping add milk, eggs and bread) |
 | shopping clear \* |  | Clear the whole shopping list |
 | shopping list |  | Show the shopping list |
@@ -421,6 +424,7 @@ In **Usage**, `<...>` is something you fill in and `[...]` is optional. A star `
 |---|---|---|
 | add bill | `add bill <name> <day> [amount]` | Remember a monthly bill's due day (add bill electricity 15 1200) |
 | add expense | `add expense <amount> <category> [note]` | Record spending (spent 450 on groceries, add expense 200 food lunch) |
+| bank import | `import bank <file.csv>` | Import a bank statement CSV into your expenses (import bank statement.csv); guesses categories, skips duplicates |
 | borrow money | `borrow <amount> from <name>` | Note money you borrowed from someone (borrow 300 from asha) |
 | budget report | `budget report` | Show this month's spending against your budgets (budget report) |
 | card dues | `add card <name> <date> \| cards \| remove card <name>` | Track credit card payment due dates (add card visa 15 nov, cards, remove card visa) |
@@ -442,11 +446,13 @@ In **Usage**, `<...>` is something you fill in and `[...]` is optional. A star `
 | lend money | `lend <amount> to <name> [note]` | Note money you lent to someone (lend 500 to ravi for lunch) |
 | loan compare | `compare loans <amt> <rate> <years> vs <rate> <years>` | Compare two loan offers side by side (compare loans 500000 8.5% 5y vs 9% 4y). |
 | make invoice | `invoice <customer>: <qty> <item> at <rate>, ... [gst 18]` | Make a simple GST invoice page (invoice Ravi Traders: 3 pens at 10, 2 books at 150 gst 18) |
+| mileage log | `mileage add <km> [note] \| mileage report [month] \| mileage rate <per km>` | Log trips and work out what you can claim (mileage add 25 km office, mileage report, mileage rate 8) |
 | payment reminder | `payment reminder <name in your ledger \| name amount [invoice X] [by date]>` | Write a polite payment-reminder message and copy it (payment reminder ravi, or: payment reminder Ravi Traders 5000 invoice INV-0012 by 15 nov) |
 | percentage change | `percentage change <old> to <new>` | Percentage change between two numbers (percentage change 80 to 100) |
 | ppf maturity | `ppf <amount a year> [years] [rate %]` | PPF maturity (ppf 1.5 lakh a year; ppf 50000 a year 15 years) |
 | profit margin | `profit margin cost <c> price <p>` | Profit margin and markup, or the price you need for a target margin (profit margin cost 60 price 100 \| price for 30% margin cost 70). |
 | rd maturity | `rd <monthly amount> <rate %> <years>` | Recurring deposit maturity (rd 5000 a month 6.5% 2 years) |
+| recurring costs | `recurring add <amount> <name> [category] \| recurring list \| recurring apply \| recurring remove <name>` | Costs that repeat every month (recurring add 649 netflix entertainment, recurring list, recurring apply, recurring remove netflix) |
 | remove bill | `remove bill <name>` | Delete a saved bill (remove bill electricity) |
 | remove budget | `remove budget <category>` | Remove a category budget (remove budget food) |
 | salary breakup | `salary breakup <amount> [a month\|a year] [tax %] [pension %] [insurance %] [other <amount>]` | Take-home pay from gross salary (salary breakup 5000 a month tax 20 pension 5; salary 60000 a year tax 22) |
@@ -461,6 +467,7 @@ In **Usage**, `<...>` is something you fill in and `[...]` is optional. A star `
 | spending forecast | `spending forecast` | Predict this month's total spending from your pace so far, against your budgets (spending forecast). |
 | spending trends | `spending trends` | Month-by-month spending, and which categories grew or shrank (spending trends). |
 | split bill | `split bill <amount> among <n> [tip %]` | Split a bill (split bill 2400 among 4 tip 10%) |
+| tax saving | `80c add <amount> <what> \| 80c \| 80c remove <what>` | Track your Section 80C investments against the 1,50,000 limit (80c add 50000 ppf, 80c, 80c remove ppf) |
 | tip calculator | `tip <bill> [percent%] [split <people>]` | Work out a tip and split the bill (tip 1200 10%, tip 2450 12% split 4) |
 | undo expense \* |  | Remove the last recorded expense |
 | unit price | `unit price <qty><unit> <price> vs <qty><unit> <price>` | Which pack is cheaper per kg or litre (unit price 500g 45 vs 1kg 80) |
@@ -531,6 +538,7 @@ In **Usage**, `<...>` is something you fill in and `[...]` is optional. A star `
 | todo done | `todo done <number\|text>` | Mark a to-do done (todo done 3, or part of its text) |
 | todo list |  | Show your to-do list |
 | weekly summary | `weekly summary \| monthly summary` | One-page summary of your week or month: spending, habits, journal, to-dos, water and sleep (weekly summary, monthly summary) |
+| work tracker | `track start <task> \| track stop \| track status \| track report [today\|week]` | Track how long you work on things (track start report, track stop, track status, track report week) |
 
 ## reference
 

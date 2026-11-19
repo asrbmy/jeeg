@@ -50,7 +50,7 @@ MAX_OUT = 30_000
 MAX_PARALLEL = 4
 RATE_PER_MIN = 120
 APPROVE_WAIT = 60
-TERMINAL_ONLY = {"web", "ui", "setup", "update", "upgrade", "plugin", "plugins", "exit", "quit", "q", "first", "completion", "report", "share",
+TERMINAL_ONLY = {"web", "ui", "gui", "window", "setup", "update", "upgrade", "plugin", "plugins", "exit", "quit", "q", "first", "completion", "report", "share",
                  "autorun", "connect", "learn", "tour", "tutorial", "routines", "ai", "install", "selfcheck", "batch"}
 MODES = ("safe", "read", "ask", "god")
 TUNNELS = ("cloudflared", "ngrok", "ssh")

@@ -51,3 +51,8 @@
 
 ## Test
     real test run all   real test report   real test compare
+
+
+## Added later
+
+`jeeg gui` · `browser table|pdf|watch|changes|flow ...` · `add document ...` · `recurring add|apply` · `track start|stop|report` · `import bank <csv>` · `calendar file ...` · `mileage ...` · `80c ...` · `meal plan ...`

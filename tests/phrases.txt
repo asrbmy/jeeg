@@ -584,3 +584,17 @@ browser allow example.com => browser_setup | browser allow example.com
 browser click text Sign in => browser_do | browser click text Sign in
 browser upload 2 cv.pdf => browser_setup | browser upload 2 cv.pdf
 browser hover 3 => browser_do | browser hover 3
+browser table => browser_look | browser table
+browser pdf => browser_look | browser pdf
+browser watch example.com => browser_look | browser watch example.com
+browser changes => browser_look | browser changes
+browser flow run shop => browser_do | browser flow run shop
+browser flow add a = open example.com => browser_setup | browser flow add a = open example.com
+add document passport 12 mar 2031 => document_expiry | add document passport 12 mar 2031
+recurring add 649 netflix => recurring_costs | recurring add 649 netflix
+track start coding => work_tracker | track start coding
+import bank statement.csv => bank_import | import bank statement.csv
+calendar file dentist 25 dec 4pm => my_calendar | calendar file dentist 25 dec 4pm
+mileage add 25 km office => mileage_log | mileage add 25 km office
+80c add 50000 ppf => tax_saving | 80c add 50000 ppf
+meal plan monday dal rice => meal_planner | meal plan monday dal rice

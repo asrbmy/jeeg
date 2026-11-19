@@ -51,3 +51,18 @@ A guided tour by area. The [Task Catalog](Task-Catalog) lists every task with it
 
 ## Looking things up (needs internet)
 `weather in pune`, `wiki summary python`, `define serendipity`, `news headlines`, `pincode 560001`, `translate good morning`. These open a search in your browser: `cricket score india`, `stock price tcs`, `recipe <dish>`, `directions to taj mahal`, `flight status 6E 204`, `train status 12951`. Offline they say so plainly.
+
+
+## Newer everyday tasks
+
+| Say | What happens |
+|---|---|
+| `add document passport 12 mar 2031`, `documents` | Remember expiry dates (notified 60 days ahead) |
+| `recurring add 649 netflix entertainment`, `recurring apply` | Monthly costs added to your expenses once a month |
+| `track start coding`, `track stop`, `track report week` | Time tracking |
+| `import bank statement.csv` | Bank CSV into expenses; categories guessed, duplicates skipped |
+| `calendar file dentist 25 dec 4pm` | Makes a .ics file for any calendar app |
+| `mileage add 25 km office`, `mileage rate 8`, `mileage report` | Trip log and claim |
+| `80c add 50000 ppf`, `80c` | Section 80C total against the limit |
+| `meal plan monday dal rice`, `meal today` | Weekly meal plan |
+| `jeeg gui` | A small window instead of the terminal (tkinter) |

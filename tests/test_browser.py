@@ -26,6 +26,9 @@ PAGES = {
     "/": "<title>Home</title><h1>Welcome</h1><p>The price is 42 dollars.</p><a href='/two'>Second page</a> <button onclick=\"document.title='Clicked'\">Press me</button>",
     "/pop": "<title>Pop</title><button onclick=\"alert('Sure?'); document.title='After'\">Alert</button><button onclick=\"setTimeout(()=>{document.body.append('Late text')},800)\">Later</button>",
     "/up": "<title>Up</title><input type='file' id='f'><button id='h' onmouseover=\"document.title='Hovered'\">Over me</button><button onclick=\"document.title='Sent'\">Send now</button>",
+    "/tbl": "<title>Tbl</title><table><caption>Prices</caption><tr><th>Item</th><th>Cost</th></tr><tr><td>Tea</td><td>10</td></tr><tr><td>Milk</td><td>20</td></tr></table>",
+    "/lbl": "<title>Lbl</title><label for='e'>Email address</label><input id='e' name='e'><button onclick=\"document.title='V:'+document.getElementById('e').value\">Save</button>",
+    "/chg": "<title>Chg</title><p id='p'>one</p>",
     "/two": "<title>Two</title><h1>Page two</h1>",
     "/form": "<title>Form</title><form action='/got' method='get'><input name='q' placeholder='Query'><input type='password' name='pw' placeholder='Secret'>"
              "<select name='c'><option>Red</option><option>Green</option></select><input type='checkbox' name='k'> Keep <button type='submit'>Go</button></form>",
@@ -104,7 +107,7 @@ ok(_cdp.policy()["allow"] == [], "forget removes")
 
 # ---- with a real browser
 exe = ""
-for cand in (os.environ.get("JEEG_TEST_CHROME", ""), *sorted(Path("/opt/pw-browsers").glob("chromium-*/chrome-linux/chrome"))):
+for cand in (os.environ.get("JEEG_TEST_CHROME", ""), *sorted(Path("/opt/pw-browsers").glob("chromium-*/chrome-linux*/chrome"))):
     if cand and Path(str(cand)).is_file():
         exe = str(cand); break
 if not exe:
@@ -267,6 +270,47 @@ try:
     out, err = run_for_ai("browser click 1", "god", ap2, HOME, lambda m: None, "test")
     ok("preview" in out.lower() and "Clicked" not in out, "AI preview-only: a click only shows what it would do: " + out[:100])
     os.environ.pop("JEEG_VIA_AI", None); os.environ["JEEG_TEST_TTY"] = "1"
+    # tables, pdf
+    jeeg(f"browser open {BASE}/tbl")
+    c, o = jeeg("browser table")
+    ok(c == 0 and "Tea | 10" in o and "Saved all 3 rows" in o, "table: " + o[-150:])
+    csvs = list(Path(HOME).rglob("table-*.csv")) + list(Path(os.environ["HOME"]).rglob("table-*.csv"))
+    ok(csvs and "Milk,20" in csvs[0].read_text(), "table csv saved")
+    c, o = jeeg("browser tables")
+    ok(c == 0 and "3 rows" in o, "tables list")
+    c, o = jeeg("browser pdf")
+    pdfs = list(Path(os.environ["HOME"]).rglob("page-*.pdf")) + list(Path(HOME).rglob("page-*.pdf"))
+    ok(c == 0 and pdfs and pdfs[0].read_bytes()[:4] == b"%PDF", "pdf saved: " + o[-100:])
+    # type by label
+    jeeg(f"browser open {BASE}/lbl")
+    c, o = jeeg("browser type text Email address = bob", yes=True)
+    ok(c == 0, "type by label: " + o[-120:])
+    jeeg("browser click text Save", yes=True)
+    c, o = jeeg("browser read")
+    ok("V:bob" in o or "V:bob" in subprocess.run([sys.executable, str(ROOT / "jeeg.py"), "browser", "status"], capture_output=True, text=True).stdout, "label typing reached the page: " + o[:120])
+    # watch
+    c, o = jeeg(f"browser watch {BASE}/chg")
+    ok(c == 0 and "Watching" in o, "watch: " + o)
+    c, o = jeeg("browser changes")
+    ok("Nothing changed" in o, "no change yet: " + o)
+    PAGES["/chg"] = "<title>Chg</title><p id='p'>two, changed</p>"
+    c, o = jeeg("browser changes")
+    ok("CHANGED" in o, "change seen: " + o)
+    # flows
+    c, o = jeeg(f"browser flow add pricey = open {BASE}/tbl | table")
+    ok(c == 0 and "Saved flow pricey" in o, "flow add: " + o)
+    c, o = jeeg("browser flow add bad = rm -rf")
+    ok(c != 0, "flow rejects bad verb")
+    c, o = jeeg("browser flow list", ai=True)
+    ok(c == 0 and "pricey" in o, "AI may list flows: " + o)
+    c, o = jeeg("browser flow add x = open example.com", ai=True)
+    ok(c != 0, "AI cannot add flows")
+    c, o = jeeg("browser flow run pricey preview")
+    ok(c == 0 and "Nothing was changed" in o, "flow preview: " + o)
+    c, o = jeeg("browser flow run pricey", yes=True)
+    ok(c == 0 and "finished" in o, "flow run: " + o[-200:])
+    c, o = jeeg("browser flow remove pricey")
+    ok("Removed" in o, "flow remove")
     # close
     c, o = jeeg("browser close")
     ok("closed" in o, "close: " + o)

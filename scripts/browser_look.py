@@ -1,13 +1,13 @@
 # keywords: browser open, browser look, browser read, browser find, browser tabs, browser screenshot, real browser, web browser, browse website
 # desc: Look at websites in a real browser (browser open example.com, browser look, browser read, browser find price, browser tabs, browser screenshot, browser back). Nothing on the page is changed.
 # category: browser
-# usage: browser open <address> | browser look | browser read | browser find <text> | browser tabs | browser tab <number> | browser newtab [address] | browser screenshot | browser back | browser forward | browser scroll down|up | browser wait <seconds> | browser wait for <text> | browser status
+# usage: browser table [n] | browser pdf | browser watch <address> | browser changes | browser open <address> | browser look | browser read | browser find <text> | browser tabs | browser tab <number> | browser newtab [address] | browser screenshot | browser back | browser forward | browser scroll down|up | browser wait <seconds> | browser wait for <text> | browser status
 # rawargs: full
 # private: yes
 # network: yes
-# patterns: ^\s*browser\s+(?:open|go|goto|visit|look|read|find|tabs?|newtab|screenshot|back|forward|scroll|wait|status|reload)\b
+# patterns: ^\s*browser\s+(?:open|go|goto|visit|look|read|find|tabs?|newtab|screenshot|back|forward|scroll|wait|status|reload|tables?|pdf|watch|changes)\b
 # priority: 4
-import base64, re, time, urllib.parse
+import base64, csv, io, re, time, urllib.parse
 from datetime import datetime
 from _lib import args_text, fail, output_dir
 import _cdp
@@ -132,6 +132,71 @@ try:
                     out.append("(nothing to click or type into here)")
                 print(_cdp.wrap(pg, "\n".join(out)))
                 print("\nTo act:  browser click <number> | browser type <number> <text> | browser press <key>")
+        elif cmd in {"table", "tables"}:
+            why = _cdp.guard(pg)
+            if why:
+                fail(why)
+            tabs_ = pg.js(_cdp.TABLES_JS) or []
+            if not tabs_:
+                fail("There is no table on this page.")
+            if cmd == "tables" or not rest:
+                for i, tb_ in enumerate(tabs_, 1):
+                    print(f"[{i}] {len(tb_['rows'])} rows x {max(len(r) for r in tb_['rows'])} columns" + (f"  - {tb_['caption']}" if tb_["caption"] else ""))
+                if cmd == "tables":
+                    raise SystemExit(0)
+            n_ = int(rest) if rest.isdigit() else 1
+            if not 1 <= n_ <= len(tabs_):
+                fail(f"Say a table number from 1 to {len(tabs_)}.")
+            rows = tabs_[n_ - 1]["rows"]
+            buf = io.StringIO()
+            csv.writer(buf).writerows(rows)
+            p = output_dir("JeeG browser") / f"table-{datetime.now():%Y%m%d-%H%M%S}.csv"
+            p.write_text(buf.getvalue(), encoding="utf-8", newline="")
+            print(_cdp.wrap(pg, "\n".join(" | ".join(r)[:160] for r in rows[:12]) + (f"\n... {len(rows) - 12} more rows" if len(rows) > 12 else "")))
+            print(f"Saved all {len(rows)} rows: {p}")
+        elif cmd == "pdf":
+            why = _cdp.guard(pg)
+            if why:
+                fail(why)
+            r = pg.call("Page.printToPDF", {"printBackground": True}, timeout=60)
+            p = output_dir("JeeG browser") / f"page-{datetime.now():%Y%m%d-%H%M%S}.pdf"
+            p.write_bytes(base64.b64decode(r["data"]))
+            print(f"Saved: {p}")
+        elif cmd == "watch":
+            if not rest:
+                fail("Usage: browser watch <address>   (then later:  browser changes)")
+            u = fix_url(rest)
+            _cdp.goto(pg, u)
+            import hashlib
+            text = _cdp.page_text(pg)
+            w = _cdp.load_watch()
+            if len(w) >= 30 and u not in w:
+                fail("You are watching 30 pages already (the limit).")
+            w[u] = {"hash": hashlib.sha256(text.encode()).hexdigest(), "title": pg.js("document.title") or u, "len": len(text)}
+            _cdp.save_watch(w)
+            print(f"Watching: {w[u]['title']}  [{u}]  (check with:  browser changes)")
+        elif cmd == "changes":
+            import hashlib
+            w = _cdp.load_watch()
+            if not w:
+                fail("Nothing is watched yet:  browser watch <address>")
+            changed = 0
+            for u, rec in list(w.items()):
+                try:
+                    _cdp.goto(pg, u)
+                except _cdp.BrowserError as ex:
+                    print(f"  ?  {rec['title']}: {ex}")
+                    continue
+                text = _cdp.page_text(pg)
+                h = hashlib.sha256(text.encode()).hexdigest()
+                if h != rec["hash"]:
+                    changed += 1
+                    print(f"  CHANGED  {rec['title']}  [{u}]  ({rec['len']} -> {len(text)} characters)")
+                    rec.update(hash=h, len=len(text))
+                else:
+                    print(f"  same     {rec['title']}")
+            _cdp.save_watch(w)
+            print(f"{changed} of {len(w)} page(s) changed." if changed else "Nothing changed.")
         elif cmd == "screenshot":
             why = _cdp.guard(pg)
             if why:

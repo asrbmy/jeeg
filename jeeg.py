@@ -18,7 +18,7 @@ Commands (interactive or one-shot):
     learn             a 7-step guided tour                  doctor fix   repair common problems
     routines export|import <file>    alias export|import <file>   share your setup
     plugin search|get <name>          shared plugin library
-    plugin new|install|export|remove|list   your own tasks    web   a local page in your browser
+    plugin new|install|export|remove|list   your own tasks    web   a local page in your browser   gui   a small window
     completion bash|zsh|powershell          tab completion
     tips              suggest a task you have not used      pack list / pack off <category> / pack on <category>
     exit              quit
@@ -1332,6 +1332,21 @@ def handle(line: str, dirs, opt) -> int | None:
         return cmd_alias(q, entries)
     if low == "explain" or low.startswith("explain "):
         return cmd_explain(q, entries)
+    if low in {"gui", "window", "open window", "desktop window", "jeeg window"}:
+        if os.environ.get("JEEG_VIA_AI") == "1":
+            print("A window can only be opened by you, from your own terminal.")
+            return 1
+        import jeeg_gui
+        try:
+            import tkinter  # noqa: F401
+        except ImportError:
+            print(jeeg_gui.tk_missing_message())
+            return 1
+        extra = [x for d in dirs for x in ("--dir", str(d))]
+        subprocess.Popen([sys.executable, str(HERE / "jeeg_gui.py")] + extra, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                         stderr=subprocess.DEVNULL, start_new_session=not IS_WIN)
+        print("Opened the JeeG window.")
+        return 0
     if low in {"privacy", "what goes online", "network tasks"}:
         return cmd_privacy(entries)
     if low in {"misses", "misses export", "misses clear"}:
@@ -1412,6 +1427,24 @@ def run_captured(line: str, dirs, opt) -> int:
     return rc
 
 
+def revive_reminders(dirs, opt) -> None:
+    """After a restart, start the background reminders again (only looks if you ever set one)."""
+    try:
+        if not (STATE / "reminders.json").is_file() or (STATE / "reminders.json").stat().st_size < 3:
+            return
+        helpers = next((str(d) for d in dirs if (Path(d) / "_time.py").is_file()), "")
+        if not helpers:
+            return
+        sys.path.insert(0, helpers)
+        try:
+            import _time
+            _time.revive()
+        finally:
+            sys.path.remove(helpers)
+    except Exception:
+        pass
+
+
 def main(argv: list[str]) -> int:
     opt = {"yes": False, "dry": False, "timeout": None, "json": False, "out": None, "quiet": False}
     cli_dirs, words, i = [], [], 0
@@ -1482,6 +1515,8 @@ def main(argv: list[str]) -> int:
               "or use --dir PATH / TASK_SCRIPTS_DIR.")
         return 1
 
+    if not opt["quiet"]:
+        revive_reminders(dirs, opt)
     if words:
         if opt["quiet"]:
             return run_captured(" ".join(words), dirs, opt)

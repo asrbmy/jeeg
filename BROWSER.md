@@ -36,6 +36,14 @@ browser policy
 
 Tell JeeG where the browser is if it cannot find it: `set JEEG_BROWSER=C:\path\to\chrome.exe`.
 
+## Tables, PDF, watching and flows
+
+- `browser table` / `browser tables` list tables on the page and save one as a CSV (all rows) in your JeeG browser folder.
+- `browser pdf` prints the current page to a PDF.
+- `browser watch <address>` remembers a page; `browser changes` visits the watched pages and says which changed (it compares a fingerprint of the page text; up to 30 pages).
+- `browser type text <label> = <value>` types into the box with that label, without needing a number first.
+- Flows: `browser flow add shop = open example.com | click text Sign in | secret 4`, then `browser flow list|show|run|remove <name>`. Steps are separated by `|` and start with a browser verb. `flow add` and `flow remove` are terminal only; `flow run` asks first and has `preview`; a `secret` step needs a real terminal and is never run for an AI. Up to 30 steps and 40 flows.
+
 ## Your own profile is not touched
 
 JeeG starts the browser with its own profile folder (`browser-profile` in JeeG's data folder). Sign in to a site once in that window and it stays signed in. Your everyday browser, its passwords and history are not used.

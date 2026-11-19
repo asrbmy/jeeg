@@ -56,3 +56,12 @@ JeeG starts the browser with its own profile folder (`browser-profile` in your d
 - Tested with Chromium on Linux only. Not yet on real Windows/macOS or real Chrome/Edge/Brave.
 
 More: `BROWSER.md`.
+
+
+## Tables, PDF, watching and flows
+
+- `browser table` / `browser tables`: list tables on the page and save one as CSV.
+- `browser pdf`: print the page to a PDF.
+- `browser watch <address>` then `browser changes`: which watched pages changed.
+- `browser type text <label> = <value>`: type by label, no number needed.
+- `browser flow add <name> = step | step`, then `flow list|show|run|remove`. Add/remove are terminal only; run asks first and has `preview`; password steps need a real terminal.

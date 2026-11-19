@@ -670,7 +670,7 @@ Categories on this page: [apps](#apps), [apps_setup](#apps-setup), [apps_write](
 **Usage:** `convert <n> <unit> to <unit>`  
 **What it does:** Convert units offline (convert 5 km to miles, 100 f to c); falls back to Google for currency  
 **Behaviour:** can use the internet.  
-**Also found by:** `convert`, `conversion`, `converter`, `unit`, `units`, `currency`, `exchange`, `how many`, `in miles`, `in km`  
+**Also found by:** `gb to mb`, `mb to gb`, `tb to gb`, `kb to mb`, `mb to kb`, `f to c`, `c to f`, `c to k`, `convert`, `conversion`  
 **Your words:** passed through untouched  
 **Script:** `scripts/convert_units.py`
 

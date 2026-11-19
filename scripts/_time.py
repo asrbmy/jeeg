@@ -126,8 +126,48 @@ def kill_pid(pid):
             pass
 
 
+def revive(show=False):
+    """After a restart the background reminders are gone but their list is still on disk. Start them again; a one-time reminder
+    whose time passed while the computer was off is reported once as missed (up to 12 hours late). Returns the missed ones."""
+    try:
+        raw = json.loads(_reg().read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return []
+    if not isinstance(raw, list):
+        return []
+    now, keep, missed, changed = time.time(), [], [], False
+    worker = Path(__file__).with_name("_worker.py")
+    for i in raw:
+        if not isinstance(i, dict):
+            changed = True
+            continue
+        if pid_alive(i.get("pid", 0)):
+            keep.append(i)
+            continue
+        changed = True
+        mode, value, msg = i.get("mode"), i.get("value"), str(i.get("message", "Reminder"))
+        if not isinstance(value, (int, float)) or mode not in ("once", "repeat"):
+            continue
+        if mode == "once" and value <= now:
+            if now - value <= 12 * 3600:
+                missed.append((value, msg))
+            continue
+        try:
+            p = spawn([sys.executable, str(worker), mode, str(value), msg])
+        except OSError:
+            continue
+        i["pid"] = p.pid
+        keep.append(i)
+    if changed:
+        save_reminders(keep)
+    for when, msg in missed:
+        alert("Missed reminder", f"{msg} (was due {time.strftime('%a %I:%M %p', time.localtime(when))})")
+    return missed
+
+
 def start_worker(mode, value, message, desc):
     """mode 'once': value = epoch to fire at.  mode 'repeat': value = seconds between alerts."""
+    revive()
     worker = Path(__file__).with_name("_worker.py")
     p = spawn([sys.executable, str(worker), mode, str(value), message])
     items = load_reminders()

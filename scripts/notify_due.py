@@ -28,9 +28,17 @@ for c in load("countdowns.json", []):
     if 0 <= k <= 3: items.append(f"{c['name']}: {'today' if k == 0 else str(k) + ' day(s) to go'}")
 try:
     from _dues import due_soon
-    for store, label, within in (("warranties.json", "Warranty ends", 14), ("vehicle_dues.json", "Vehicle due", 14), ("vaccines.json", "Vaccine due", 7)):
+    for store, label, within in (("warranties.json", "Warranty ends", 14), ("vehicle_dues.json", "Vehicle due", 14), ("vaccines.json", "Vaccine due", 7), ("documents.json", "Document expires", 60)):
         for n, k in due_soon(store, within):
             items.append(f"{label}: {n} " + ("(overdue)" if k < 0 else "today" if k == 0 else f"in {k} day(s)"))
+except Exception:
+    pass
+try:
+    mo = today.strftime("%Y-%m")
+    for r in load("recurring.json", []):
+        if r.get("last") != mo:
+            items.append(f"Recurring cost not added this month: {r['name']} (say: recurring apply)")
+            break
 except Exception:
     pass
 now = datetime.datetime.now().strftime("%H:%M")

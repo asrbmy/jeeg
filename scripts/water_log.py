@@ -1,5 +1,5 @@
 # keywords: water log, log water, drank water, water intake, water today, how much water, water goal, hydration log, track water
-# desc: Log water you drank and see today's total (water log 500 ml, water log 2 glasses, water today, water goal 3000)
+# desc: Log water you drank and see today's total; a glass is 250 ml, a bottle 500 ml (water log 500 ml, water log 2 glasses, water today, water goal 3000)
 # category: health
 # usage: water log <amount> [ml|glasses|bottles] | water today | water goal <ml>
 # rawargs: yes

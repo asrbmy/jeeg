@@ -526,3 +526,46 @@ def upload_file(pg, n, path):
     if not q.get("nodeId"):
         raise BrowserError(f"There is no element [{n}] on this page now. Run  browser look  again.")
     pg.call("DOM.setFileInputFiles", {"files": [path], "nodeId": q["nodeId"]})
+
+
+TABLES_JS = r"""
+(() => [...document.querySelectorAll('table')].slice(0, 20).map(t => ({
+  caption: ((t.caption && t.caption.innerText) || '').trim().slice(0, 80),
+  rows: [...t.rows].slice(0, 500).map(r => [...r.cells].map(c => c.innerText.trim().replace(/\s+/g, ' ').slice(0, 200)))
+})).filter(t => t.rows.length))()
+"""
+
+
+def watch_file():
+    return data_dir() / "browser_watch.json"
+
+
+def load_watch():
+    try:
+        d = json.loads(watch_file().read_text(encoding="utf-8"))
+        return d if isinstance(d, dict) else {}
+    except (OSError, ValueError):
+        return {}
+
+
+def save_watch(d):
+    watch_file().write_text(json.dumps(d), encoding="utf-8")
+
+
+def flows_file():
+    return data_dir() / "browser_flows.json"
+
+
+def load_flows():
+    try:
+        d = json.loads(flows_file().read_text(encoding="utf-8"))
+        return {k: [x for x in v if isinstance(x, str)] for k, v in d.items() if isinstance(v, list)} if isinstance(d, dict) else {}
+    except (OSError, ValueError, AttributeError):
+        return {}
+
+
+def save_flows(d):
+    flows_file().write_text(json.dumps(d, indent=1), encoding="utf-8")
+
+
+FLOW_VERBS = {"open", "look", "read", "find", "click", "type", "press", "select", "tick", "hover", "scroll", "wait", "back", "forward", "screenshot", "table", "tables", "pdf", "secret", "reload"}

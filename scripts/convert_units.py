@@ -1,9 +1,11 @@
-# keywords: convert, conversion, converter, unit, units, currency, exchange, how many, in miles, in km, kg to lb, celsius, fahrenheit
+# keywords: gb to mb, mb to gb, tb to gb, kb to mb, mb to kb, f to c, c to f, c to k, convert, conversion, converter, unit, units, currency, exchange, how many, in miles, in km, kg to lb, celsius, fahrenheit
 # desc: Convert units offline (convert 5 km to miles, 100 f to c); falls back to Google for currency
 # category: utility
 # network: yes
 # usage: convert <n> <unit> to <unit>
 # rawargs: yes
+# patterns: ^\s*(?:convert\s+)?-?[\d.,]+\s*(?!(?:usd|inr|eur|gbp|aud|cad|jpy|cny|aed|sgd|chf|nzd|rs|dollars?|rupees?|euros?|pounds?|yen|bitcoin|btc)\b)[a-z°/]+(?:\s[a-z]+)?\s+(?:to|in|into|as)\s+(?!(?:usd|inr|eur|gbp|aud|cad|jpy|cny|aed|sgd|chf|nzd|rs|dollars?|rupees?|euros?|pounds?|yen|bitcoin|btc)\b)[a-z°/]+(?:\s[a-z]+)?\s*$
+# priority: 2
 import re, urllib.parse, webbrowser
 from _lib import args_text, fail
 text = args_text().lower().replace(",", "")

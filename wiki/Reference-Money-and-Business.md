@@ -2,7 +2,7 @@
 
 Calculators for loans, savings, tax, bills and splitting, your expense records and budgets, a lending ledger, a small stock list and invoices.
 
-46 tasks. Each entry shows the **usage** (`<x>` you fill in, `[x]` optional), what the task does, how it behaves, other words that also find it, and the script file you can read or edit. Say the task name, or the usage with your words filled in. `explain <words>` shows how any phrase is matched; `<task> preview` or `--dry-run` shows what would happen without doing it.
+50 tasks. Each entry shows the **usage** (`<x>` you fill in, `[x]` optional), what the task does, how it behaves, other words that also find it, and the script file you can read or edit. Say the task name, or the usage with your words filled in. `explain <words>` shows how any phrase is matched; `<task> preview` or `--dry-run` shows what would happen without doing it.
 
 Categories on this page: [money](#money)
 
@@ -23,6 +23,14 @@ Categories on this page: [money](#money)
 **Also found by:** `expense`, `spent`, `paid`, `record expense`, `log expense`, `cost`  
 **Your words:** passed through untouched  
 **Script:** `scripts/add_expense.py`
+
+### bank import
+
+**Usage:** `import bank <file.csv>`  
+**What it does:** Import a bank statement CSV into your expenses (import bank statement.csv); guesses categories, skips duplicates  
+**Also found by:** `import bank`, `bank statement`, `bank csv`, `import statement`, `import transactions`  
+**Your words:** the whole sentence is passed (quotes kept)  
+**Script:** `scripts/bank_import.py`
 
 ### borrow money
 
@@ -197,6 +205,14 @@ Categories on this page: [money](#money)
 **Your words:** the whole sentence is passed (quotes kept)  
 **Script:** `scripts/make_invoice.py`
 
+### mileage log
+
+**Usage:** `mileage add <km> [note] | mileage report [month] | mileage rate <per km>`  
+**What it does:** Log trips and work out what you can claim (mileage add 25 km office, mileage report, mileage rate 8)  
+**Also found by:** `mileage`, `km log`, `trip log`, `distance log`, `mileage report`, `travel claim`  
+**Your words:** the whole sentence is passed (quotes kept)  
+**Script:** `scripts/mileage_log.py`
+
 ### payment reminder
 
 **Usage:** `payment reminder <name in your ledger | name amount [invoice X] [by date]>`  
@@ -237,6 +253,14 @@ Categories on this page: [money](#money)
 **Also found by:** `rd`, `recurring deposit`, `monthly deposit`, `post office rd`  
 **Your words:** passed through untouched  
 **Script:** `scripts/rd_maturity.py`
+
+### recurring costs
+
+**Usage:** `recurring add <amount> <name> [category] | recurring list | recurring apply | recurring remove <name>`  
+**What it does:** Costs that repeat every month (recurring add 649 netflix entertainment, recurring list, recurring apply, recurring remove netflix)  
+**Also found by:** `recurring`, `subscription`, `monthly cost`, `recurring expense`, `netflix monthly`, `rent monthly`, `subscriptions`  
+**Your words:** the whole sentence is passed (quotes kept)  
+**Script:** `scripts/recurring_costs.py`
 
 ### remove bill
 
@@ -348,6 +372,14 @@ Categories on this page: [money](#money)
 **Also found by:** `split`, `bill`, `share`, `divide bill`, `per person`, `restaurant bill`, `tip`, `dutch`, `split the cost`, `each person pays`  
 **Your words:** passed through untouched  
 **Script:** `scripts/split_bill.py`
+
+### tax saving
+
+**Usage:** `80c add <amount> <what> | 80c | 80c remove <what>`  
+**What it does:** Track your Section 80C investments against the 1,50,000 limit (80c add 50000 ppf, 80c, 80c remove ppf)  
+**Also found by:** `80c`, `tax saving investments`, `section 80c`, `ppf elss`, `tax deduction`  
+**Your words:** the whole sentence is passed (quotes kept)  
+**Script:** `scripts/tax_saving.py`
 
 ### tip calculator
 

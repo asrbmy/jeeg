@@ -586,7 +586,7 @@ Categories on this page: [network](#network), [web](#web), [search](#search), [m
 
 ### browser do
 
-**Usage:** `browser click <number> | browser type <number> <text> | browser press <key> | browser select <number> <option> | browser tick <number> | browser hover <number> | browser click text <words>  (add the word preview to only see what it would do)`  
+**Usage:** `browser click <number> | browser type <number> <text> | browser press <key> | browser select <number> <option> | browser flow run <name> | browser type text <label> = <words> | browser tick <number> | browser hover <number> | browser click text <words>  (add the word preview to only see what it would do)`  
 **What it does:** Act on a page in the real browser, by the numbers that  browser look  shows (browser click 4, browser type 2 hello, browser press enter, browser select 3 Red, browser tick 5). Asks first.  
 **Behaviour:** asks before running; can use the internet; never saved in history.  
 **Also found by:** `browser click`, `browser type`, `browser press`, `browser select`, `browser tick`, `browser submit`, `click in browser`, `type in browser`  
@@ -595,7 +595,7 @@ Categories on this page: [network](#network), [web](#web), [search](#search), [m
 
 ### browser look
 
-**Usage:** `browser open <address> | browser look | browser read | browser find <text> | browser tabs | browser tab <number> | browser newtab [address] | browser screenshot | browser back | browser forward | browser scroll down|up | browser wait <seconds> | browser wait for <text> | browser status`  
+**Usage:** `browser table [n] | browser pdf | browser watch <address> | browser changes | browser open <address> | browser look | browser read | browser find <text> | browser tabs | browser tab <number> | browser newtab [address] | browser screenshot | browser back | browser forward | browser scroll down|up | browser wait <seconds> | browser wait for <text> | browser status`  
 **What it does:** Look at websites in a real browser (browser open example.com, browser look, browser read, browser find price, browser tabs, browser screenshot, browser back). Nothing on the page is changed.  
 **Behaviour:** can use the internet; never saved in history.  
 **Also found by:** `browser open`, `browser read`, `browser find`, `browser tabs`, `browser screenshot`, `real browser`, `web browser`, `browse website`  
@@ -604,7 +604,7 @@ Categories on this page: [network](#network), [web](#web), [search](#search), [m
 
 ### browser setup
 
-**Usage:** `browser start [hidden] | browser close | browser allow <site> | browser deny <site> | browser forget <site> | browser policy | browser secret <number> | browser upload <number> <file>`  
+**Usage:** `browser start [hidden] | browser close | browser allow <site> | browser deny <site> | browser forget <site> | browser policy | browser secret <number> | browser flow add <name> = <step> | <step> | browser flow list|show|remove <name> | browser upload <number> <file>`  
 **What it does:** Set up the real browser (browser start, browser start hidden, browser close, browser allow example.com, browser deny example.com, browser policy, browser secret 3 to type a password yourself). You do this in a terminal.  
 **Behaviour:** can use the internet; never saved in history.  
 **Also found by:** `browser start`, `browser close`, `browser allow`, `browser deny`, `browser policy`, `browser secret`, `browser password`  
