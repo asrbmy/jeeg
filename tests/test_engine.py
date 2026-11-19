@@ -156,6 +156,10 @@ check("plugin listed", "hello plugin" in r.stdout, r.stdout)
 r = cli("zebra plugin hello")
 check("plugin runs", "plugin ran" in r.stdout, r.stdout + r.stderr)
 
+(plug / "helper_user.py").write_text("# keywords: quokka helper user\n# desc: uses the shared helpers\n# category: tools\nfrom _lib import args_text\nprint('helpers ok', args_text())\n")
+r = cli("quokka helper user now")
+check("a plugin can import the shared helpers (from _lib import ...)", "helpers ok" in r.stdout and "Traceback" not in r.stdout + r.stderr, r.stdout + r.stderr)
+
 cli("add contact dad 9876500000")
 cli("add email dad dad@example.com")
 r = cli("find contact dad")

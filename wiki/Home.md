@@ -10,11 +10,14 @@
 
 | If you want to... | Read |
 |---|---|
-| Follow a plan from zero to confident | [Learning Path](Learning-Path) |
+| Follow a plan from zero to confident | [Learning Path](Learning-Path), then [Tutorial: Your First Hour](Tutorial-Your-First-Hour) |
+| See real walk-throughs with real output | [Recipes and Workflows](Recipes-and-Workflows), [Examples Gallery](Examples-Gallery) |
+| Know how it is built inside | [Architecture and Internals](Architecture-and-Internals) |
 | Install it and run the first task | [Install and First Run](Install-and-First-Run) |
 | Know how it chooses a task | [How JeeG Understands You](How-JeeG-Understands-You) |
 | See every command and option | [Commands and Options](Commands-and-Options) |
 | Find what you can do | [Everyday Tasks](Everyday-Tasks), [Task Catalog](Task-Catalog) (all tasks) |
+| Look up one task in detail | Reference pages: [Money](Reference-Money-and-Business), [Files](Reference-Files-and-Folders), [System](Reference-System-and-Hardware), [Network and web](Reference-Network-Web-and-Search), [Developer](Reference-Developer-Tools), [Apps](Reference-Apps-and-Launchers), [Time and records](Reference-Time-Reminders-and-Records), [Health, study, fun](Reference-Health-Study-and-Fun) |
 | Keep notes, to-dos, money, health records | [Reminders and Personal Records](Reminders-and-Personal-Records) |
 | Make your own shortcuts and routines | [Routines, Aliases, Variables and Automation](Routines-Aliases-Variables-and-Automation) |
 | Understand what is safe and what is private | [Safety and Privacy](Safety-and-Privacy) |

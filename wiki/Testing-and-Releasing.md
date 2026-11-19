@@ -25,7 +25,7 @@ Adding or removing a task changes: the task count in README.md, USER_GUIDE.md an
 
     python tools/make_guide_appendix.py
     python tools/make_site.py
-    python tools/make_wiki.py
+    python tools/make_wiki.py        (runs the demo phrases for the tutorial, recipes and gallery; --quick skips them)
 
 Tasks that touch the network need `# network: yes`; new helpers that use network modules must be allowed in `tests/test_privacy.py`.
 

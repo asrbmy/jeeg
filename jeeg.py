@@ -882,6 +882,15 @@ def history_read(n: int = 15) -> list[dict]:
     return out
 
 
+def task_env() -> dict:
+    """The environment a task runs in. Scripts in your own folders (--dir, plugins) can then use the shared helpers: from _lib import args_text."""
+    env = dict(os.environ)
+    helpers = next((str(d) for d in (HERE / "scripts", HERE / "jeeg_scripts") if (d / "_lib.py").is_file()), "")
+    if helpers:
+        env["PYTHONPATH"] = helpers + (os.pathsep + env["PYTHONPATH"] if env.get("PYTHONPATH") else "")
+    return env
+
+
 def run_entry(e: dict, args: list[str], opt: dict) -> int:
     path = Path(e["path"])
     cmd = RUNNERS[path.suffix.lower()](path) + args
@@ -904,7 +913,7 @@ def run_entry(e: dict, args: list[str], opt: dict) -> int:
         t0 = time.perf_counter()
         try:
             r = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace",
-                               timeout=opt["timeout"], stdin=None if e.get("stdin") else subprocess.DEVNULL)
+                               timeout=opt["timeout"], stdin=None if e.get("stdin") else subprocess.DEVNULL, env=task_env())
             rc, text = r.returncode, (r.stdout or "") + (r.stderr or "")
         except subprocess.TimeoutExpired:
             rc, text = 1, f"{label} timed out after {opt['timeout']}s.\n"
@@ -918,7 +927,7 @@ def run_entry(e: dict, args: list[str], opt: dict) -> int:
     print(f">> {label}" + (f"  ({' '.join(args)})" if args else ""))
     t0 = time.perf_counter()
     try:
-        rc = subprocess.run(cmd, timeout=opt["timeout"]).returncode
+        rc = subprocess.run(cmd, timeout=opt["timeout"], env=task_env()).returncode
     except subprocess.TimeoutExpired:
         print(f"!! {label} timed out after {opt['timeout']}s.")
         return 1

@@ -303,7 +303,7 @@ A plugin is one `.py` file. Make a starter with `jeeg plugin new my_task`, edit 
 - **Link programs and more services:** programs with no web API (`docker`, `git`, `adb`, `kubectl`) as command apps, ready-made presets (GitLab, Notion, Linear, Todoist, Home Assistant, Jira), logins in the system keychain, device login without pasting a token.
 - **MCP tools for your apps:** Claude Desktop, Cursor and Claude.ai get `jeeg_apps`, `jeeg_app_read` and `jeeg_app_do` (reads look, writes ask).
 - **27 ready-made linked apps and 31 ready-made MCP servers** (Stripe, Asana, Shopify, Outlook, Slack, Redis, MySQL...), see `app preset list` and `mcp catalog`.
-- **A wiki to learn everything (`wiki/`):** a learning path, every feature explained, the full task catalog, cheat sheet, troubleshooting and FAQ. Start at `wiki/Home.md`.
+- **A wiki to learn everything (`wiki/`):** a learning path, a first-hour tutorial, recipes and examples with real output, how it works inside, a detailed reference for every task, cheat sheet, troubleshooting and FAQ. Start at `wiki/Home.md`.
 - **A real web browser (BROWSER.md):** `browser open example.com`, `browser look`, `browser click 3`, `browser type 2 hello`. JeeG drives your Chrome, Edge or Brave with its own profile, locally; clicks ask first; an AI never reaches your own network or types passwords.
 - **MCP both ways (MCP.md):** connect more AI apps (`install mcp windsurf|vscode|gemini cli|...`) and use other MCP servers from JeeG (`mcp catalog`, `mcp add filesystem ~/Documents`, `mcp look`).
 - **Event rules:** `rule add ... when github issues changes then ...` acts on new items.

@@ -2,12 +2,11 @@
 
 Every task in JeeG, by category (548 tasks). Generated from the real task list; do not edit by hand (`python tools/make_wiki.py`).
 
-In **Usage**, `<...>` is something you fill in and `[...]` is optional. A star `*` means the task asks before running; *online* means it can use the internet. In the terminal, `list <category>` shows the same, and `explain <words>` shows how a phrase would be matched.
+In **Usage**, `<...>` is something you fill in and `[...]` is optional. A star `*` means the task asks before running; *online* means it can use the internet. For more detail on each task (flags, other wording that finds it, script file) see the reference pages: [Money and business](Reference-Money-and-Business), [Files, folders, backups and the clipboard](Reference-Files-and-Folders), [System, power, hardware and home](Reference-System-and-Hardware), [Network, web, search and travel](Reference-Network-Web-and-Search), [Developer tools](Reference-Developer-Tools), [Apps, launchers and linked apps](Reference-Apps-and-Launchers), [Time, reminders and personal records](Reference-Time-Reminders-and-Records), [Health, study, media and fun](Reference-Health-Study-and-Fun). In the terminal, `list <category>` shows the same, and `explain <words>` shows how a phrase would be matched.
 
 ## Categories
 
 [ai (4)](#ai) | [apps (29)](#apps) | [apps_setup (2)](#apps-setup) | [apps_write (1)](#apps-write) | [backup (4)](#backup) | [birthdays (3)](#birthdays) | [browser (3)](#browser) | [clipboard (6)](#clipboard) | [data (2)](#data) | [developer (64)](#developer) | [email (6)](#email) | [entertainment (12)](#entertainment) | [files (40)](#files) | [folders (9)](#folders) | [food (2)](#food) | [fun (5)](#fun) | [habits (2)](#habits) | [hardware (13)](#hardware) | [health (13)](#health) | [home (6)](#home) | [info (12)](#info) | [journal (3)](#journal) | [learning (5)](#learning) | [links (4)](#links) | [lists (4)](#lists) | [maps (4)](#maps) | [media (14)](#media) | [money (46)](#money) | [network (28)](#network) | [personal (1)](#personal) | [power (7)](#power) | [productivity (10)](#productivity) | [reference (1)](#reference) | [reminders (13)](#reminders) | [routines (9)](#routines) | [search (8)](#search) | [security (4)](#security) | [selfcheck (1)](#selfcheck) | [shopping (3)](#shopping) | [snippets (4)](#snippets) | [social (16)](#social) | [study (12)](#study) | [system (28)](#system) | [text (15)](#text) | [time (13)](#time) | [tools (4)](#tools) | [travel (7)](#travel) | [utility (18)](#utility) | [web (2)](#web) | [work (2)](#work) | [workspace (24)](#workspace)
-
 
 ## ai
 
