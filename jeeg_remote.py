@@ -50,7 +50,7 @@ MAX_OUT = 30_000
 MAX_PARALLEL = 4
 RATE_PER_MIN = 120
 APPROVE_WAIT = 60
-TERMINAL_ONLY = {"web", "ui", "gui", "window", "setup", "update", "upgrade", "plugin", "plugins", "exit", "quit", "q", "first", "completion", "report", "share",
+TERMINAL_ONLY = {"web", "ui", "gui", "window", "windows", "desktop", "kit", "audit", "setup", "update", "upgrade", "plugin", "plugins", "exit", "quit", "q", "first", "completion", "report", "share",
                  "autorun", "connect", "learn", "tour", "tutorial", "routines", "ai", "install", "selfcheck", "batch"}
 MODES = ("safe", "read", "ask", "god")
 TUNNELS = ("cloudflared", "ngrok", "ssh")
@@ -335,6 +335,15 @@ def run_for_ai(query, mode: str, approver: Approver, state, log=print, source: s
         return "Give a request in plain words, for example: gst 2500 18", True
     os.environ["JEEG_VIA_AI"] = "1"                         # tasks started from here know an AI asked (per-app rules in app_policy.json)
     first = _first_word(q)
+    try:
+        import jeeg_policy
+        mode = jeeg_policy.clamp_ai(mode)
+        if jeeg_policy.load().get("ai_max") == "off":
+            return "Your administrator has turned AI use of JeeG off on this computer.", True
+        if first == "browser" and not jeeg_policy.ai_browser_allowed():
+            return "Your administrator has turned off AI control of the browser on this computer.", True
+    except ImportError:
+        pass
     if first in TERMINAL_ONLY or first in jeeg_api.TERMINAL_ONLY:
         return f"'{first}' can only be used in the terminal on the computer itself.", True
     chain = re.search(r"\bthen\b", q, re.I) is not None

@@ -15,7 +15,7 @@ SEP = ";" if os.name == "nt" else ":"
 
 
 def stdlib_imports(folder: Path) -> list:
-    own = {p.stem for p in folder.glob("*.py")} | {"jeeg", "jeeg_cmds", "jeeg_api", "jeeg_bridge", "jeeg_autorun", "jeeg_remote", "jeeg_connect"}
+    own = {p.stem for p in folder.glob("*.py")} | {"jeeg", "jeeg_cmds", "jeeg_api", "jeeg_bridge", "jeeg_autorun", "jeeg_remote", "jeeg_connect", "jeeg_gui", "jeeg_policy", "jeeg_migrate"}
     found = set()
     for f in folder.glob("*.py"):
         try:

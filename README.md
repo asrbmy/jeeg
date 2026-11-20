@@ -7,7 +7,7 @@ JeeG finds the matching script in the `scripts` folder and runs it.
 
 - Pure Python 3.9+, nothing to install. Works on Windows, macOS and Linux.
 - Light: about 16 MB of memory, about 65 ms per command, nothing running in the background (except reminders and alarms you set yourself).
-- 556 ready-made tasks. You can add your own by dropping in a file.
+- 566 ready-made tasks. You can add your own by dropping in a file.
 
 ---
 
@@ -219,7 +219,7 @@ Optional extras for a few of these: `pip install pyzipper pyyaml`.
 
 | Area | Examples |
 |---|---|
-| Install and update | `pip install jeeg`, `setup` (wizard), `update` / `update now` |
+| Install and update | `pip install jeeg`, `setup` (wizard), `update` / `update now` (pip, git, unzipped folder or standalone program; checksums checked), `update auto on` |
 | Plugins | `plugin new tea_timer`, `plugin install file.py`, `plugin export`, `plugin remove`, `plugin list` |
 | Easier to use | typo repair (`opn gmial` -> `open gmail`), `completion bash\|zsh\|powershell`, `web` (a private page on your own computer) |
 | New tasks | `invoice Ravi Traders: 3 pens at 10 gst 18`, `rd 5000 6.5 2 years`, `save clipboard`, `clipboard history` |
@@ -342,6 +342,7 @@ A plugin is one `.py` file. Make a starter with `jeeg plugin new my_task`, edit 
 ## What is new in 2.12
 
 - **AI mode:** `connect ai` makes a temporary https link (through `cloudflared` or `ngrok`, which you install yourself) that you paste into Claude.ai (Settings > Connectors > Add custom connector) or any AI that can open links, so it can use JeeG on your computer. Three modes: `safe`, `ask` (default: you type y for anything beyond the safe list) and `god`. Time-limited, secret link, every call printed. See REMOTE_AI.md.
+- **For administrators:** an optional policy file can switch off tasks, internet tasks, plugins and AI browser control, and cap the AI mode (ADMIN.md). `audit show|export` lists what ran and who asked.
 
 ## What is new in 2.11
 

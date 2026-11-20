@@ -38,7 +38,7 @@ __all__ = ["run", "run_many", "arun", "watch", "on", "off", "run_task", "find", 
 
 MAX_LINE = 2000
 # Commands that are interactive, long-running or that install code: only available in the terminal.
-TERMINAL_ONLY = frozenset({"web", "ui", "gui", "window", "learn", "tour", "tutorial", "setup", "exit", "quit", "q", "update", "upgrade",
+TERMINAL_ONLY = frozenset({"web", "ui", "gui", "window", "windows", "desktop", "kit", "audit", "learn", "tour", "tutorial", "setup", "exit", "quit", "q", "update", "upgrade",
                            "plugin", "plugins", "routines", "completion", "first"})
 _LOCK = threading.RLock()
 _CONTROL = re.compile(r"[\x00-\x08\x0b-\x1f\x7f]")

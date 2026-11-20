@@ -148,16 +148,171 @@ def install_kind(here: Path) -> str:
     return "zip"
 
 
-def cmd_update(q: str, here: Path, version: str, assume_yes: bool = False) -> int:
+# ---- updating from PyPI (pip installs and unzipped folders) and the once-a-day "newer version" notice (off unless you turn it on)
+PYPI_API = "https://pypi.org/pypi/jeeg/json"
+
+
+def pypi_latest(timeout: float = 8.0) -> dict:
+    """{'version', 'url', 'sha256', 'size', 'name'} for the newest pure-Python wheel on PyPI, or raises OSError."""
+    api = os.environ.get("JEEG_PYPI_API", "").strip()
+    api = api if api.startswith("http://127.0.0.1") else PYPI_API
+    req = urllib.request.Request(api, headers={"User-Agent": "JeeG-update-check", "Accept": "application/json"})
+    try:
+        with _OPENER.open(req, timeout=timeout) as r:
+            data = json.loads(r.read(2_000_000).decode("utf-8", "replace"))
+    except urllib.error.HTTPError as ex:
+        raise OSError("JeeG is not on PyPI yet" if ex.code == 404 else f"PyPI answered {ex.code}")
+    except (urllib.error.URLError, TimeoutError, ValueError) as ex:
+        raise OSError("could not reach PyPI (are you online?)") from ex
+    ver = str(((data or {}).get("info") or {}).get("version") or "")
+    if not re.fullmatch(r"\d+(\.\d+){1,3}", ver):
+        raise OSError("PyPI did not report a usable version")
+    for f in (data.get("urls") or []):
+        if isinstance(f, dict) and f.get("packagetype") == "bdist_wheel" and str(f.get("filename", "")).endswith("-py3-none-any.whl") and not f.get("yanked"):
+            sha = str((f.get("digests") or {}).get("sha256", "")).lower()
+            url = str(f.get("url", ""))
+            host_ok = url.startswith("https://files.pythonhosted.org/") or url.startswith("http://127.0.0.1")
+            if re.fullmatch(r"[0-9a-f]{64}", sha) and host_ok:
+                return {"version": ver, "url": url, "sha256": sha, "size": int(f.get("size") or 0), "name": str(f["filename"])}
+    raise OSError(f"PyPI has {ver} but no checkable wheel for it yet")
+
+
+def update_from_wheel(info: dict, here: Path, state: Path, assume_yes: bool) -> int:
+    """Replace the program files of an unzipped JeeG folder with the PyPI wheel, after checking its SHA-256 and every file."""
+    import ast
+    import hashlib
+    import io
+    import zipfile
+    if not os.access(here, os.W_OK) or not os.access(here / "scripts", os.W_OK):
+        print(f"I cannot write to {here}. Run it where you have permission, or download the new version yourself.")
+        return 1
+    if not _ask(f"Replace the program files in {here} with JeeG {info['version']}? (your notes and settings are kept; a copy of the old files is saved first)", assume_yes):
+        return 3
+    try:
+        blob = _download(info["url"], 25_000_000)
+    except OSError as ex:
+        print(f"Could not update: {ex}.")
+        return 1
+    if hashlib.sha256(blob).hexdigest() != info["sha256"]:
+        print("The downloaded file does not match the checksum PyPI published, so I stopped. Nothing was changed.")
+        return 1
+    new = {}
+    try:
+        with zipfile.ZipFile(io.BytesIO(blob)) as z:
+            for n in z.namelist():
+                m = re.fullmatch(r"(jeeg[a-z_]*\.py)", n) or re.fullmatch(r"jeeg_scripts/([A-Za-z0-9_.\-]+\.py)", n)
+                if not m:
+                    continue
+                if z.getinfo(n).file_size > 3_000_000:
+                    raise ValueError(f"{n} is too large")
+                text = z.read(n)
+                ast.parse(text)                                       # every file must at least be valid Python before anything is written
+                new[("scripts/" if n.startswith("jeeg_scripts/") else "") + m.group(1)] = text
+    except (zipfile.BadZipFile, SyntaxError, ValueError, KeyError) as ex:
+        print(f"The new version did not pass my checks ({type(ex).__name__}), so nothing was changed.")
+        return 1
+    top = new.get("jeeg.py", b"").decode("utf-8", "replace")
+    if not re.search(r'__version__\s*=\s*"' + re.escape(info["version"]) + '"', top) or len([k for k in new if k.startswith("scripts/")]) < 50:
+        print("The new files do not look like JeeG " + info["version"] + ", so nothing was changed.")
+        return 1
+    import zipfile as zf2
+    bdir = state / "backups"
+    bdir.mkdir(parents=True, exist_ok=True)
+    bk = bdir / f"program-before-{info['version']}-{time.strftime('%Y%m%d-%H%M%S')}.zip"
+    old = [p for p in list(here.glob("jeeg*.py")) + list((here / "scripts").glob("*.py"))]
+    with zf2.ZipFile(bk, "w", zf2.ZIP_DEFLATED) as zb:
+        for p in old:
+            zb.write(p, str(p.relative_to(here)).replace("\\", "/"))
+    manifest = here / ".jeeg-files.json"
+    try:
+        had = set(json.loads(manifest.read_text(encoding="utf-8")))
+    except (OSError, ValueError):
+        had = set()
+    try:
+        for rel, data in new.items():
+            dst = here / rel
+            tmp = dst.with_name(dst.name + ".new")
+            tmp.write_bytes(data)
+            os.replace(tmp, dst)
+        for rel in sorted(had - set(new)):                          # a task that this release removed or renamed
+            if re.fullmatch(r"scripts/[A-Za-z0-9_.\-]+\.py", rel) and (here / rel).is_file():
+                (here / rel).unlink()
+        manifest.write_text(json.dumps(sorted(new)), encoding="utf-8")
+    except OSError as ex:                                           # put the old files back
+        with zf2.ZipFile(bk) as zb:
+            for n in zb.namelist():
+                (here / n).write_bytes(zb.read(n))
+        print(f"Updating failed ({ex.strerror or ex}); I put the old files back. A copy is in {bk}.")
+        return 1
+    print(f"Updated to JeeG {info['version']} ({len(new)} files). A copy of the old program files is in {bk}.\nStart JeeG again to use it.")
+    return 0
+
+
+def _update_cfg(state: Path) -> dict:
+    try:
+        d = json.loads((state / "update_check.json").read_text(encoding="utf-8"))
+        return d if isinstance(d, dict) else {}
+    except (OSError, ValueError):
+        return {}
+
+
+def update_notice(state: Path, here: Path, version: str) -> None:
+    """If you turned on  update auto on : once a day, one short request, and one line if a newer version exists. Never installs anything."""
+    cfg = _update_cfg(state)
+    today = time.strftime("%Y-%m-%d")
+    if cfg.get("on") is not True or cfg.get("last") == today:
+        return
+    try:
+        kind = install_kind(here)
+        tag = (latest_release(3.0)["tag_name"].lstrip("vV") if kind in {"exe", "git"} else pypi_latest(3.0)["version"])
+    except (OSError, KeyError):
+        tag = None
+    try:
+        cfg["last"] = today
+        if tag:
+            cfg["newest"] = tag
+        state.mkdir(parents=True, exist_ok=True)
+        (state / "update_check.json").write_text(json.dumps(cfg), encoding="utf-8")
+    except OSError:
+        pass
+    if tag and _vtuple(tag) > _vtuple(version):
+        print(f"A newer JeeG is available: {tag} (you have {version}). Say:  update now", file=sys.stderr)
+
+
+def _update_auto(q: str, state: Path) -> int:
+    w = q.lower().split()
+    cfg = _update_cfg(state)
+    arg = w[2] if len(w) > 2 else "status"
+    if arg in {"on", "off"}:
+        cfg["on"] = arg == "on"
+        state.mkdir(parents=True, exist_ok=True)
+        (state / "update_check.json").write_text(json.dumps(cfg), encoding="utf-8")
+        print("Once a day JeeG will check for a newer version and tell you in one line. It never installs by itself." if cfg["on"] else "Automatic checking is off. JeeG only looks when you say: update")
+        return 0
+    print("Automatic update check: " + ("on (once a day; one request to PyPI or GitHub; no personal data)" if cfg.get("on") else "off") + "\nChange it with:  update auto on   /   update auto off")
+    return 0
+
+
+def cmd_update(q: str, here: Path, version: str, assume_yes: bool = False, state: Path | None = None) -> int:
+    st = state or Path(os.environ.get("JEEG_HOME") or (Path.home() / ".jeeg"))
+    if q.lower().split()[:2] == ["update", "auto"]:
+        return _update_auto(q, st)
     now = "now" in q.lower().split()
     kind = install_kind(here)
-    rel = None
+    rel, info = None, None
     try:
-        if kind == "exe":
+        if kind in {"exe", "git"} or os.environ.get("JEEG_RELEASE_API", "").strip():     # your own release address always wins
             rel = latest_release()
             tag, url = str(rel["tag_name"]).lstrip("vV"), str(rel.get("html_url") or RELEASE_PAGE)
         else:
-            tag, url = latest_version()
+            try:
+                info = pypi_latest()
+                tag, url = info["version"], "https://pypi.org/project/jeeg/"
+            except OSError as pex:                                 # not on PyPI (yet): fall back to the GitHub release for the version
+                try:
+                    tag, url = latest_version()
+                except OSError as gex:
+                    raise OSError(f"{pex}; GitHub: {gex}")
     except OSError as ex:
         print(f"JeeG {version}. Could not check for a newer version: {ex}.")
         return 1
@@ -172,12 +327,17 @@ def cmd_update(q: str, here: Path, version: str, assume_yes: bool = False) -> in
         if not _ask(f"Replace {sys.executable} with JeeG {tag}?", assume_yes):
             return 3
         return update_standalone(rel, Path(sys.executable))
+    print(f"A newer version is available: {tag} (you have {version}).")
+    if kind == "zip":
+        if not info:
+            print(f"Download it from {url}, unzip over your JeeG folder (your data in ~/.jeeg is kept).")
+            return 0
+        if not now:
+            print("Update with:  update now   (downloads from PyPI, checks the SHA-256 and every file, saves a copy of the old files first)")
+            return 0
+        return update_from_wheel(info, here, st, assume_yes)
     cmd = {"git": ["git", "-C", str(here), "pull", "--ff-only"],
            "pip": [sys.executable, "-m", "pip", "install", "--upgrade", "jeeg"]}.get(kind)
-    print(f"A newer version is available: {tag} (you have {version}).")
-    if not cmd:
-        print(f"Download it from {url}, unzip over your JeeG folder (your data in ~/.jeeg is kept).")
-        return 0
     shown = " ".join(cmd)
     if not now:
         print(f"Update with:  {shown}\nor say:  update now")
@@ -690,6 +850,21 @@ def cmd_selfcheck(self_cmd: list, version: str, here: Path) -> int:
         import _sys
         return (bool(_sys.clip_get is not None), "")
     check("clipboard helpers load", clip, fatal=False)
+    def _tk():
+        import importlib.util
+        return importlib.util.find_spec("tkinter") is not None, "needed for the window: jeeg gui"
+    check("tkinter is installed (jeeg gui)", _tk, fatal=False)
+    def _browser():
+        sys.path.insert(0, str(here / "scripts"))
+        import _cdp
+        b = _cdp.find_browser()
+        return bool(b), (str(b)[:50] if b else "install Chrome, Edge or Brave for the browser tasks")
+    check("a Chromium browser is found (browser tasks)", _browser, fatal=False)
+    if sys.platform.startswith("linux"):
+        check("wmctrl or xdotool is installed (window and desktop tasks)", lambda: (bool(shutil.which("wmctrl") or shutil.which("xdotool")), "sudo apt install wmctrl xdotool"), fatal=False)
+        check("a clipboard tool is installed (xclip, xsel or wl-clipboard)", lambda: (bool(shutil.which("xclip") or shutil.which("xsel") or shutil.which("wl-paste")), "sudo apt install xclip"), fatal=False)
+    if sys.platform != "win32":
+        check("crontab is available (autorun)", lambda: (bool(shutil.which("crontab")), "needed for: autorun add ..."), fatal=False)
     check("Pillow is installed (picture tasks)", lambda: (__import__("importlib.util", fromlist=["util"]).find_spec("PIL") is not None, "pip install Pillow for picture tasks"), fatal=False)
     check("the data folder is writable", lambda: ((tmp / "home").exists() or (tmp / "home").mkdir(parents=True, exist_ok=True) or True, ""))
     try:

@@ -3,6 +3,7 @@
     autorun add "start work day" at 9:00 weekdays   (a task phrase, or one of your own routines)
     autorun add "gst 2500 18" at 6:30 pm weekdays   Monday to Friday
     autorun add backup folder documents at 21:00 every sun,wed
+    autorun add "show reminders" at login           (Windows: when you log in; macOS/Linux: when the computer starts)
     autorun list | autorun remove <number> | autorun remove all
 
 Windows uses Task Scheduler (schtasks), macOS and Linux use cron. Nothing runs in the background by itself:
@@ -27,6 +28,14 @@ TAG = "jeeg-autorun"
 def parse(text: str):
     """'morning at 9:00 pm weekdays' -> ('morning', 21, 0, ['mon', ...]).  Raises ValueError with a plain message."""
     t = text.strip()
+    lg = re.match(r"^(?P<what>.+?)\s+(?:at|on|when|every\s+time\s+i)\s+(?:log\s?in|logon|log\s+on|start\s?up|boot|reboot)\s*$", t, re.I)
+    if lg:
+        what = lg.group("what").strip().strip("\"'").strip()
+        if not what or len(what) > 150 or re.search(r"[\x00-\x1f\x7f]", what):
+            raise ValueError("The phrase must be 1 to 150 characters on one line.")
+        if what.split()[0].lower() in {"autorun", "update", "upgrade", "plugin", "plugins", "setup", "web", "ui", "exit", "quit"}:
+            raise ValueError(f"'{what.split()[0]}' cannot be scheduled.")
+        return what, -1, -1, ["login"]
     m = re.match(r"^(?P<what>.+?)\s+(?:at|@)\s+(?P<h>\d{1,2})(?::(?P<m>\d{2}))?\s*(?P<ap>am|pm)?\b(?P<rest>.*)$", t, re.I)
     if not m:
         raise ValueError("Say what to run and when, for example:  autorun add morning at 9:00")
@@ -58,6 +67,8 @@ def parse(text: str):
 
 def describe(h: int, mi: int, days) -> str:
     when = f"{h:02d}:{mi:02d}"
+    if days == ["login"]:
+        return "at login on Windows, at start-up on macOS and Linux"
     if len(days) == 7:
         return f"every day at {when}"
     if days == DAYS[:5]:
@@ -74,6 +85,9 @@ def _cmd(here: Path, state: Path, phrase: str) -> list:
 
 
 def cron_line(here: Path, state: Path, item_id: str, phrase: str, h: int, mi: int, days) -> str:
+    if days == ["login"]:
+        cmd = " ".join(shlex.quote(x) for x in _cmd(here, state, phrase)).replace("%", "\\%")
+        return f"@reboot sleep 20; JEEG_HOME={shlex.quote(str(state))} {cmd} >/dev/null 2>&1  # {TAG}:{item_id}"
     dow = "*" if len(days) == 7 else ",".join(str((DAYS.index(d) + 1) % 7) for d in days)
     cmd = " ".join(shlex.quote(x) for x in _cmd(here, state, phrase)).replace("%", "\\%")
     return f"{mi} {h} * * {dow} JEEG_HOME={shlex.quote(str(state))} {cmd} >/dev/null 2>&1  # {TAG}:{item_id}"
@@ -81,6 +95,8 @@ def cron_line(here: Path, state: Path, item_id: str, phrase: str, h: int, mi: in
 
 def schtasks_args(here: Path, state: Path, item_id: str, phrase: str, h: int, mi: int, days) -> list:
     tr = subprocess.list2cmdline(_cmd(here, state, phrase))
+    if days == ["login"]:
+        return ["schtasks", "/Create", "/TN", f"JeeG-{item_id}", "/TR", tr, "/SC", "ONLOGON", "/F"]
     base = ["schtasks", "/Create", "/TN", f"JeeG-{item_id}", "/TR", tr, "/ST", f"{h:02d}:{mi:02d}", "/F"]
     if len(days) == 7:
         return base + ["/SC", "DAILY"]
@@ -197,6 +213,9 @@ def cmd_autorun(arg: str, here: Path, state: Path, dry: bool = False) -> int:
         if not dry:
             _save(state, items + [item])
         print(("Would schedule" if dry else "Scheduled") + f": '{what}'  {describe(h, mi, days)}.")
+        if days == ["login"]:
+            print("It runs once each time you log in (Windows) or the computer starts (macOS, Linux; needs cron to be running).")
+            return 0
         print("It runs when your computer is on at that time. Tasks that ask for confirmation will not run by themselves.")
         return 0
     print("Usage: autorun add <phrase or routine> at <time> [daily|weekdays|weekends|every mon,thu] | autorun list | autorun remove <n>")

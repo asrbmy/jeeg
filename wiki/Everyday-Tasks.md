@@ -66,3 +66,17 @@ A guided tour by area. The [Task Catalog](Task-Catalog) lists every task with it
 | `80c add 50000 ppf`, `80c` | Section 80C total against the limit |
 | `meal plan monday dal rice`, `meal today` | Weekly meal plan |
 | `jeeg gui` | A small window instead of the terminal (tkinter) |
+
+### Even more
+
+| Say | What happens |
+|---|---|
+| `download https://site/file.pdf`, `browser download 3` | Save a file to Downloads (asks first; never programs or scripts) |
+| `summarize notes.txt 5`, `summarize clipboard` | Key sentences, picked by word frequency (not AI) |
+| `clipboard clean`, `clipboard links`, `clipboard csv` | Tidy what you copied, pull out links, save a copied table as CSV |
+| `meter add electricity 12450`, `meter use electricity` | Meter readings and use per day |
+| `monthly report` | One-page HTML report; print it to PDF |
+| `windows list`, `window snap chrome left` | List and arrange windows |
+| `desktop type hello`, `desktop key ctrl+s`, `desktop click 500 300` | Type, press keys or click in the front window (you only, asks first) |
+| `kit export mine`, `kit show file`, `kit install file` | Share routines, aliases and variables |
+| `autorun add "show reminders" at login` | Run something at log-in or start-up |

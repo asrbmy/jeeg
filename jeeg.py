@@ -382,7 +382,7 @@ def resolve(query: str, entries: list[dict]):
 # ------------------------------------------------- your data: aliases, logs
 RESERVED = {"selfcheck", "list", "help", "history", "again", "repeat", "redo", "reindex", "selftest", "exit", "quit", "alias",
             "explain", "misses", "stats", "doctor", "tasks", "pack", "tips", "tip", "plugins", "plugin", "update", "setup",
-            "web", "ui", "completion", "learn", "tour", "routines", "privacy", "autorun", "report", "share", "batch"}
+            "web", "ui", "completion", "learn", "tour", "routines", "privacy", "autorun", "report", "share", "batch", "policy", "audit"}
 
 
 def _load_json(name: str, default):
@@ -527,7 +527,12 @@ def cmd_explain(q: str, entries: list[dict]) -> int:
 def active(entries: list[dict]) -> list[dict]:
     """Entries minus categories you switched off with  pack off <category>."""
     off = set(_load_json("disabled.json", []))
-    return [e for e in entries if e["cat"] not in off] if off else entries
+    entries = [e for e in entries if e["cat"] not in off] if off else entries
+    try:
+        import jeeg_policy
+        return jeeg_policy.apply(entries, STATE / "plugins")
+    except ImportError:
+        return entries
 
 
 def cmd_plugins(entries: list[dict]) -> int:
@@ -622,7 +627,7 @@ def nudge_backup() -> None:
     """Once a day, mention a backup if you have personal data and have not exported it for 30 days."""
     try:
         mine = [f for f in STATE.iterdir() if f.name not in {"index.json", "log.jsonl", "history.jsonl", "misses.log",
-                                                              "last_backup.json", "nudge.json", "disabled.json"} and f.is_file()]
+                                                              "last_backup.json", "nudge.json", "disabled.json", "data_version.json"} and f.is_file()]
         if not mine:
             return
         today = time.strftime("%Y-%m-%d")
@@ -640,7 +645,10 @@ def nudge_backup() -> None:
 def log_run(e: dict, rc: int, dt: float) -> None:
     if NOLOG:
         return
-    _append_line("log.jsonl", json.dumps({"t": int(time.time()), "s": e["name"], "rc": rc, "dt": round(dt, 2)}))
+    rec = {"t": int(time.time()), "s": e["name"], "rc": rc, "dt": round(dt, 2)}
+    if os.environ.get("JEEG_VIA_AI") == "1":
+        rec["ai"] = 1                                   # the audit log tells you which runs an AI asked for
+    _append_line("log.jsonl", json.dumps(rec))
 
 
 def log_miss(query: str, why: str) -> None:
@@ -1255,6 +1263,16 @@ def handle(line: str, dirs, opt) -> int | None:
         return None
     all_entries = load_index(dirs, rebuild=(low == "reindex"))
     entries = active(all_entries)
+    try:                                              # a task the administrator turned off: say so instead of guessing something else
+        import jeeg_policy
+        gone = [e for e in all_entries if e not in jeeg_policy.apply(all_entries, STATE / "plugins")]
+        if gone and low not in {"policy", "list", "help", "exit", "quit"} and not low.startswith(("list ", "pack ", "explain ")):
+            rb, ra = rank(q, gone), rank(q, entries)
+            if rb and (not ra or rb[0][0] > ra[0][0]):
+                print(f"Your administrator has turned off '{rb[0][1]['name'].replace('_', ' ')}' on this computer. Say 'policy' to see what is limited.")
+                return 1
+    except ImportError:
+        pass
     if low == "pack" or low.startswith("pack "):
         return cmd_pack(q, all_entries)
     if low in {"tips", "tip"}:
@@ -1263,9 +1281,9 @@ def handle(line: str, dirs, opt) -> int | None:
         import jeeg_cmds
         return jeeg_cmds.cmd_plugin(q.split(None, 1)[1] if " " in q else "list", STATE / "plugins", all_entries, parse_header,
                                     opt.get("yes", False))
-    if re.fullmatch(r"(?:(?:jeeg\s+)?(?:update|upgrade)(?:\s+jeeg)?(?:\s+now)?|(?:update|upgrade)\s+now)", low):
+    if re.fullmatch(r"(?:(?:jeeg\s+)?(?:update|upgrade)(?:\s+jeeg)?(?:\s+now)?|(?:update|upgrade)\s+now|update\s+auto(?:\s+(?:on|off|status))?)", low):
         import jeeg_cmds
-        return jeeg_cmds.cmd_update(low, HERE, __version__, opt.get("yes", False))
+        return jeeg_cmds.cmd_update(low, HERE, __version__, opt.get("yes", False), STATE)
     if low in {"setup", "setup jeeg", "jeeg setup", "setup wizard", "first run"}:
         import jeeg_cmds
         return jeeg_cmds.cmd_setup(HERE, STATE, all_entries, opt.get("yes", False))
@@ -1332,6 +1350,10 @@ def handle(line: str, dirs, opt) -> int | None:
         return cmd_alias(q, entries)
     if low == "explain" or low.startswith("explain "):
         return cmd_explain(q, entries)
+    if low in {"policy", "admin policy", "show policy"}:
+        import jeeg_policy
+        print(jeeg_policy.describe())
+        return 0
     if low in {"gui", "window", "open window", "desktop window", "jeeg window"}:
         if os.environ.get("JEEG_VIA_AI") == "1":
             print("A window can only be opened by you, from your own terminal.")
@@ -1515,7 +1537,20 @@ def main(argv: list[str]) -> int:
               "or use --dir PATH / TASK_SCRIPTS_DIR.")
         return 1
 
+    try:
+        import jeeg_migrate
+        note = jeeg_migrate.run(STATE)
+        if note:
+            print(note, file=sys.stderr)
+    except ImportError:
+        pass
     if not opt["quiet"]:
+        if sys.stdout.isatty() and os.environ.get("JEEG_VIA_AI") != "1" and (STATE / "update_check.json").is_file():
+            try:
+                import jeeg_cmds
+                jeeg_cmds.update_notice(STATE, HERE, __version__)
+            except Exception:
+                pass
         revive_reminders(dirs, opt)
     if words:
         if opt["quiet"]:

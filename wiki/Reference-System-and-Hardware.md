@@ -2,7 +2,7 @@
 
 Status of your computer, power and screen control, volume and brightness, devices, and household helpers.
 
-55 tasks. Each entry shows the **usage** (`<x>` you fill in, `[x]` optional), what the task does, how it behaves, other words that also find it, and the script file you can read or edit. Say the task name, or the usage with your words filled in. `explain <words>` shows how any phrase is matched; `<task> preview` or `--dry-run` shows what would happen without doing it.
+57 tasks. Each entry shows the **usage** (`<x>` you fill in, `[x]` optional), what the task does, how it behaves, other words that also find it, and the script file you can read or edit. Say the task name, or the usage with your words filled in. `explain <words>` shows how any phrase is matched; `<task> preview` or `--dry-run` shows what would happen without doing it.
 
 Categories on this page: [system](#system), [power](#power), [hardware](#hardware), [home](#home), [selfcheck](#selfcheck)
 
@@ -32,6 +32,15 @@ Categories on this page: [system](#system), [power](#power), [hardware](#hardwar
 **What it does:** Show current CPU load  
 **Also found by:** `cpu`, `processor`, `load`, `cpu load`, `busy`  
 **Script:** `scripts/cpu_usage.py`
+
+### desktop input
+
+**Usage:** `desktop type <text> | desktop key <combo> | desktop click <x> <y> | add 'preview' to see what would happen`  
+**What it does:** Type, press keys or click at a screen position in whatever window is in front (desktop type hello, desktop key ctrl+s, desktop click 500 300). Asks first; you only, never an AI. Windows built in; Linux needs xdotool; macOS needs cliclick for clicks.  
+**Behaviour:** asks before running.  
+**Also found by:** `desktop type`, `desktop key`, `desktop click`, `press keys on screen`, `type into app`, `click on screen`, `mouse click`, `send keys`  
+**Your words:** the whole sentence is passed (quotes kept)  
+**Script:** `scripts/desktop_input.py`
 
 ### disk space
 
@@ -208,6 +217,14 @@ Categories on this page: [system](#system), [power](#power), [hardware](#hardwar
 **What it does:** List connected USB devices  
 **Also found by:** `usb list`, `connected usb`, `what usb is plugged`, `plugged in devices`, `usb drives`, `connected devices`  
 **Script:** `scripts/usb_devices.py`
+
+### window control
+
+**Usage:** `windows list | window focus|minimize|maximize|restore|close <part of title> | window snap <part of title> left|right|full`  
+**What it does:** List and control open windows (windows list, window focus chrome, window minimize notepad, window snap chrome left, window close notepad). Windows built in; Linux needs wmctrl or xdotool; macOS uses System Events.  
+**Also found by:** `windows list`, `list windows`, `focus window`, `close window`, `minimize window`, `maximize window`, `move window`, `snap window`, `switch to window`  
+**Your words:** the whole sentence is passed (quotes kept)  
+**Script:** `scripts/window_control.py`
 
 
 ## power

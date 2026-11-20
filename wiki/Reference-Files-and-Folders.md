@@ -2,7 +2,7 @@
 
 Finding, organising, renaming and cleaning files; folders; backups; the clipboard; snippets; data files.
 
-69 tasks. Each entry shows the **usage** (`<x>` you fill in, `[x]` optional), what the task does, how it behaves, other words that also find it, and the script file you can read or edit. Say the task name, or the usage with your words filled in. `explain <words>` shows how any phrase is matched; `<task> preview` or `--dry-run` shows what would happen without doing it.
+71 tasks. Each entry shows the **usage** (`<x>` you fill in, `[x]` optional), what the task does, how it behaves, other words that also find it, and the script file you can read or edit. Say the task name, or the usage with your words filled in. `explain <words>` shows how any phrase is matched; `<task> preview` or `--dry-run` shows what would happen without doing it.
 
 Categories on this page: [files](#files), [folders](#folders), [backup](#backup), [clipboard](#clipboard), [snippets](#snippets), [data](#data), [security](#security)
 
@@ -428,6 +428,14 @@ Categories on this page: [files](#files), [folders](#folders), [backup](#backup)
 **Your words:** the whole sentence is passed (quotes kept)  
 **Script:** `scripts/clipboard_history.py`
 
+### copied text
+
+**Usage:** `clipboard clean | links | csv | sort | count`  
+**What it does:** Work on what you copied (clipboard clean, clipboard links, clipboard csv, clipboard sort, clipboard count)  
+**Also found by:** `clean copied text`, `copied links`, `copied table to csv`, `strip formatting`, `plain text from copy`  
+**Your words:** the whole sentence is passed (quotes kept)  
+**Script:** `scripts/copied_text.py`
+
 ### copy to clipboard
 
 **Usage:** `copy to clipboard <text>`  
@@ -512,6 +520,14 @@ Categories on this page: [files](#files), [folders](#folders), [backup](#backup)
 
 
 ## security
+
+### audit log
+
+**Usage:** `audit show [n] | audit summary | audit ai | audit export [file.csv]`  
+**What it does:** See and export what JeeG ran and who asked (you or an AI): audit show 20, audit summary, audit export. Task names and results only, never what you typed.  
+**Also found by:** `audit export`, `activity log`, `what did jeeg run`, `what ran`, `run history export`, `ai activity`  
+**Your words:** the whole sentence is passed (quotes kept)  
+**Script:** `scripts/audit_log.py`
 
 ### breach check
 

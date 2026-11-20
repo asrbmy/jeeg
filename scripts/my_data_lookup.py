@@ -11,7 +11,7 @@ from _backup import data_files
 from _files import drop_tokens
 q = drop_tokens(args_text().lower(), {"search", "find", "look", "for", "in", "my", "data", "notes", "records", "everything", "journal", "saved", "where", "did", "i", "write", "the"}).split()
 if not q: fail("Usage: search my data <words>   e.g. search my data dentist")
-SKIP = {"log.jsonl", "history.jsonl", "misses.log", "disabled.json", "undo.json", "routines.json"}
+SKIP = {"log.jsonl", "history.jsonl", "misses.log", "disabled.json", "undo.json", "routines.json", "data_version.json"}
 hits = 0
 for p in data_files():
     if p.name in SKIP or p.suffix not in {".txt", ".csv", ".json", ".md", ".log"}: continue

@@ -16,6 +16,7 @@ permissions:
   attestations: write
 jobs:
   tag:
+    timeout-minutes: 5
     if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     outputs:
@@ -31,6 +32,7 @@ jobs:
           echo "Attaching to $T"
           echo "tag=$T" >> "$GITHUB_OUTPUT"
   build:
+    timeout-minutes: 40
     needs: tag
     strategy:
       fail-fast: false

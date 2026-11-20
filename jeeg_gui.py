@@ -60,6 +60,10 @@ class App:
         self.btn.pack(side="left", padx=(8, 0))
         tk.Button(top, text="Tasks", command=lambda: self.go("list")).pack(side="left", padx=(6, 0))
         tk.Button(top, text="Tips", command=lambda: self.go("tips")).pack(side="left", padx=(6, 0))
+        self.area = tk.StringVar(root, value="Browse...")
+        cats = ["money", "files", "system", "network", "health", "study", "time", "reminders", "text", "developer", "apps", "browser", "clipboard", "lists", "productivity"]
+        menu = tk.OptionMenu(top, self.area, *cats, command=lambda c: (self.area.set("Browse..."), self.go("list " + c)))
+        menu.pack(side="left", padx=(6, 0))
         self.out = scrolledtext.ScrolledText(root, wrap="word", font=("Courier", 11), padx=8, pady=6, state="disabled")
         self.out.pack(fill="both", expand=True, padx=10)
         self.status = tk.Label(root, text="Type what you want to do, for example:  emi loan 25 lakh 8.5% 20 years", anchor="w", padx=10, pady=4)

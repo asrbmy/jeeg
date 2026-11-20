@@ -2,7 +2,7 @@
 
 Health logs and calculators, study tools, pictures, PDF and video, learning sites, games and quizzes.
 
-64 tasks. Each entry shows the **usage** (`<x>` you fill in, `[x]` optional), what the task does, how it behaves, other words that also find it, and the script file you can read or edit. Say the task name, or the usage with your words filled in. `explain <words>` shows how any phrase is matched; `<task> preview` or `--dry-run` shows what would happen without doing it.
+65 tasks. Each entry shows the **usage** (`<x>` you fill in, `[x]` optional), what the task does, how it behaves, other words that also find it, and the script file you can read or edit. Say the task name, or the usage with your words filled in. `explain <words>` shows how any phrase is matched; `<task> preview` or `--dry-run` shows what would happen without doing it.
 
 Categories on this page: [health](#health), [study](#study), [learning](#learning), [media](#media), [fun](#fun), [text](#text)
 
@@ -494,6 +494,14 @@ Categories on this page: [health](#health), [study](#study), [learning](#learnin
 **Also found by:** `sort list`, `alphabetical order`, `sort alphabetically`, `sort items`, `order list`, `sort names`, `sort numbers`, `sort words`  
 **Your words:** passed through untouched  
 **Script:** `scripts/sort_lines.py`
+
+### summarize text
+
+**Usage:** `summarize <file | clipboard> [sentences]`  
+**What it does:** Pick the key sentences from a text file, PDF or the clipboard (summarize notes.txt, summarize clipboard 5). Not AI: it scores sentences by word frequency.  
+**Also found by:** `summarize`, `summary`, `summarise`, `key sentences`, `shorten text`, `tldr`, `short version`  
+**Your words:** the whole sentence is passed (quotes kept)  
+**Script:** `scripts/summarize_text.py`
 
 ### title case text
 

@@ -6,7 +6,7 @@
 # rawargs: full
 # private: yes
 # network: yes
-# patterns: ^\s*browser\s+(?:click|type|press|select|tick|check|submit|fill|hover|do|flow\s+run)\b
+# patterns: ^\s*browser\s+(?:click|type|press|select|tick|check|submit|fill|hover|download|do|flow\s+run)\b
 # priority: 5
 import re, time
 from _lib import args_text, fail
@@ -45,7 +45,7 @@ if fm:
     raise SystemExit(0)
 m = re.match(r"^(\w+)\s*(.*)$", t, re.S)
 cmd, rest = (m.group(1).lower(), m.group(2).strip()) if m else ("", "")
-tm = re.match(r"^(?:text|label)\s+(.+)$", rest, re.I | re.S) if cmd in {"click", "hover", "tick", "check", "type", "fill", "select"} else None
+tm = re.match(r"^(?:text|label)\s+(.+)$", rest, re.I | re.S) if cmd in {"click", "hover", "tick", "check", "type", "fill", "select", "download"} else None
 tlabel = tm.group(1) if tm else ""
 if tm and cmd in {"type", "fill", "select"}:
     tlabel, _, tval = tm.group(1).partition("=")
@@ -55,12 +55,12 @@ if tm and cmd in {"type", "fill", "select"}:
 else:
     tval = None
 num = re.match(r"^\[?(\d{1,3})\]?\s*(.*)$", rest, re.S)
-if cmd in {"click", "type", "fill", "select", "tick", "check", "submit", "hover"} and not num and not tm:
+if cmd in {"click", "type", "fill", "select", "tick", "check", "submit", "hover", "download"} and not num and not tm:
     fail(f"Say which number, from  browser look.  For example:  browser {cmd} 3" + (" hello" if cmd in {"type", "fill"} else ""))
 n, arg = (int(num.group(1)), num.group(2).strip()) if num else (0, tval if tval is not None else rest)
 if cmd in {"type", "fill", "select"} and not arg:
     fail(f"Say what to {'choose' if cmd == 'select' else 'type'}:  browser {cmd} {n} <text>")
-if cmd not in {"click", "type", "fill", "press", "select", "tick", "check", "submit", "hover"}:
+if cmd not in {"click", "type", "fill", "press", "select", "tick", "check", "submit", "hover", "download"}:
     fail("Say: browser click <number> | click text <words> | type <number> <text> | press <key> | select <number> <option> | tick <number> | hover <number>")
 try:
     pg, tb = _cdp.session(auto_start=False)
@@ -91,9 +91,22 @@ try:
                        "type": f"Would type {len(arg)} characters into {what}", "fill": f"Would type {len(arg)} characters into {what}",
                        "select": f"Would choose '{arg}' in {what}", "tick": f"Would tick/untick {what}", "check": f"Would tick/untick {what}",
                        "hover": f"Would move the mouse over {what}",
+                       "download": f"Would download {e['href'] or '(nothing: that element is not a link)'} into your Downloads folder",
                        "submit": f"Would send the form of {what} to {e['form'] or '(this page)'}"}[cmd]
                 print(msg + f"  on {host}.")
                 print("Nothing was changed.")
+                raise SystemExit(0)
+            if cmd == "download":
+                if not e["href"]:
+                    fail(f"[{n}] is not a link, so there is nothing to download.")
+                import os, subprocess, sys
+                from pathlib import Path
+                r = subprocess.run([sys.executable, str(Path(__file__).resolve().parent.parent / "jeeg.py"), "--yes", "download " + e["href"]],
+                                   capture_output=True, text=True, timeout=600, stdin=subprocess.DEVNULL, env=dict(os.environ))
+                msg = [l for l in (r.stdout + r.stderr).splitlines() if l.strip() and not l.startswith(">>") and not re.match(r"^(ok|failed \(exit \d+\)) in", l)]
+                if r.returncode != 0:
+                    fail(" ".join(msg)[:250] or "The download failed.")
+                print(" ".join(msg)[:250])
                 raise SystemExit(0)
             if cmd == "hover":
                 _cdp.hover_element(pg, n)

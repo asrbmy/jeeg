@@ -38,3 +38,5 @@
 - [Troubleshooting](Troubleshooting)
 - [FAQ](FAQ)
 - [Glossary](Glossary)
+
+- [Admin and Audit](Admin-and-Audit)

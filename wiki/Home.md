@@ -42,3 +42,5 @@
 5. **Everything stays here.** Records live in `~/.jeeg`. Only a small list of tasks touch the internet, and `privacy` lists them.
 
 *This wiki describes version 2.20.0. Pages say plainly what has only been tested on Linux.*
+
+- [Admin and Audit](Admin-and-Audit): limit JeeG on a computer, audit log, data upgrades

@@ -41,6 +41,21 @@ try:
             break
 except Exception:
     pass
+try:
+    import csv as _csv
+    from _lib import data_dir as _dd
+    _b = load("budgets.json", {})
+    _f = _dd() / "expenses.csv"
+    if _b and _f.exists():
+        _mo, _sp = today.strftime("%Y-%m"), {}
+        for _r in _csv.DictReader(open(_f, encoding="utf-8")):
+            if _r["date"].startswith(_mo):
+                _sp[_r["category"]] = _sp.get(_r["category"], 0) + float(_r["amount"])
+        for _c, _lim in _b.items():
+            if _lim and _sp.get(_c, 0) >= 0.8 * _lim:
+                items.append(f"Budget {_c}: {int(100 * _sp[_c] / _lim)}% used")
+except Exception:
+    pass
 now = datetime.datetime.now().strftime("%H:%M")
 for n, v in load("medicines.json", {}).items():
     miss = [x for x in v["times"] if x <= now and x not in v["taken"].get(today.isoformat(), [])]

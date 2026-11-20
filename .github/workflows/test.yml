@@ -2,11 +2,12 @@ name: tests
 on: [push, pull_request]
 jobs:
   test:
+    timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        python: ["3.9", "3.12"]
+        python: ["3.9", "3.12", "3.13"]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -43,11 +44,31 @@ jobs:
           python tests/test_fuzz.py
           python tests/test_connect.py
           python tests/test_quality.py
+      - name: New in 2.11 to 2.20, everyday tasks, administrator policy, audit log, data upgrades
+        run: |
+          python tests/test_v217.py
+          python tests/test_v218.py
+          python tests/test_v219.py
+          python tests/test_v220.py
+          python tests/test_everyday.py
+          python tests/test_more.py
+          python tests/test_prod.py
+          python tests/test_update.py
+      - name: Desktop window (Linux, virtual display)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update && sudo apt-get install -y xvfb python3-tk
+          xvfb-run -a python3 tests/test_gui.py
+        continue-on-error: true
+      - name: Real browser control (Chrome is preinstalled on the runners)
+        run: python tests/test_browser.py
+        continue-on-error: true
       - name: Privacy checks
         run: python tests/test_privacy.py
       - name: Security tests
         run: python tests/test_security.py
   package:
+    timeout-minutes: 15
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

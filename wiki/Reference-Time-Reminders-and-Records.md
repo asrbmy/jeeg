@@ -2,7 +2,7 @@
 
 Dates, time zones, reminders and timers, routines, to-dos, notes, journal, habits, birthdays, lists and reports.
 
-67 tasks. Each entry shows the **usage** (`<x>` you fill in, `[x]` optional), what the task does, how it behaves, other words that also find it, and the script file you can read or edit. Say the task name, or the usage with your words filled in. `explain <words>` shows how any phrase is matched; `<task> preview` or `--dry-run` shows what would happen without doing it.
+69 tasks. Each entry shows the **usage** (`<x>` you fill in, `[x]` optional), what the task does, how it behaves, other words that also find it, and the script file you can read or edit. Say the task name, or the usage with your words filled in. `explain <words>` shows how any phrase is matched; `<task> preview` or `--dry-run` shows what would happen without doing it.
 
 Categories on this page: [time](#time), [reminders](#reminders), [routines](#routines), [productivity](#productivity), [lists](#lists), [shopping](#shopping), [journal](#journal), [habits](#habits), [birthdays](#birthdays), [personal](#personal), [work](#work)
 
@@ -223,6 +223,23 @@ Categories on this page: [time](#time), [reminders](#reminders), [routines](#rou
 **What it does:** Routine: show to-dos then lock the screen after 5 s (editable)  
 **Also found by:** `end work`, `finish work`, `end my day`, `end day`, `wrap up`, `shutdown routine`, `going home`, `done for today`  
 **Script:** `scripts/end_work_day.py`
+
+### kit install
+
+**Usage:** `kit install <file>`  
+**What it does:** Install a kit file made by 'kit export' (kit install file). Asks first; keeps anything you already have; check it first with 'kit show'  
+**Behaviour:** asks before running.  
+**Also found by:** `install a kit`, `add someone else routines`  
+**Your words:** the whole sentence is passed (quotes kept)  
+**Script:** `scripts/kit_install.py`
+
+### kit share
+
+**Usage:** `kit export <name> | kit show <file>`  
+**What it does:** Share your routines, aliases and variables as one file, or look inside someone else's (kit export mykit, kit show file)  
+**Also found by:** `kit export`, `kit show`, `share my routines`  
+**Your words:** the whole sentence is passed (quotes kept)  
+**Script:** `scripts/kit_share.py`
 
 ### list routines
 

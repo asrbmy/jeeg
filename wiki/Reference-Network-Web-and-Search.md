@@ -2,7 +2,7 @@
 
 Network checks, watching pages, feeds, looking things up, maps, travel, mail and the real browser.
 
-74 tasks. Each entry shows the **usage** (`<x>` you fill in, `[x]` optional), what the task does, how it behaves, other words that also find it, and the script file you can read or edit. Say the task name, or the usage with your words filled in. `explain <words>` shows how any phrase is matched; `<task> preview` or `--dry-run` shows what would happen without doing it.
+75 tasks. Each entry shows the **usage** (`<x>` you fill in, `[x]` optional), what the task does, how it behaves, other words that also find it, and the script file you can read or edit. Say the task name, or the usage with your words filled in. `explain <words>` shows how any phrase is matched; `<task> preview` or `--dry-run` shows what would happen without doing it.
 
 Categories on this page: [network](#network), [web](#web), [search](#search), [maps](#maps), [travel](#travel), [info](#info), [email](#email), [links](#links), [browser](#browser)
 
@@ -37,6 +37,15 @@ Categories on this page: [network](#network), [web](#web), [search](#search), [m
 **Behaviour:** can use the internet.  
 **Also found by:** `dns`, `lookup`, `resolve`, `domain`, `nslookup`, `ip of`, `ip address of website`  
 **Script:** `scripts/dns_lookup.py`
+
+### fetch file
+
+**Usage:** `download <https address> [preview]`  
+**What it does:** Download a file from a web address into your Downloads folder (download https://example.com/a.pdf); asks first, refuses programs and scripts  
+**Behaviour:** asks before running; can use the internet.  
+**Also found by:** `fetch remote file`, `save remote file`, `get file from link`  
+**Your words:** the whole sentence is passed (quotes kept)  
+**Script:** `scripts/fetch_file.py`
 
 ### fleet check
 

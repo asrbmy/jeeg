@@ -2,7 +2,7 @@
 
 Calculators for loans, savings, tax, bills and splitting, your expense records and budgets, a lending ledger, a small stock list and invoices.
 
-50 tasks. Each entry shows the **usage** (`<x>` you fill in, `[x]` optional), what the task does, how it behaves, other words that also find it, and the script file you can read or edit. Say the task name, or the usage with your words filled in. `explain <words>` shows how any phrase is matched; `<task> preview` or `--dry-run` shows what would happen without doing it.
+52 tasks. Each entry shows the **usage** (`<x>` you fill in, `[x]` optional), what the task does, how it behaves, other words that also find it, and the script file you can read or edit. Say the task name, or the usage with your words filled in. `explain <words>` shows how any phrase is matched; `<task> preview` or `--dry-run` shows what would happen without doing it.
 
 Categories on this page: [money](#money)
 
@@ -139,6 +139,14 @@ Categories on this page: [money](#money)
 **Your words:** passed through untouched  
 **Script:** `scripts/gst_amount.py`
 
+### home meter
+
+**Usage:** `meter add <name> <reading> | meter list <name> | meter use <name>`  
+**What it does:** Log meter readings and see use per day (meter add electricity 12450, meter list electricity, meter use electricity)  
+**Also found by:** `meter reading`, `electricity meter`, `water meter`, `gas meter`, `meter log`, `units used`  
+**Your words:** the whole sentence is passed (quotes kept)  
+**Script:** `scripts/home_meter.py`
+
 ### house split
 
 **Usage:** `flat members <names> | flat add <what> <amount> paid by <name> [split <names>] | flat summary | flat clear`  
@@ -212,6 +220,14 @@ Categories on this page: [money](#money)
 **Also found by:** `mileage`, `km log`, `trip log`, `distance log`, `mileage report`, `travel claim`  
 **Your words:** the whole sentence is passed (quotes kept)  
 **Script:** `scripts/mileage_log.py`
+
+### monthly report
+
+**Usage:** `monthly report [YYYY-MM]`  
+**What it does:** Make a one-page report of this month (spending, budgets, recurring costs, mileage, 80C) you can open or print to PDF (monthly report)  
+**Also found by:** `month report`, `money report`, `month summary page`, `report page`, `finance report`  
+**Your words:** the whole sentence is passed (quotes kept)  
+**Script:** `scripts/monthly_report.py`
 
 ### payment reminder
 

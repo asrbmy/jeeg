@@ -57,6 +57,9 @@ check("plugin remove refuses path trick", task("-y", "plugin", "remove", "../../
 # ------------------------------------------------------------------ update
 import jeeg_cmds
 real = jeeg_cmds.latest_version
+def _no_pypi(timeout=8):
+    raise OSError('not on PyPI')
+jeeg_cmds.pypi_latest = _no_pypi          # these checks are about the GitHub release path
 jeeg_cmds.latest_version = lambda timeout=8: ("9.9.9", "https://example.invalid/r")
 import io, contextlib
 def run_update(q, here=ROOT, yes=False):

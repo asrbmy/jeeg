@@ -22,12 +22,24 @@ def guess(n):
 def num(x):
     x = re.sub(r"[^\d.]", "", x or ""); return float(x) if x.count(".") <= 1 and x else 0.0
 text = p.read_text(encoding="utf-8-sig", errors="replace")
-rows = list(csv.reader(text.splitlines()))
+lines = text.splitlines()
+try:
+    dl = csv.Sniffer().sniff("\n".join(lines[:30]), delimiters=",;\t|").delimiter
+except csv.Error:
+    dl = ","
+rows = list(csv.reader(lines, delimiter=dl))
 h = next((i for i, r in enumerate(rows[:30]) if any("date" in c.lower() for c in r) and len(r) >= 3), None)
 if h is None: fail("I could not find a header row with a Date column.")
 hd = [c.strip().lower() for c in rows[h]]
-def col(*names): return next((i for i, c in enumerate(hd) if any(n in c for n in names)), None)
-cd, cn, cdr, ca = col("date"), col("narration", "description", "particulars", "details", "remarks"), col("debit", "withdrawal", "dr"), col("amount")
+def col(*names, exact=()):
+    for i, c in enumerate(hd):
+        if "balance" in c or "value date" in c: continue
+        if any(n in c for n in names) or c in exact: return i
+    return None
+cd, cn = col("date"), col("narration", "description", "particulars", "details", "remarks", "payee")
+cdr, ca = col("debit", "withdrawal", "paid out", "money out", exact=("dr", "dr.")), col("amount", "amt")
+if cdr is not None and ca == cdr: ca = None
+ctype = next((i for i, c in enumerate(hd) if c in {"type", "dr/cr", "cr/dr", "debit/credit", "transaction type", "txn type"}), None)
 if cd is None or (cdr is None and ca is None): fail("I need a Date column and a Debit/Withdrawal or Amount column.")
 f = data_dir() / "expenses.csv"
 seen = set()
@@ -39,9 +51,20 @@ with open(f, "a", newline="", encoding="utf-8") as fh:
     if new: wr.writerow(["date", "amount", "category", "note"])
     for r in rows[h + 1:]:
         if len(r) <= cd: continue
-        d = parse_date(r[cd].strip())
+        ds = r[cd].strip()
+        ds = re.sub(r"^(\d{1,2})([/.-])(\d{1,2})\2(\d{2})$", lambda m_: f"{m_.group(1)}{m_.group(2)}{m_.group(3)}{m_.group(2)}20{m_.group(4)}", ds)
+        d = parse_date(ds)
         if not d: continue
-        a = num(r[cdr]) if cdr is not None and len(r) > cdr else (-num(r[ca]) if ca is not None and r[ca].strip().startswith("-") else 0.0)
+        if cdr is not None and len(r) > cdr and num(r[cdr]) > 0:
+            a = num(r[cdr])
+        elif ca is not None and len(r) > ca:
+            raw = r[ca].strip()
+            kind = r[ctype].strip().lower() if ctype is not None and len(r) > ctype else ""
+            # a minus sign, brackets, or a Dr/Debit marker means money went out
+            out = raw.startswith("-") or raw.startswith("(") or raw.lower().endswith("dr") or kind.startswith(("d", "w")) or (ctype is None and cdr is None and False)
+            a = num(raw) if out else 0.0
+        else:
+            a = 0.0
         if a <= 0: continue
         note = (r[cn].strip() if cn is not None and len(r) > cn else "")[:60]
         k = (d.isoformat(), f"{a:.2f}", note)

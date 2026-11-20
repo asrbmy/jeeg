@@ -1,12 +1,12 @@
 # Task Catalog
 
-Every task in JeeG, by category (556 tasks). Generated from the real task list; do not edit by hand (`python tools/make_wiki.py`).
+Every task in JeeG, by category (566 tasks). Generated from the real task list; do not edit by hand (`python tools/make_wiki.py`).
 
 In **Usage**, `<...>` is something you fill in and `[...]` is optional. A star `*` means the task asks before running; *online* means it can use the internet. For more detail on each task (flags, other wording that finds it, script file) see the reference pages: [Money and business](Reference-Money-and-Business), [Files, folders, backups and the clipboard](Reference-Files-and-Folders), [System, power, hardware and home](Reference-System-and-Hardware), [Network, web, search and travel](Reference-Network-Web-and-Search), [Developer tools](Reference-Developer-Tools), [Apps, launchers and linked apps](Reference-Apps-and-Launchers), [Time, reminders and personal records](Reference-Time-Reminders-and-Records), [Health, study, media and fun](Reference-Health-Study-and-Fun). In the terminal, `list <category>` shows the same, and `explain <words>` shows how a phrase would be matched.
 
 ## Categories
 
-[ai (4)](#ai) | [apps (29)](#apps) | [apps_setup (2)](#apps-setup) | [apps_write (1)](#apps-write) | [backup (4)](#backup) | [birthdays (3)](#birthdays) | [browser (3)](#browser) | [clipboard (6)](#clipboard) | [data (2)](#data) | [developer (64)](#developer) | [email (6)](#email) | [entertainment (12)](#entertainment) | [files (40)](#files) | [folders (9)](#folders) | [food (2)](#food) | [fun (5)](#fun) | [habits (2)](#habits) | [hardware (13)](#hardware) | [health (13)](#health) | [home (6)](#home) | [info (12)](#info) | [journal (3)](#journal) | [learning (5)](#learning) | [links (4)](#links) | [lists (7)](#lists) | [maps (4)](#maps) | [media (14)](#media) | [money (50)](#money) | [network (28)](#network) | [personal (1)](#personal) | [power (7)](#power) | [productivity (11)](#productivity) | [reference (1)](#reference) | [reminders (13)](#reminders) | [routines (9)](#routines) | [search (8)](#search) | [security (4)](#security) | [selfcheck (1)](#selfcheck) | [shopping (3)](#shopping) | [snippets (4)](#snippets) | [social (16)](#social) | [study (12)](#study) | [system (28)](#system) | [text (15)](#text) | [time (13)](#time) | [tools (4)](#tools) | [travel (7)](#travel) | [utility (18)](#utility) | [web (2)](#web) | [work (2)](#work) | [workspace (24)](#workspace)
+[ai (4)](#ai) | [apps (29)](#apps) | [apps_setup (2)](#apps-setup) | [apps_write (1)](#apps-write) | [backup (4)](#backup) | [birthdays (3)](#birthdays) | [browser (3)](#browser) | [clipboard (7)](#clipboard) | [data (2)](#data) | [developer (64)](#developer) | [email (6)](#email) | [entertainment (12)](#entertainment) | [files (40)](#files) | [folders (9)](#folders) | [food (2)](#food) | [fun (5)](#fun) | [habits (2)](#habits) | [hardware (13)](#hardware) | [health (13)](#health) | [home (6)](#home) | [info (12)](#info) | [journal (3)](#journal) | [learning (5)](#learning) | [links (4)](#links) | [lists (7)](#lists) | [maps (4)](#maps) | [media (14)](#media) | [money (52)](#money) | [network (29)](#network) | [personal (1)](#personal) | [power (7)](#power) | [productivity (11)](#productivity) | [reference (1)](#reference) | [reminders (13)](#reminders) | [routines (11)](#routines) | [search (8)](#search) | [security (5)](#security) | [selfcheck (1)](#selfcheck) | [shopping (3)](#shopping) | [snippets (4)](#snippets) | [social (16)](#social) | [study (12)](#study) | [system (30)](#system) | [text (16)](#text) | [time (13)](#time) | [tools (4)](#tools) | [travel (7)](#travel) | [utility (18)](#utility) | [web (2)](#web) | [work (2)](#work) | [workspace (24)](#workspace)
 
 ## ai
 
@@ -95,6 +95,7 @@ In **Usage**, `<...>` is something you fill in and `[...]` is optional. A star `
 |---|---|---|
 | clear clipboard |  | Clear the clipboard |
 | clipboard history | `clipboard history [number \| clear \| search <word>]` | List saved clipboard items, find one by a word, or copy one back (clipboard history, search clipboard history invoice, clipboard history 2, clear clipboard history) |
+| copied text | `clipboard clean \| links \| csv \| sort \| count` | Work on what you copied (clipboard clean, clipboard links, clipboard csv, clipboard sort, clipboard count) |
 | copy to clipboard | `copy to clipboard <text>` | Copy text to the clipboard (copy hello world) |
 | save clipboard | `save clipboard` | Keep what is on the clipboard in your private clipboard history (save clipboard) |
 | show clipboard |  | Show what is on the clipboard |
@@ -438,6 +439,7 @@ In **Usage**, `<...>` is something you fill in and `[...]` is optional. A star `
 | freelance rate | `freelance rate income <n> expenses <n> hours <n>` | Work out the hourly rate you need (freelance rate income 4000 expenses 800 hours 25 weeks off 6). |
 | fuel cost | `fuel cost <km> km <mileage> kmpl <price>` | Trip fuel cost from distance, mileage and price (fuel cost 250 km 18 kmpl 105 per litre) |
 | gst amount | `gst <amount> [rate] [inclusive]` | GST add or remove (gst 1000 18, gst 1180 18 inclusive) |
+| home meter | `meter add <name> <reading> \| meter list <name> \| meter use <name>` | Log meter readings and see use per day (meter add electricity 12450, meter list electricity, meter use electricity) |
 | house split | `flat members <names> \| flat add <what> <amount> paid by <name> [split <names>] \| flat summary \| flat clear` | Share house costs between flatmates and see who pays whom (flat members amit ravi sam; flat add rent 18000 paid by amit; flat summary) |
 | hra exemption | `hra basic <amt> hra <amt> rent <amt> [metro]` | HRA tax exemption (hra basic 50000 hra 20000 rent 18000 metro) |
 | income tax | `income tax <income> [deductions <amount>]` | Income tax, new vs old regime (income tax 12 lakh; income tax 18 lakh deductions 2 lakh) |
@@ -447,6 +449,7 @@ In **Usage**, `<...>` is something you fill in and `[...]` is optional. A star `
 | loan compare | `compare loans <amt> <rate> <years> vs <rate> <years>` | Compare two loan offers side by side (compare loans 500000 8.5% 5y vs 9% 4y). |
 | make invoice | `invoice <customer>: <qty> <item> at <rate>, ... [gst 18]` | Make a simple GST invoice page (invoice Ravi Traders: 3 pens at 10, 2 books at 150 gst 18) |
 | mileage log | `mileage add <km> [note] \| mileage report [month] \| mileage rate <per km>` | Log trips and work out what you can claim (mileage add 25 km office, mileage report, mileage rate 8) |
+| monthly report | `monthly report [YYYY-MM]` | Make a one-page report of this month (spending, budgets, recurring costs, mileage, 80C) you can open or print to PDF (monthly report) |
 | payment reminder | `payment reminder <name in your ledger \| name amount [invoice X] [by date]>` | Write a polite payment-reminder message and copy it (payment reminder ravi, or: payment reminder Ravi Traders 5000 invoice INV-0012 by 15 nov) |
 | percentage change | `percentage change <old> to <new>` | Percentage change between two numbers (percentage change 80 to 100) |
 | ppf maturity | `ppf <amount a year> [years] [rate %]` | PPF maturity (ppf 1.5 lakh a year; ppf 50000 a year 15 years) |
@@ -481,6 +484,7 @@ In **Usage**, `<...>` is something you fill in and `[...]` is optional. A star `
 | check speed *(online)* |  | Test internet speed (Speedtest) |
 | check website *(online)* | `check website <url>` | Check if a website is up (check website github.com) |
 | dns lookup *(online)* | `dns lookup <domain>` | Look up the IP addresses of a domain |
+| fetch file *(online)* \* | `download <https address> [preview]` | Download a file from a web address into your Downloads folder (download https://example.com/a.pdf); asks first, refuses programs and scripts |
 | fleet check *(online)* \* | `check all computers` | Ask every saved computer (see "computer add") for its health at once: disk, memory, uptime. Needs JeeG and an ssh key on each. |
 | flush dns \* |  | Clear the DNS cache |
 | listening ports |  | Show which programs are listening on network ports |
@@ -571,6 +575,8 @@ In **Usage**, `<...>` is something you fill in and `[...]` is optional. A star `
 | daily briefing *(online)* | `daily briefing [city]` | Daily briefing (say: morning briefing): date, weather, to-dos, birthdays, reminders |
 | edit routines |  | Open the routines file to add or change routines |
 | end work day |  | Routine: show to-dos then lock the screen after 5 s (editable) |
+| kit install \* | `kit install <file>` | Install a kit file made by 'kit export' (kit install file). Asks first; keeps anything you already have; check it first with 'kit show' |
+| kit share | `kit export <name> \| kit show <file>` | Share your routines, aliases and variables as one file, or look inside someone else's (kit export mykit, kit show file) |
 | list routines |  | List your routines and their steps |
 | meeting mode |  | Routine: open Meet and your calendar (editable) |
 | night mode |  | Routine: dark mode, dim screen, low volume (editable) |
@@ -595,6 +601,7 @@ In **Usage**, `<...>` is something you fill in and `[...]` is optional. A star `
 
 | Task | Usage | What it does |
 |---|---|---|
+| audit log | `audit show [n] \| audit summary \| audit ai \| audit export [file.csv]` | See and export what JeeG ran and who asked (you or an AI): audit show 20, audit summary, audit export. Task names and results only, never what you typed. |
 | breach check *(online)* | `breach check "<password>"` | Check if a password has appeared in known data leaks (only a 5-character hash prefix is sent) |
 | file hash | `file hash <file> [expected hash]` | Show the SHA-256, SHA-1 and MD5 fingerprint of a file, to check a download (file hash setup.exe) |
 | password strength | `password strength "<password>"` | Rate how strong a password is, privately (password strength "MyPass123") |
@@ -669,6 +676,7 @@ In **Usage**, `<...>` is something you fill in and `[...]` is optional. A star `
 | check updates *(online)* \* |  | Check which programs and system updates are waiting (does not install) |
 | cpu temperature |  | Show processor temperature (where the computer allows it) |
 | cpu usage |  | Show current CPU load |
+| desktop input \* | `desktop type <text> \| desktop key <combo> \| desktop click <x> <y> \| add 'preview' to see what would happen` | Type, press keys or click at a screen position in whatever window is in front (desktop type hello, desktop key ctrl+s, desktop click 500 300). Asks first; you only, never an AI. Windows built in; Linux needs xdotool; macOS needs cliclick for clicks. |
 | disk space |  | Show free space on your drives |
 | env variable \* | `set env variable NAME to VALUE \| remove env variable NAME \| add <folder> to path` | Save an environment variable for good (set env variable API_URL to https://x.com) or add a folder to PATH (add C:\tools to path). Add "preview" to see what would change. New terminals pick it up. |
 | find software *(online)* | `search app [words]` | Find an app in your package manager (search app video editor), or list the apps I can install by short name (search app) |
@@ -693,6 +701,7 @@ In **Usage**, `<...>` is something you fill in and `[...]` is optional. A star `
 | uninstall app \* | `uninstall <app> [preview]` | Uninstall an app by name with your system's package manager (uninstall vlc; add "preview" to see the command only) |
 | update apps *(online)* \* | `update all apps \| update app <name> [preview]` | Update all your installed apps (update all apps), or one (update app vlc); add "preview" to see the command only |
 | usb devices |  | List connected USB devices |
+| window control | `windows list \| window focus\|minimize\|maximize\|restore\|close <part of title> \| window snap <part of title> left\|right\|full` | List and control open windows (windows list, window focus chrome, window minimize notepad, window snap chrome left, window close notepad). Windows built in; Linux needs wmctrl or xdotool; macOS uses System Events. |
 
 ## text
 
@@ -708,6 +717,7 @@ In **Usage**, `<...>` is something you fill in and `[...]` is optional. A star `
 | reverse text | `reverse text <text>` | Reverse text (reverse text hello) |
 | roman numerals | `roman numeral <number\|numeral>` | Convert between Roman numerals and numbers (roman numeral 2026, or roman numeral MCMXC) |
 | sort lines | `sort lines <items>` | Sort a list alphabetically or by number (sort lines pear, apple, fig); add 'reverse' for Z-A |
+| summarize text | `summarize <file \| clipboard> [sentences]` | Pick the key sentences from a text file, PDF or the clipboard (summarize notes.txt, summarize clipboard 5). Not AI: it scores sentences by word frequency. |
 | title case text | `title case <text>` | Title Case Some Text (title case the quick brown fox) |
 | uppercase text | `uppercase <text>` | UPPERCASE some text (uppercase hello world); with no text it uses the clipboard |
 | url decode | `url decode <text>` | Turn a percent-encoded web address back into readable text (url decode hello%20world) |

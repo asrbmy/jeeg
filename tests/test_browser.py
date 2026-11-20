@@ -270,6 +270,12 @@ try:
     out, err = run_for_ai("browser click 1", "god", ap2, HOME, lambda m: None, "test")
     ok("preview" in out.lower() and "Clicked" not in out, "AI preview-only: a click only shows what it would do: " + out[:100])
     os.environ.pop("JEEG_VIA_AI", None); os.environ["JEEG_TEST_TTY"] = "1"
+    jeeg(f"browser open {BASE}/")
+    c, o = jeeg("browser look")
+    c, o = jeeg("browser download 1 preview")
+    ok(c == 0 and "Would download" in o and "/two" in o and "Nothing was changed" in o, "download preview: " + o)
+    c, o = jeeg("browser download 2 preview")
+    ok("not a link" in o or "nothing" in o.lower(), "download of a non-link: " + o)
     # tables, pdf
     jeeg(f"browser open {BASE}/tbl")
     c, o = jeeg("browser table")
