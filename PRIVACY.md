@@ -13,7 +13,7 @@ JeeG is built so that you can check these statements yourself.
 Only in the `.jeeg` folder in your home directory (or `JEEG_HOME`), readable only by you on Mac and Linux. Notes, expenses, journal, medicines, contacts and the rest are plain files you can open, copy or delete. Tasks marked private (passwords, medicines, clipboard) are not written to your command history.
 
 **When JeeG itself uses the internet**
-Only when you run a task that needs it. Say `privacy` to see the list; `list` marks those tasks with `[online]`. Today that is 66 of 566 tasks: weather, exchange rates, news, dictionary and Wikipedia look-ups, `check website`, `ping host`, `git pull`, the connector tasks you set up yourself (webhooks, mail, GitHub, MQTT, peers ...), installing programs (your package manager contacts its own servers), watches, RSS feeds, `save page`, `network doctor` and similar. Everything else (calculators, files, notes, reminders, reports, invoices, medicines) works with the network cable unplugged.
+Only when you run a task that needs it. Say `privacy` to see the list; `list` marks those tasks with `[online]`. Today that is 67 of 567 tasks: weather, exchange rates, news, dictionary and Wikipedia look-ups, `check website`, `ping host`, `git pull`, the connector tasks you set up yourself (webhooks, mail, GitHub, MQTT, peers ...), installing programs (your package manager contacts its own servers), watches, RSS feeds, `save page`, `network doctor` and similar. Everything else (calculators, files, notes, reminders, reports, invoices, medicines) works with the network cable unplugged.
 
 Automatic checking is **off** until you say `update auto on`; then JeeG makes one short request a day and prints one line if a newer version exists. It never installs anything by itself.
 
@@ -25,6 +25,7 @@ Besides tasks, the engine contacts these addresses, only when you type the match
 | `pypi.org`, `files.pythonhosted.org` | `update` / `update now` (pip install or unzipped folder), `update auto on` | a request for the newest version, then the new files, checked against PyPI's SHA-256 before anything is replaced |
 | `raw.githubusercontent.com` | `plugin search`, `plugin get` | a request for the library list or one plugin file |
 | any `https` address you give | `plugin install <link>` | a request for that file |
+| the computer you pair with, or a relay you choose | `link …` | only encrypted JeeG link messages to that address (see `LINK.md`); the relay sees addresses and amounts, never content; UDP broadcast on your own network for `link find` |
 | `1.1.1.1:53` | `doctor` | one connection test, no data |
 
 The `web` command opens a page on `127.0.0.1` that only your own computer can reach.

@@ -7,7 +7,7 @@ JeeG finds the matching script in the `scripts` folder and runs it.
 
 - Pure Python 3.9+, nothing to install. Works on Windows, macOS and Linux.
 - Light: about 16 MB of memory, about 65 ms per command, nothing running in the background (except reminders and alarms you set yourself).
-- 566 ready-made tasks. You can add your own by dropping in a file.
+- 567 ready-made tasks. You can add your own by dropping in a file.
 
 ---
 

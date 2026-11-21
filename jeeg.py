@@ -60,7 +60,7 @@ import sys
 import time
 from pathlib import Path
 
-__version__ = "2.20.0"
+__version__ = "2.21.0"
 
 HERE = Path(__file__).resolve().parent
 FROZEN = bool(getattr(sys, "frozen", False))      # True inside the standalone program built with PyInstaller
@@ -382,7 +382,7 @@ def resolve(query: str, entries: list[dict]):
 # ------------------------------------------------- your data: aliases, logs
 RESERVED = {"selfcheck", "list", "help", "history", "again", "repeat", "redo", "reindex", "selftest", "exit", "quit", "alias",
             "explain", "misses", "stats", "doctor", "tasks", "pack", "tips", "tip", "plugins", "plugin", "update", "setup",
-            "web", "ui", "completion", "learn", "tour", "routines", "privacy", "autorun", "report", "share", "batch", "policy", "audit"}
+            "web", "ui", "completion", "learn", "tour", "routines", "privacy", "autorun", "report", "share", "batch", "policy", "audit", "link"}
 
 
 def _load_json(name: str, default):
@@ -648,6 +648,8 @@ def log_run(e: dict, rc: int, dt: float) -> None:
     rec = {"t": int(time.time()), "s": e["name"], "rc": rc, "dt": round(dt, 2)}
     if os.environ.get("JEEG_VIA_AI") == "1":
         rec["ai"] = 1                                   # the audit log tells you which runs an AI asked for
+    if os.environ.get("JEEG_VIA_PEER"):
+        rec["peer"] = os.environ["JEEG_VIA_PEER"][:40]  # ...and which runs another JeeG computer asked for
     _append_line("log.jsonl", json.dumps(rec))
 
 
@@ -1350,6 +1352,10 @@ def handle(line: str, dirs, opt) -> int | None:
         return cmd_alias(q, entries)
     if low == "explain" or low.startswith("explain "):
         return cmd_explain(q, entries)
+    if low == "link" or low.startswith("link "):
+        import jeeg_link
+        tty = sys.stdin is not None and sys.stdin.isatty()
+        return jeeg_link.cli(q if low != "link" else "link status", STATE, interactive=bool(tty))
     if low in {"policy", "admin policy", "show policy"}:
         import jeeg_policy
         print(jeeg_policy.describe())

@@ -8,7 +8,7 @@ Where it is looked for (first found wins):
 
 Example:
     {"disable_categories": ["system", "files"], "disable_tasks": ["shred file"],
-     "block_online": true, "block_plugins": true, "ai_max": "read", "ai_browser": false, "note": "Set by IT"}
+     "block_online": true, "block_plugins": true, "block_link": true, "ai_max": "read", "ai_browser": false, "note": "Set by IT"}
 
 On macOS and Linux a policy file that other users can write is ignored (and reported), because it would not be a policy.
 A person using JeeG cannot change it from JeeG. It limits; it never adds anything.
@@ -56,7 +56,7 @@ def load() -> dict:
             v = lst(raw[k])
             if v is None: bad.append(f"{k} must be a list")
             else: out[k] = v
-    for k in ("block_online", "block_plugins", "ai_browser"):
+    for k in ("block_online", "block_plugins", "ai_browser", "block_link"):
         if k in raw:
             if isinstance(raw[k], bool): out[k] = raw[k]
             else: bad.append(f"{k} must be true or false")
@@ -118,6 +118,7 @@ def describe() -> str:
     if pol.get("disable_tasks"): lines.append("  Switched off tasks: " + ", ".join(pol["disable_tasks"]))
     if pol.get("block_online"): lines.append("  Tasks that use the internet: off")
     if pol.get("block_plugins"): lines.append("  Plugins: off")
+    if pol.get("block_link"): lines.append("  JeeG link (talking to other JeeG computers): off")
     if "ai_max" in pol: lines.append(f"  AI mode at most: {pol['ai_max']}")
     if pol.get("ai_browser") is False: lines.append("  AI browser control: off")
     for b in pol.get("_problems", []): lines.append(f"  Problem: {b}")

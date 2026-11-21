@@ -27,7 +27,7 @@ Contents
 - A small launcher written in Python (standard library only). It has no background service and does not need an account.
 - It reads every script in `scripts/`, matches your words to a script, and runs it. A script is just a file you can open and edit.
 - Say `jeeg gui` for a small window with a box for plain words (needs tkinter; most Python installs have it).
-- 566 tasks are included across apps, websites, files, system, network, reminders, personal records, money calculators, text tools, developer tools and quick searches.
+- 567 tasks are included across apps, websites, files, system, network, reminders, personal records, money calculators, text tools, developer tools and quick searches.
 - It runs on Windows, macOS and Linux. Python 3.9 or newer is required.
 - It is quick (about 56 ms per command including Python start-up, measured on Linux) and light (about 16 MB while a command runs; nothing stays in memory between commands, except reminders and alarms you set).
 
@@ -703,7 +703,7 @@ Run the checks yourself any time:
 
 ## 15. Appendix: every task
 
-566 tasks. In the Usage column, `<...>` is something you fill in and `[...]` is optional. A star means the task asks before running; "online" means it can use the internet.
+567 tasks. In the Usage column, `<...>` is something you fill in and `[...]` is optional. A star means the task asks before running; "online" means it can use the internet.
 
 
 ### ai
@@ -1198,6 +1198,7 @@ Run the checks yourself any time:
 | scan network (online) | `who is on my wifi [scan]` | List the devices on your home network (who is on my wifi). Add "scan" to wake the quiet ones first. Only your own private network. |
 | share file (online) | `send <file> to my phone` | Send one file to your phone or another computer on the same Wi-Fi: shows a link and QR code, serves that one file once, then stops |
 | show ip (online) |  | Show your local and public IP address |
+| iot hub (online) | `iot list \| iot scene add <name> = <step> ; <step> \| iot scene run <name> \| iot scene list \| iot scene remove <name>` | One place for your home devices and computers: see everything (iot list) and save scenes that do several things at once |
 | smart device (online) | `device add <name> <shelly\|tasmota> <ip> \| device on\|off\|toggle\|status <name> \| device list \| device remove <name>` | Control smart plugs on your home network (device add lamp shelly 192.168.1.50, then: device on lamp / device off lamp / device status lamp) |
 | ssh hosts | `computer add <name> <user@host> \| computer list \| computer remove <name>` | Save other computers you can reach with ssh (computer add pi pi@192.168.1.20), then run JeeG tasks on them |
 | ssh task (online) * | `on <name> run <task>` | Run a JeeG task on another computer over ssh (on pi run disk space). Needs JeeG there and an ssh key (no password prompts). |
@@ -1527,3 +1528,8 @@ Run the checks yourself any time:
 | open trello |  | Open Trello |
 | open zoom |  | Open Zoom |
 
+
+
+## Talking to other JeeG computers
+
+See `LINK.md`: `link listen`, `link find`, `link pair`, `link send`, `link file`, `link run`, `link level`, `link relay serve`.

@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.21.0
+
+- **JeeG link** (`LINK.md`): pair JeeG computers with a compared 6-digit number, then `link send`, `link file`, `link run` (levels `block`, `chat`, `safe`, `read`, `ask`, `full`; changed any time with `link level`). Encrypted and authenticated; works on a LAN (`link find`), directly across the internet, or through an optional relay (`link relay serve`, `link listen relay HOST:PORT`). Pairing needs a person at a terminal; update, autorun, audit, policy, plugins and the link command itself can never be run remotely. The audit log shows `computer:<name>`. Administrators can turn it off (`block_link`).
+- **IoT hub** (`iot list`, `iot scene add|run|list|remove`): all saved devices, brokers, computers and paired JeeGs in one list, and scenes that run several device/MQTT/SSH/link steps.
+- The protocol is homegrown (standard library only) and not independently reviewed; see the honest limits in `LINK.md`. 567 tasks.
+
 ## 2.20.0
 
 - **Self-update from PyPI:** `update now` on an unzipped folder now downloads the newest wheel from PyPI, checks its SHA-256 and every file (valid Python, right version, no path tricks), saves a copy of the old program files in `~/.jeeg/backups`, replaces them, removes tasks the new release dropped, and puts everything back if anything fails. Pip installs now compare with PyPI too. `update auto on` adds an optional once-a-day one-line notice (off by default; never installs by itself). An AI can never run `update`.

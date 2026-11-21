@@ -612,3 +612,6 @@ kit export mykit => kit_share | kit export mykit
 kit install friend.json => kit_install | kit install friend.json
 audit show => audit_log | audit show
 audit export => audit_log | audit export
+iot list => iot_hub | iot list
+iot scene run night => iot_hub | iot scene run night
+iot scene add night = device off lamp => iot_hub | iot scene add night = device off lamp
