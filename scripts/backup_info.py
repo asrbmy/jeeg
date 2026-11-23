@@ -1,6 +1,8 @@
 # keywords: backup status, last backup, when did i back up, backup check, is my data backed up, data size, how much data
 # desc: Show when your data was last backed up and how much data you have
 # category: backup
+# patterns: \bbackup\s+(status|check)\b
+# priority: 4
 import time
 from _lib import human
 from _backup import data_files, last

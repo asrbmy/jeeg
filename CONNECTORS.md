@@ -9,6 +9,7 @@ Everything here is **off until you set it up**, one connector at a time. Secrets
 | Telegram on your phone | `telegram setup`, then `telegram start` (below) |
 | A web address, GitHub, Zapier, cron | `hook add` and `hook listen` (below) |
 | Claude.ai or any AI | `connect ai` (REMOTE_AI.md) |
+| n8n, Node-RED, Kestra, Prefect, Sim Studio | `integrations/workflows/README.md` |
 | Claude Desktop / Cursor | `install mcp claude-desktop yes` |
 | Another JeeG | `peer` (below) |
 | JavaScript / TypeScript | `integrations/js` (`const { run } = require("./index.js")`) |

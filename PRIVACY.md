@@ -13,7 +13,7 @@ JeeG is built so that you can check these statements yourself.
 Only in the `.jeeg` folder in your home directory (or `JEEG_HOME`), readable only by you on Mac and Linux. Notes, expenses, journal, medicines, contacts and the rest are plain files you can open, copy or delete. Tasks marked private (passwords, medicines, clipboard) are not written to your command history.
 
 **When JeeG itself uses the internet**
-Only when you run a task that needs it. Say `privacy` to see the list; `list` marks those tasks with `[online]`. Today that is 67 of 567 tasks: weather, exchange rates, news, dictionary and Wikipedia look-ups, `check website`, `ping host`, `git pull`, the connector tasks you set up yourself (webhooks, mail, GitHub, MQTT, peers ...), installing programs (your package manager contacts its own servers), watches, RSS feeds, `save page`, `network doctor` and similar. Everything else (calculators, files, notes, reminders, reports, invoices, medicines) works with the network cable unplugged.
+Only when you run a task that needs it. Say `privacy` to see the list; `list` marks those tasks with `[online]`. Today that is 82 of 602 tasks: weather, exchange rates, news, dictionary and Wikipedia look-ups, `check website`, `ping host`, `git pull`, the connector tasks you set up yourself (webhooks, mail, GitHub, MQTT, peers ...), installing programs (your package manager contacts its own servers), watches, RSS feeds, `save page`, `network doctor` and similar. Everything else (calculators, files, notes, reminders, reports, invoices, medicines) works with the network cable unplugged.
 
 Automatic checking is **off** until you say `update auto on`; then JeeG makes one short request a day and prints one line if a newer version exists. It never installs anything by itself.
 
@@ -26,6 +26,7 @@ Besides tasks, the engine contacts these addresses, only when you type the match
 | `raw.githubusercontent.com` | `plugin search`, `plugin get` | a request for the library list or one plugin file |
 | any `https` address you give | `plugin install <link>` | a request for that file |
 | the computer you pair with, or a relay you choose | `link …` | only encrypted JeeG link messages to that address (see `LINK.md`); the relay sees addresses and amounts, never content; UDP broadcast on your own network for `link find` |
+| your own devices (Home Assistant, Modbus, MQTT, TCP/UDP/WebSocket, REST services you saved) | the matching task or a bridge rule | only what you asked it to send to the address you saved; plain `http`/`ws` only to your own network; bridge listeners (webhook, UDP, TCP) accept data from your network |
 | `1.1.1.1:53` | `doctor` | one connection test, no data |
 
 The `web` command opens a page on `127.0.0.1` that only your own computer can reach.
@@ -85,3 +86,9 @@ Plugins run as normal programs with your permissions, so they could do anything.
 ## The local API (`--serve-api`, `--stdio`, `--mcp`)
 
 These only run when you start them. The HTTP API listens on 127.0.0.1 (this computer only), needs a secret token kept in your JeeG data folder (readable only by you on Mac/Linux), refuses requests that come from web pages, and refuses tasks that ask for confirmation unless you start it with `--allow-confirm`. Nothing is sent anywhere by the API itself.
+
+## Plugins
+The plugins in `integrations/` talk to JeeG on this computer. The only ones that can reach the internet are the Obsidian plugin's "Ask an AI" commands and `jeeg_chat.py` with a remote provider: they send the text you chose (a selection, or up to 12,000 characters of a note) to the AI company you picked, with your own API key, only when you run the command. Ollama and LM Studio keep it on your computer. JeeG itself has no AI model, account or telemetry.
+
+## The agent (optional)
+JeeG has no AI model. If you run `agent setup`, you pick a model. With Ollama or LM Studio nothing leaves your computer. With a company's API, each `agent goal` (or Telegram `/goal`) sends your goal, the remembered facts that match it, and what the tasks it runs print to that company, using your own key. Memory (`memory.json`), skills (`skills.json`), run logs (`agent_runs/`) and settings (`conn_agent.json`, private) stay in your JeeG folder; `agent forget` deletes the key and settings.

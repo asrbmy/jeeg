@@ -6,7 +6,7 @@
     link pair <host[:port]>      pair with one (both people compare a 6-digit number)
     link pair relay <host:port> <CODE>           pair through a relay, from anywhere
     link peers | link forget <name> | link level <name> <block|chat|safe|read|ask|full>
-    link send <name> <message> | link file <name> <path> | link inbox | link ping <name>
+    link send <name> <message> | link broadcast <message> | link file <name> <path> | link inbox | link ping <name> | link who
     link run <name> <task in plain words>        run a task on that computer (what it allows)
     link relay serve [PORT]      run a relay for people who are behind routers (see jeeg_relay.py)
 
@@ -576,10 +576,30 @@ class Listener:
                 self._receive_file(chan, name, m)
             elif t == "run":
                 chan.send(self._run(name, level, str(m.get("q", ""))))
+            elif t in {"chan_post", "chan_pull"}:
+                chan.send(self._channel(pid, name, t, m))
             elif t == "bye":
                 return
             else:
                 chan.send({"t": "err", "m": "unknown request"})
+
+    def _channel(self, pid: str, who: str, t: str, m: dict) -> dict:
+        """Shared channels: a paired computer may only touch channels you shared with it. What it posts is data, never a command."""
+        import jeeg_chan
+        try:
+            ch = jeeg_chan.clean(str(m.get("chan", "")))
+            if pid not in jeeg_chan.shared_with(self.state, ch):
+                return {"t": "err", "m": f"channel '{ch}' is not shared with you"}
+            if t == "chan_pull":
+                return {"t": "msgs", "items": jeeg_chan.read(self.state, ch, jeeg_chan.MAX_PULL, str(m.get("after", "")))}
+            lab = jeeg_chan.label(str(m.get("as", "")))
+            sender = f"{lab}@{who}" if lab else who
+            got = jeeg_chan.post(self.state, ch, str(m.get("text", "")), sender, str(m.get("kind", "msg")), str(m.get("ref", "")), str(m.get("to", "")), str(m.get("id", "")))
+            if got:
+                self.log(f"Channel '{ch}': {sender}: {got['text'][:120]}")
+            return {"t": "ok"}
+        except jeeg_chan.ChanError as ex:
+            return {"t": "err", "m": str(ex)}
 
     def _receive_file(self, chan: Chan, who: str, m: dict) -> None:
         n = safe_file_name(m.get("name", ""))
@@ -644,7 +664,7 @@ class Listener:
             pass
         first = q.split(None, 1)[0].lower() if q.split() else ""
         import jeeg_remote
-        if first in ("link", "update", "upgrade", "autorun", "kit", "audit", "policy", "gui", "window", "windows", "desktop", "plugin", "plugins", "allow", "deny", "pack", "connect", "install"):
+        if first in ("link", "update", "upgrade", "autorun", "kit", "audit", "bridge", "policy", "gui", "window", "windows", "desktop", "plugin", "plugins", "allow", "deny", "pack", "connect", "install"):
             return {"t": "result", "text": f"'{first}' can only be used at this computer itself.", "err": True}
         with self._run_lock:                                  # one remote task at a time: it also sets who is asking
             os.environ["JEEG_VIA_PEER"] = who
@@ -720,6 +740,52 @@ def send_file(chan: Chan, path: Path) -> str:
     return str(r.get("saved", ""))
 
 
+def push_channel(store, pid: str, rec: dict, chan: str, msg: dict) -> str:
+    """Send one channel message to a paired computer. Returns '' or a short reason."""
+    try:
+        c = open_session(store, pid, rec)
+    except (LinkError, OSError) as ex:
+        return str(getattr(ex, "strerror", None) or ex)[:80]
+    try:
+        r = ask(c, {"t": "chan_post", "chan": chan, "text": msg["text"], "kind": msg.get("kind", "msg"), "ref": msg.get("ref", ""), "to": msg.get("to", ""),
+                    "id": msg["id"], "as": msg.get("as", "")})
+        return "" if r.get("t") == "ok" else str(r.get("m", "refused"))[:80]
+    except (LinkError, OSError) as ex:
+        return str(ex)[:80]
+    finally:
+        try:
+            c.sock.close()
+        except OSError:
+            pass
+
+
+def broadcast(state, chan: str, msg: dict) -> list:
+    """Push a channel message to every computer the channel is shared with. Returns [(name, '' or reason)]."""
+    import jeeg_chan
+    store = Store(state)
+    peers = store.peers()
+    out = []
+    for pid in jeeg_chan.shared_with(state, chan):
+        rec = peers.get(pid)
+        if rec and rec.get("level") != "block":
+            out.append((rec.get("name", "?"), push_channel(store, pid, rec, chan, msg)))
+    return out
+
+
+def pull_channel(store, pid: str, rec: dict, chan: str, after: str = "") -> list:
+    c = open_session(store, pid, rec)
+    try:
+        r = ask(c, {"t": "chan_pull", "chan": chan, "after": after})
+        if r.get("t") != "msgs":
+            raise LinkError(str(r.get("m", "refused")))
+        return [m for m in r.get("items", []) if isinstance(m, dict)][:200]
+    finally:
+        try:
+            c.sock.close()
+        except OSError:
+            pass
+
+
 def find_on_lan(wait: float = 2.0) -> list:
     out, seen = [], set()
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -752,7 +818,7 @@ link find                             JeeGs listening on your network
 link pair <host[:port]>               pair (both people compare a 6-digit number)
 link pair relay <host:port> <CODE>    pair through a relay, from anywhere
 link peers | link forget <name> | link level <name> <block|chat|safe|read|ask|full>
-link send <name> <message> | link file <name> <path> | link inbox | link ping <name>
+link send <name> <message> | link broadcast <message> | link file <name> <path> | link inbox | link ping <name> | link who
 link run <name> <task in plain words>
 link relay serve [PORT]               run a relay (for people behind routers)"""
 
@@ -857,6 +923,53 @@ def cli(q: str, state, interactive: bool = True, out=print, inp=input) -> int:
                 return 0
             out("Say: link relay serve [PORT]")
             return 1
+        if sub == "who":
+            ps = store.peers()
+            if not ps:
+                out("No paired computers yet.")
+                return 0
+            for pid, r in sorted(ps.items(), key=lambda x: x[1].get("name", "")):
+                t0 = time.time()
+                try:
+                    c = open_session(store, pid, r, 4)
+                    try:
+                        ask(c, {"t": "ping"})
+                    finally:
+                        try:
+                            c.send({"t": "bye"})
+                        except (OSError, LinkError):
+                            pass
+                        c.sock.close()
+                    out(f"  {r.get('name', '?'):<20}online   ({int((time.time() - t0) * 1000)} ms)   they may: {r.get('level', '?')}")
+                except (LinkError, OSError):
+                    out(f"  {r.get('name', '?'):<20}not reachable (is  link listen  running there?)")
+            return 0
+        if sub == "broadcast":
+            text = " ".join(rest).strip()
+            if not text:
+                out("Say: link broadcast <message>")
+                return 1
+            ps = store.peers()
+            if not ps:
+                out("No paired computers yet.")
+                return 1
+            sent = 0
+            for pid, r in sorted(ps.items(), key=lambda x: x[1].get("name", "")):
+                try:
+                    c = open_session(store, pid, r, 4)
+                    try:
+                        ok_ = ask(c, {"t": "chat", "text": text[:2000]}).get("t") == "ok"
+                    finally:
+                        try:
+                            c.send({"t": "bye"})
+                        except (OSError, LinkError):
+                            pass
+                        c.sock.close()
+                except (LinkError, OSError):
+                    ok_ = False
+                sent += ok_
+                out(f"  {r.get('name', '?'):<20}{'delivered' if ok_ else 'not delivered'}")
+            return 0 if sent else 1
         if sub in {"send", "file", "run", "ping"}:
             if not rest:
                 out(USAGE.split("\n")[6] if sub != "run" else "Say: link run <name> <task>")

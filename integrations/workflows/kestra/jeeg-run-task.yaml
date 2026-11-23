@@ -1,0 +1,33 @@
+id: jeeg_run_task
+namespace: company.local
+
+# Runs a JeeG task and keeps the answer. Needs JeeG's API on the same computer as Kestra (not in Docker):
+#   jeeg --serve-api --only text,money,utility,time
+# Put the token (from: jeeg --api-token) in a Kestra secret named JEEG_TOKEN.
+
+inputs:
+  - id: query
+    type: STRING
+    defaults: convert 5 km to miles
+
+tasks:
+  - id: ask_jeeg
+    type: io.kestra.plugin.core.http.Request
+    uri: http://127.0.0.1:8766/v1/run
+    method: POST
+    contentType: application/json
+    headers:
+      Authorization: "Bearer {{ secret('JEEG_TOKEN') }}"
+    body: "{{ {'query': inputs.query} | json }}"
+
+  - id: show_answer
+    type: io.kestra.plugin.core.log.Log
+    message: "{{ outputs.ask_jeeg.body | jq('.result.output') | first }}"
+
+# For JeeG to start a Kestra flow, add this trigger to the flow you want to start:
+# triggers:
+#   - id: from_jeeg
+#     type: io.kestra.plugin.core.trigger.Webhook
+#     key: choose-a-long-random-key
+# then in JeeG:  rest add kestra http://127.0.0.1:8080 none
+#                rest post kestra /api/v1/executions/webhook/company.local/jeeg_run_task/choose-a-long-random-key {}

@@ -1,0 +1,40 @@
+[
+  {
+    "functionDeclarations": [
+      {
+        "name": "jeeg_find",
+        "description": "Show which JeeG tasks match a phrase, without running anything.",
+        "parameters": {
+          "type": "OBJECT",
+          "properties": {
+            "query": {
+              "type": "STRING"
+            },
+            "limit": {
+              "type": "INTEGER"
+            }
+          },
+          "required": [
+            "query"
+          ]
+        }
+      },
+      {
+        "name": "jeeg_run",
+        "description": "Run a JeeG task from plain words, for example 'gst 2500 18' or 'convert 5 km to miles'. Runs on the user's own computer.",
+        "parameters": {
+          "type": "OBJECT",
+          "properties": {
+            "query": {
+              "type": "STRING",
+              "description": "What to do, in plain words"
+            }
+          },
+          "required": [
+            "query"
+          ]
+        }
+      }
+    ]
+  }
+]

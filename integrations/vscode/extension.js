@@ -57,6 +57,17 @@ function activate(context) {
       if (!t) return vscode.window.showInformationMessage("Select some text first.");
       const phrase = await vscode.window.showInputBox({ prompt: "Which text task? (the selection is piped in)", value: "word count" });
       if (phrase) await show(phrase.slice(0, 200), t.slice(0, 1000000));
+    }),
+    vscode.commands.registerCommand("jeeg.replaceSelection", async () => {
+      const ed = vscode.window.activeTextEditor;
+      const sel = ed && ed.selection;
+      const t = ed && sel && !sel.isEmpty ? ed.document.getText(sel) : "";
+      if (!t) return vscode.window.showInformationMessage("Select some text first.");
+      const phrase = await vscode.window.showInputBox({ prompt: "Which text task? The answer replaces your selection (undo with Ctrl+Z)", value: "sort lines" });
+      if (!phrase) return;
+      const r = await runJeeg(phrase.slice(0, 200).split(/\s+/).filter(Boolean), t.slice(0, 1000000));
+      if (!r.ok) return vscode.window.showWarningMessage("JeeG: " + r.text.split("\n")[0].slice(0, 120));
+      await ed.edit((b) => b.replace(sel, r.text));
     })
   );
 }

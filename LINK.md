@@ -21,6 +21,8 @@ Both screens show the same **6-digit number**. If, and only if, the numbers are 
     link run kitchen pc show my reminders
     link ping kitchen pc
     link inbox                     (messages people sent you)
+    link who                       (which paired computers are online)
+    link broadcast <message>       (message every paired computer)
     link peers | link level <name> <level> | link forget <name>
 
 ## Levels: what THEY may do on YOUR computer
@@ -66,7 +68,7 @@ The relay learns that two connections exist, their IP addresses and how much dat
 
 ## IoT: smart devices and scenes
 
-`iot list` shows everything you saved in one place: smart plugs (`device`), MQTT brokers (`mqtt`), computers over SSH (`computer`), wake-on-LAN targets and paired JeeGs.
+`iot status` asks every saved smart plug whether it is on, off or not reachable. `iot list` shows everything you saved in one place: smart plugs (`device`), MQTT brokers (`mqtt`), computers over SSH (`computer`), wake-on-LAN targets and paired JeeGs.
 
 Scenes run several steps in order:
 

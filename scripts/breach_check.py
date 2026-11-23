@@ -17,7 +17,7 @@ else:
     while len(toks) > 1 and toks[0].lower() in ("breach", "check", "pwned", "leaked", "password", "has", "been", "is", "my", "in", "a", "data", "breaches", "the", "if", "was"): toks.pop(0)
     pw = toks[-1] if toks else ""
 if not pw: fail('Usage: breach check "<password>"')
-h = hashlib.sha1(pw.encode("utf-8")).hexdigest().upper()
+h = hashlib.sha1(pw.encode("utf-8"), usedforsecurity=False).hexdigest().upper()
 body = get("https://api.pwnedpasswords.com/range/" + h[:5], timeout=10)
 if body is None: fail("Could not reach the breach service (are you online?).")
 hits = {}

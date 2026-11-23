@@ -1,0 +1,9 @@
+{
+  "id": "jeeg",
+  "name": "JeeG",
+  "version": "0.2.0",
+  "minAppVersion": "1.4.0",
+  "description": "Run JeeG tasks on your notes, and ask Claude, ChatGPT, DeepSeek, Gemini, Ollama and other AIs about them.",
+  "author": "JeeG",
+  "isDesktopOnly": true
+}

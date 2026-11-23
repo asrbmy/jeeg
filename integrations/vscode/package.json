@@ -2,7 +2,7 @@
   "name": "jeeg-vscode",
   "displayName": "JeeG",
   "description": "Type a task in plain words and run it with JeeG, right inside VS Code. Everything stays on your computer.",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "publisher": "jeeg",
   "license": "MIT",
   "engines": { "vscode": "^1.80.0" },
@@ -13,6 +13,7 @@
     "commands": [
       { "command": "jeeg.run", "title": "JeeG: Run a task" },
       { "command": "jeeg.runSelection", "title": "JeeG: Run the selected text as a task" },
+      { "command": "jeeg.replaceSelection", "title": "JeeG: Replace the selection with a task's answer" },
       { "command": "jeeg.pipeSelection", "title": "JeeG: Send the selected text to a task (word count, sort lines ...)" }
     ],
     "configuration": {

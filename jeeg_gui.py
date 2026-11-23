@@ -64,6 +64,7 @@ class App:
         cats = ["money", "files", "system", "network", "health", "study", "time", "reminders", "text", "developer", "apps", "browser", "clipboard", "lists", "productivity"]
         menu = tk.OptionMenu(top, self.area, *cats, command=lambda c: (self.area.set("Browse..."), self.go("list " + c)))
         menu.pack(side="left", padx=(6, 0))
+        self.build_computers_menu(top)
         self.out = scrolledtext.ScrolledText(root, wrap="word", font=("Courier", 11), padx=8, pady=6, state="disabled")
         self.out.pack(fill="both", expand=True, padx=10)
         self.status = tk.Label(root, text="Type what you want to do, for example:  emi loan 25 lakh 8.5% 20 years", anchor="w", padx=10, pady=4)
@@ -101,6 +102,41 @@ class App:
         self.entry.delete(0, "end")
         if self.pos < len(self.history):
             self.entry.insert(0, self.history[self.pos])
+
+    def build_computers_menu(self, top):
+        """Computers menu: look at paired computers, channels, bridge rules and devices. Pairing and listening stay in a terminal, on purpose."""
+        tk = self.tk
+        mb = tk.Menubutton(top, text="Computers", relief="raised")
+        m = tk.Menu(mb, tearoff=0)
+        mb["menu"] = m
+        for label, line in (("Paired computers", "link peers"), ("Find JeeGs on this network", "link find"), ("Messages received", "link inbox"),
+                            ("Channels", "channel list"), ("Hand-off jobs waiting", "handoff inbox"), ("Bridge rules", "bridge list"),
+                            ("Devices and scenes", "iot list"), ("Check my setup", "setup check")):
+            m.add_command(label=label, command=lambda l=line: self.go(l))
+        m.add_separator()
+        m.add_command(label="Send a message...", command=self.ask_send)
+        m.add_command(label="Change what a computer may do...", command=self.ask_level)
+        m.add_separator()
+        m.add_command(label="How to pair (needs a terminal)...", command=lambda: self.messagebox.showinfo(
+            "Pairing", "For safety, pairing is done at a terminal where you can see the 6-digit number on both computers.\n\nOn one computer:  jeeg link listen\nOn the other:  jeeg link find   then   jeeg link pair <address>"))
+        mb.pack(side="left", padx=(6, 0))
+        self.computers_menu = m
+
+    def ask_send(self):
+        from tkinter import simpledialog
+        who = simpledialog.askstring("Send a message", "Which paired computer?", parent=self.root)
+        text = simpledialog.askstring("Send a message", "Message:", parent=self.root) if who else None
+        if who and text:
+            self.go(f"link send {who.strip()} {text.strip()}")
+
+    def ask_level(self):
+        from tkinter import simpledialog
+        who = simpledialog.askstring("Change access", "Which paired computer?", parent=self.root)
+        lv = simpledialog.askstring("Change access", "What may they do?  block, chat, safe, read, ask or full", parent=self.root) if who else None
+        if who and lv:
+            if lv.strip().lower() == "full" and not self.messagebox.askyesno("Full access", "Full access lets that computer run almost any task on this one. Only choose it for a computer and person you trust. Continue?"):
+                return
+            self.go(f"link level {who.strip()} {lv.strip().lower()}")
 
     def go(self, line):
         self.entry.delete(0, "end")

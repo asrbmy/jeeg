@@ -1,4 +1,4 @@
-# JeeG for VS Code (starter)
+# JeeG for VS Code
 
 A small extension that runs JeeG tasks from inside VS Code.
 
@@ -7,5 +7,7 @@ A small extension that runs JeeG tasks from inside VS Code.
 3. Select text and choose **JeeG: Run the selected text as a task**, or **Send the selected text to a task** (for example `word count`, `sort lines`, `uppercase`).
 
 It starts the local `jeeg` command without a shell, never uses the network itself, and has no telemetry.
+
+**Replace the selection with a task's answer** (for example `sort lines`, `uppercase`) changes your text in place; Ctrl+Z undoes it.
 
 To try it from source: open this folder in VS Code and press `F5`. To make an installable file: `npm i -g @vscode/vsce` then `vsce package`.

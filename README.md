@@ -1,5 +1,8 @@
 # JeeG - How It Works
 
+*Agent, memory and skills: see `AGENT.md`.*  
+*Made and maintained by [asrbmy](https://asrbmy.github.io) and owned by [Link with iQ](https://linkwithiq.github.io). See `CREDITS.md`.*
+
 ![JeeG in a terminal](docs/demo.gif)
 
 You type what you want in plain words ("open youtube", "set timer 10 minutes", "send whatsapp to mom hi").
@@ -7,7 +10,7 @@ JeeG finds the matching script in the `scripts` folder and runs it.
 
 - Pure Python 3.9+, nothing to install. Works on Windows, macOS and Linux.
 - Light: about 16 MB of memory, about 65 ms per command, nothing running in the background (except reminders and alarms you set yourself).
-- 567 ready-made tasks. You can add your own by dropping in a file.
+- 602 ready-made tasks. You can add your own by dropping in a file.
 
 ---
 
@@ -341,7 +344,7 @@ A plugin is one `.py` file. Make a starter with `jeeg plugin new my_task`, edit 
 
 ## What is new in 2.12
 
-- **AI mode:** `connect ai` makes a temporary https link (through `cloudflared` or `ngrok`, which you install yourself) that you paste into Claude.ai (Settings > Connectors > Add custom connector) or any AI that can open links, so it can use JeeG on your computer. Three modes: `safe`, `ask` (default: you type y for anything beyond the safe list) and `god`. Time-limited, secret link, every call printed. See REMOTE_AI.md.
+- **AI mode:** `connect ai` makes a temporary https link (through `cloudflared` or `ngrok`, which you install yourself) that you paste into Claude.ai (Settings > Connectors > Add custom connector) or any AI that can open links, so it can use JeeG on your computer. Three modes: `safe`, `ask` (default: you type y for anything beyond the safe list) and `god`. Time-limited, secret link, every call printed. See REMOTE_AI.md. To let Claude.ai, DeepSeek or ChatGPT edit your Obsidian notes (with undo), see OBSIDIAN_AI.md.
 - **For administrators:** an optional policy file can switch off tasks, internet tasks, plugins and AI browser control, and cap the AI mode (ADMIN.md). `audit show|export` lists what ran and who asked.
 
 ## What is new in 2.11
@@ -374,7 +377,7 @@ A plugin is one `.py` file. Make a starter with `jeeg plugin new my_task`, edit 
 - **Better typo fixing:** `shutdwn pc` offers `shutdown pc`, trying every close spelling of each word.
 - **Plugins:** `plugin update` (and `plugin outdated`) refresh library plugins after checking their fingerprints; five new library plugins.
 - **22 new tasks:** salary breakup, interest tax, severance, credit card dues, savings goal (`sip goal`), PDF rotate / compress / watermark / to pictures (optional `pip install pypdf pypdfium2 Pillow`), GPA planner, citations, medicine stock, BP and sugar log, fasting timer, gas cylinder, milk and maid log, flatmate split, regex explainer, colour converter, `.env` checker, checksum verifier, HTTP header check.
-- **Python, other languages, apps:** `import jeeg`, `jeeg --serve-api`, `jeeg --stdio`, `jeeg --mcp` (see PYTHON_GUIDE.md and INTEGRATIONS.md). A starter VS Code extension is in `integrations/vscode/`.
+- **Python, other languages, apps:** `import jeeg`, `jeeg --serve-api`, `jeeg --stdio`, `jeeg --mcp` (see PYTHON_GUIDE.md and INTEGRATIONS.md). Plugins for browsers, Obsidian, VS Code, local models, ChatGPT/Gemini tools and launchers are in `integrations/` (start with `integrations/README.md`).
 - **Find any task:** the searchable list is `docs/tasks.html` (on the project page under Tasks).
 
 ![JeeG in the terminal](docs/img/terminal.svg)

@@ -27,7 +27,7 @@ Contents
 - A small launcher written in Python (standard library only). It has no background service and does not need an account.
 - It reads every script in `scripts/`, matches your words to a script, and runs it. A script is just a file you can open and edit.
 - Say `jeeg gui` for a small window with a box for plain words (needs tkinter; most Python installs have it).
-- 567 tasks are included across apps, websites, files, system, network, reminders, personal records, money calculators, text tools, developer tools and quick searches.
+- 602 tasks are included across apps, websites, files, system, network, reminders, personal records, money calculators, text tools, developer tools and quick searches.
 - It runs on Windows, macOS and Linux. Python 3.9 or newer is required.
 - It is quick (about 56 ms per command including Python start-up, measured on Linux) and light (about 16 MB while a command runs; nothing stays in memory between commands, except reminders and alarms you set).
 
@@ -322,6 +322,10 @@ Most accept text after the task name or use your clipboard if you give none, and
 - **Health and daily life:** `water log 500 ml`, `sleep log 7.5 hours`, `bmi 70 kg 175 cm`, `calorie calculator ...`, `fuel cost 250 km 18 kmpl 105`, `tip 1200 10%`, `unit price 500g 45 vs 1kg 80`, `cooking convert 2 cups flour to grams`.
 - **Bills and classes:** `add bill electricity 15 1200`, `upcoming bills`, `remove bill ...`, `add class maths mon 9:00`, `show timetable`, `todays classes`, `remove class ...`.
 - **Time, sky and money:** `meeting time 9 am india in london`, `sunrise delhi`, `sunset mumbai`, `moon phase`, `public holidays india 2026`, `exchange rates`, `gold price` (the last three need internet).
+- **Agent, memory and skills (your own model plans, you approve):** `agent setup`, `agent goal <what you want>`, `agent last`; `remember I prefer metric units`, `remember list`; `skill add morning = show reminders ; what is due`, `skill run morning`. From Telegram: `/goal ...`. See `AGENT.md`.
+- **Notes (Obsidian), edited by AI websites:** `vault copy <note>` puts a note and instructions on the clipboard for claude.ai, DeepSeek or ChatGPT; `vault listen` offers to apply an AI's edit block the moment you copy it; or check it with `vault plan`, applied with `vault apply` (asks first, backs up) and reversed with `vault undo`. Also `vault replace`, `vault cut`, `vault prepend`, `vault trash` (moves to .trash). See `OBSIDIAN_AI.md`.
+- **Notes (Obsidian):** `vault set` (finds your Obsidian vault), `vault search <words>`, `vault read <note>`, `vault list`, `vault recent` are read-only; `vault append <note> | <text>` and `vault new <note> | <text>` add text, never overwrite, and ask first. AI apps can use them through `jeeg --mcp`; see `integrations/obsidian/README.md`.
+- **Developer and security (local, read-only unless stated):** `find todo <folder>`, `find secrets <folder>` (hides the values it finds), `env diff .env.example .env`, `log analyze app.log`, `semver 1.2.3 vs 1.10.0`, `identify file report.pdf` (what it really is, and a warning if the name is misleading), `ssh key audit`, and `integrity save <folder>` then `integrity check <folder>` to see which files were added, changed or removed.
 - **Files:** `old large files 100 mb`, `rename photos by date <folder>` (preview first), `compare folders a b`, `convert encoding old.txt`, `zip with password <folder>` (needs `pip install pyzipper`), `file hash setup.exe`, `json to yaml` / `yaml to json` (needs `pip install pyyaml`), `reading time notes.txt`, `meeting notes <title>`, `flashcards <file>`.
 - **Developer:** `run tests`, `who uses port 3000`, `regex test "a+" on "caaat"` (runs in a separate process with a time limit), `git contributors`, `git recent changes`.
 - **When nothing matches:** JeeG shows the closest tasks instead of just failing, and `stats` flags tasks that keep failing.
@@ -703,17 +707,20 @@ Run the checks yourself any time:
 
 ## 15. Appendix: every task
 
-567 tasks. In the Usage column, `<...>` is something you fill in and `[...]` is optional. A star means the task asks before running; "online" means it can use the internet.
+602 tasks. In the Usage column, `<...>` is something you fill in and `[...]` is optional. A star means the task asks before running; "online" means it can use the internet.
 
 
 ### ai
 
 | Task | Usage | What it does |
 |---|---|---|
+| agent (online) | `agent setup \| agent goal <what you want> [read\|ask\|safe] [steps 8] [for 10 minutes] \| agent last \| agent status \| agent test \| agent forget` | Give JeeG a goal and a model you chose (Ollama, LM Studio, or your own Claude/ChatGPT/DeepSeek key) plans the steps; JeeG runs them and asks you before anything risky. agent setup \| agent goal <text> \| agent last \| agent status \| agent forget |
 | open chatgpt |  | Open ChatGPT |
 | open claude |  | Open Claude |
 | open gemini |  | Open Google Gemini |
 | open perplexity | `open perplexity <words>` | Open Perplexity (or ask it) |
+| remember | `remember <fact> \| remember list \| remember search <words> \| remember forget <number\|all>` | Tell JeeG facts or preferences to remember on this computer (remember I prefer metric units); the agent uses them. remember list \| remember search <words> \| remember forget <number\|all>. Never keeps passwords. |
+| skill | `skill add <name> = <step> ; <step> \| skill run <name> [read\|ask\|safe] \| skill list \| skill show <name> \| skill describe <name> = <text> \| skill remove <name> \| skill export <name> \| skill import <file>` | Save a list of plain-words steps as a skill and run it any time (skill add morning = show reminders ; what is due). The agent can use your skills. skill add \| run \| list \| show \| remove \| describe \| share |
 
 ### apps
 
@@ -767,6 +774,7 @@ Run the checks yourself any time:
 | Task | Usage | What it does |
 |---|---|---|
 | backup info |  | Show when your data was last backed up and how much data you have |
+| backup share (online) * | `backup share <computer>` | Share a backup zip of your JeeG data to a paired computer over the encrypted link (backup share kitchen-pc). It arrives in their Downloads/JeeG received folder. Asks first. |
 | export data | `export data [folder]` | Back up all your JeeG data (to-dos, notes, expenses, journal...) into one zip file (export data) |
 | export records | `export records <expenses\|journal\|todos\|habits\|birthdays\|notes>` | Save one list as a CSV file for Excel (export records expenses \| journal \| todos \| habits \| birthdays \| notes) |
 | import data * | `import data <backup.zip>` | Restore your data from a backup zip made by 'export data' (current data is saved first) |
@@ -822,6 +830,8 @@ Run the checks yourself any time:
 | docker ps |  | List running Docker containers |
 | docker stop all * |  | Stop all running Docker containers |
 | env check | `env check [folder]` | Compare a .env file with .env.example and list missing keys, without showing secrets (env check; env check myapp) |
+| env diff | `env diff <file1> <file2>` | Compare two .env files and show which keys are missing or different, without printing the values (env diff .env.example .env) |
+| find todo | `find todo [folder]` | List TODO, FIXME and HACK comments in a project folder (find todo myproject) |
 | git branch |  | List git branches |
 | git checkout | `git checkout <branch> \| git checkout new <branch>` | Switch to a git branch, or create one (git switch main, git checkout new feature-x) |
 | git clone (online) | `git clone <url>` | Clone a repository (git clone https://github.com/user/repo) |
@@ -843,6 +853,7 @@ Run the checks yourself any time:
 | json to yaml | `json to yaml <file.json>` | Convert a JSON file to YAML (json to yaml config.json) |
 | jwt decode | `jwt <token>` | Read what is inside a JWT token, without sending it anywhere (jwt eyJ...) |
 | kill port * | `kill port <number>` | Stop whatever is listening on a port (kill port 3000) |
+| log analyze | `log analyze <file>` | Summarise a log file: counts by level, the most common errors, and the busiest minutes (log analyze app.log) |
 | mcp call (online) * | `mcp call <name> <tool> [json arguments] [preview]` | Use any tool of a saved MCP server (mcp call files write_file {"path": "a.txt", "content": "hi"}). Asks first. Add the word preview to see what would be sent. |
 | mcp servers (online) | `mcp catalog \| mcp add <catalog name> [argument] \| mcp add <name> = <command or https address> \| mcp list \| mcp tools <name> \| mcp login <name> [ENV_VAR ...] \| mcp logout <name> \| mcp mark <name> <tool,tool> read\|write \| mcp remove <name>` | Let JeeG use other MCP servers (mcp catalog, mcp add filesystem ~/Documents, mcp add files = npx some-server, mcp login <name>, mcp tools <name>, mcp mark <name> <tool> read) |
 | new project | `new project <name> [python\|node\|html\|flask]` | Create a starter project folder (new project myapp python \| node \| html \| flask) |
@@ -867,6 +878,7 @@ Run the checks yourself any time:
 | regex tester | `regex test "<pattern>" on "<text>"` | Try a regular expression on some text and see the matches (regex test "\d+" on "abc 123 def 45") |
 | response headers (online) | `http headers <url>` | Show a website's response headers and which security headers it sets (http headers https://example.com) (needs internet) |
 | run tests |  | Run the tests of the project in this folder (run tests): pytest, unittest, npm, go or cargo is detected |
+| semver compare | `semver <version> vs <version>` | Compare two version numbers the way package managers do (semver 1.2.3 vs 1.10.0) |
 | serve folder (online) | `serve folder [port]` | Serve the current folder at http://localhost:8000 |
 | show env variables | `env variables [filter]` | List environment variables (secrets hidden); add a word to filter (env variables java) |
 | show path |  | Show the folders in your PATH, one per line, marking missing ones |
@@ -991,6 +1003,7 @@ Run the checks yourself any time:
 | Task | Usage | What it does |
 |---|---|---|
 | android adb | `android devices \| android battery \| android screenshot \| android open <web address>` | Look at an Android phone over USB or Wi-Fi with adb (android devices, android battery, android screenshot, android open https://example.com) |
+| bluetooth devices | `bluetooth list \| bluetooth connect <name> \| bluetooth disconnect <name>` | List paired Bluetooth devices and connect or disconnect one (bluetooth list, bluetooth connect headphones). Uses the system's own tools; Linux needs bluetoothctl, macOS needs blueutil for connect. |
 | mute volume |  | Mute or unmute the sound |
 | next track |  | Skip to the next song |
 | play pause |  | Play or pause the current media |
@@ -1082,6 +1095,7 @@ Run the checks yourself any time:
 | Task | Usage | What it does |
 |---|---|---|
 | document expiry | `add document <name> <expiry date> \| documents \| remove document <name>` | Remember when passports, licences and IDs expire (add document passport 12 mar 2031, documents, remove document passport) |
+| family board (online) | `board add <text> \| board list \| board done <number> \| board undo <number>` | A shared to-do board for a family or small team. Items sync to the paired computers you share the 'board' channel with (board add buy milk, board list, board done 2, channel share board with kitchen-pc) |
 | meal planner | `meal plan <day> <meals> \| meal plan \| meal today \| meal clear` | Plan the week's meals (meal plan monday dal rice, meal plan, meal today, meal clear) |
 | my calendar | `calendar file <title> <date> [time] [for <minutes>]` | Make a .ics calendar event file that opens in any calendar app (calendar file dentist 25 dec 4pm) |
 | shopping add | `shopping add <items>` | Add items to the shopping list (shopping add milk, eggs and bread) |
@@ -1153,6 +1167,7 @@ Run the checks yourself any time:
 | ppf maturity | `ppf <amount a year> [years] [rate %]` | PPF maturity (ppf 1.5 lakh a year; ppf 50000 a year 15 years) |
 | profit margin | `profit margin cost <c> price <p>` | Profit margin and markup, or the price you need for a target margin (profit margin cost 60 price 100 \| price for 30% margin cost 70). |
 | rd maturity | `rd <monthly amount> <rate %> <years>` | Recurring deposit maturity (rd 5000 a month 6.5% 2 years) |
+| receipts | `receipt add <amount> <category> <shop...> [date YYYY-MM-DD] \| receipt attach <id> <file> \| receipt list [YYYY[-MM]] \| receipt total [YYYY[-MM]] \| receipt report <YYYY> \| receipt remove <id>` | Keep receipts for tax time: receipt add 450 groceries "Big Bazaar", receipt attach 3 photo.jpg, receipt list 2026-11, receipt total 2026-11, receipt report 2026 |
 | recurring costs | `recurring add <amount> <name> [category] \| recurring list \| recurring apply \| recurring remove <name>` | Costs that repeat every month (recurring add 649 netflix entertainment, recurring list, recurring apply, recurring remove netflix) |
 | remove bill | `remove bill <name>` | Delete a saved bill (remove bill electricity) |
 | remove budget | `remove budget <category>` | Remove a category budget (remove budget food) |
@@ -1178,6 +1193,8 @@ Run the checks yourself any time:
 
 | Task | Usage | What it does |
 |---|---|---|
+| ai channel (online) | `channel export <name> [file] \| channel search <word> \| channel list \| channel post <name> [as <label>:] <text> \| channel read <name> [n] \| channel wait <name> [seconds] \| channel share <name> with <computer> \| channel unshare <name> with <computer> \| channel pull <name> from <computer> \| channel remove <name>` | Shared message boards that people and AIs on different JeeG computers read and write (channel post lab hello, channel read lab, channel share lab with kitchen-pc). Messages from others are information, never commands. |
+| bridge (online) | `bridge add <name> when <source> [if contains <word>] then <step> ; <step> \| bridge list \| bridge remove <name> \| bridge test <name> <message> \| bridge run [minutes]` | Rules that connect things: when a message arrives from MQTT, a webhook, UDP/TCP, serial, WebSocket, a channel or a chat, do steps on something else (bridge add door when mqtt home door/front if contains open then ha on light.hall ; channel post lab door opened). Run them with: bridge run. Terminal only. |
 | check internet (online) |  | Check whether the internet is working |
 | check speed (online) |  | Test internet speed (Speedtest) |
 | check website (online) | `check website <url>` | Check if a website is up (check website github.com) |
@@ -1185,21 +1202,29 @@ Run the checks yourself any time:
 | fetch file (online) * | `download <https address> [preview]` | Download a file from a web address into your Downloads folder (download https://example.com/a.pdf); asks first, refuses programs and scripts |
 | fleet check (online) * | `check all computers` | Ask every saved computer (see "computer add") for its health at once: disk, memory, uptime. Needs JeeG and an ssh key on each. |
 | flush dns * |  | Clear the DNS cache |
+| handoff (online) | `handoff allow <computer> \| handoff ask <computer> <request> \| handoff inbox \| handoff reply <id> <text> \| handoff result <id> [seconds] \| handoff list` | Ask the AI or person at another JeeG computer to do a job and get the answer back (handoff ask kitchen-pc summarise report.pdf, then handoff result <id>). Both sides must run: handoff allow <computer> |
+| home assistant (online) | `ha add <name> <address> \| ha states [filter] \| ha on\|off\|toggle <entity> \| ha call <domain.service> <entity> [json] \| ha list \| ha remove <name>` | Control Home Assistant (add it once with ha add home http://homeassistant.local:8123, then ha states light, ha on light.kitchen, ha call switch.turn_off switch.fan). The access token is asked for and kept private. |
+| iot hub (online) | `iot list \| iot status \| iot scene add <name> = <step> ; <step> \| iot scene run <name> \| iot scene list \| iot scene remove <name>` | One place for your home devices and computers: see everything (iot list) and save scenes that do several things at once (iot scene add night = device off lamp ; mqtt publish home lights/hall off) |
 | listening ports |  | Show which programs are listening on network ports |
 | live network speed | `live network speed [seconds]` | Watch your current download/upload speed for a few seconds (live network speed) |
+| modbus device (online) | `modbus read <host[:502]> holding\|input\|coil\|discrete <address> [count] [unit N]` | Read Modbus TCP devices on your network such as PLCs and energy meters (modbus read 192.168.1.60 holding 0 2). Writing is a separate task that asks first: modbus write ... |
+| modbus write (online) * | `modbus write <host[:502]> holding <address> <value> \| modbus write <host[:502]> coil <address> on\|off` | Write to a Modbus TCP device (modbus write 192.168.1.60 coil 5 on, modbus write 192.168.1.60 holding 10 500). Asks first. |
 | mqtt message (online) | `mqtt add <name> <host[:port]> [user] \| mqtt publish <name> <topic> <message> \| mqtt listen <name> <topic> [seconds] \| mqtt list \| mqtt remove <name>` | Send or listen to MQTT messages (mqtt add home 192.168.1.2, mqtt publish home lights/kitchen on, mqtt listen home sensors/#) |
 | network doctor (online) | `network doctor` | Find out why the internet is slow or down: checks your network, router, name lookup and the internet, then says what to try |
 | peer jeeg (online) | `peer add <name> <link from 'connect ai'> \| peer run <name> <task> \| peer list \| peer remove <name>` | Talk to a JeeG on another computer through its AI-mode link (peer add office <link>, peer run office disk space) |
 | ping host (online) | `ping host <name or ip>` | Ping a host (ping google.com) |
 | port check (online) | `port check <host> <port>` | Check if a port is open (port check example.com 443) |
 | port owner | `who uses port <number>` | Which program is using a port (who uses port 3000) |
+| rest api (online) | `rest add <name> <https address> [bearer\|header <Header-Name>\|none] \| rest get <name> [path] \| rest list \| rest remove <name>` | Save a web service once (rest add shop https://api.example.com bearer, you are asked for the key) and call it (rest get shop /orders, rest post shop /items {"name":"x"}). |
+| rest post (online) * | `rest post <name> <path> <json>` | Send JSON to a saved web service (rest post shop /items {"name":"x"}). Asks first. Save the service with: rest add |
 | rss feed (online) | `feed add <url> [name] \| feed list \| feed remove <n> \| read feeds [n]` | Follow blogs and news sites by their RSS/Atom feed (feed add https://site/feed, read feeds, feed list, feed remove 2) |
 | save page (online) | `save page <url>` | Save a web page as readable text for offline reading (save page https://example.com/article). Saved in Documents/JeeG pages. |
 | scan network (online) | `who is on my wifi [scan]` | List the devices on your home network (who is on my wifi). Add "scan" to wake the quiet ones first. Only your own private network. |
+| setup home (online) | `setup home [192.168.1 \| 192.168.1.50]` | Look on your home network for Home Assistant, MQTT brokers, Shelly and Tasmota plugs, and print the exact commands to save them (setup home, or setup home 192.168.1) |
 | share file (online) | `send <file> to my phone` | Send one file to your phone or another computer on the same Wi-Fi: shows a link and QR code, serves that one file once, then stops |
 | show ip (online) |  | Show your local and public IP address |
-| iot hub (online) | `iot list \| iot scene add <name> = <step> ; <step> \| iot scene run <name> \| iot scene list \| iot scene remove <name>` | One place for your home devices and computers: see everything (iot list) and save scenes that do several things at once |
 | smart device (online) | `device add <name> <shelly\|tasmota> <ip> \| device on\|off\|toggle\|status <name> \| device list \| device remove <name>` | Control smart plugs on your home network (device add lamp shelly 192.168.1.50, then: device on lamp / device off lamp / device status lamp) |
+| socket tools (online) | `tcp send <host:port> <text> \| tcp read <host:port> [seconds] \| udp send <host:port> <text> \| udp listen <port> [seconds] \| ws send <ws://address> <text> \| ws read <ws://address> [seconds]` | Talk to devices over plain TCP, UDP or WebSocket on your own network (tcp send 192.168.1.40:9000 hello, udp send 192.168.1.40:4210 on, udp listen 4210 10, ws send ws://192.168.1.5:81 hi) |
 | ssh hosts | `computer add <name> <user@host> \| computer list \| computer remove <name>` | Save other computers you can reach with ssh (computer add pi pi@192.168.1.20), then run JeeG tasks on them |
 | ssh task (online) * | `on <name> run <task>` | Run a JeeG task on another computer over ssh (on pi run disk space). Needs JeeG there and an ssh key (no password prompts). |
 | ssl expiry (online) | `ssl expiry <site>` | Show how many days a site's https certificate has left (ssl expiry mysite.com) |
@@ -1208,6 +1233,18 @@ Run the checks yourself any time:
 | watch site (online) | `watch page\|price\|site\|ssl\|release <target> [name] \| watch list \| watch remove <n> \| check watches` | Watch a web page, a price, a site being up, a certificate, or a GitHub release; "check watches" reports what changed (watch page https://x.com/news, watch price https://shop.com/item, watch site https://mysite.com, watch ssl mysite.com, watch release owner/repo) |
 | webhook (online) | `webhook add <name> <https address> \| webhook send <name> <text> \| webhook list \| webhook remove <name>` | Save web addresses (Slack, Discord, Zapier, n8n ...) and send them a message (webhook add team https://..., webhook send team deploy done) |
 | wifi info |  | Show the Wi-Fi network you are connected to |
+| zigbee devices (online) | `zigbee devices <broker> \| zigbee on\|off\|toggle <broker> <device> \| zigbee set <broker> <device> <key> <value> \| zigbee get <broker> <device>` | Switch Zigbee devices through zigbee2mqtt over your saved MQTT broker (zigbee devices home, zigbee on home hall-lamp, zigbee off home hall-lamp, zigbee set home hall-lamp brightness 120). Save the broker first: mqtt add |
+
+### notes
+
+| Task | Usage | What it does |
+|---|---|---|
+| vault | `vault copy [<note> \| find <words>] \| vault plan [edit block] \| vault set [folder] \| vault search <words> \| vault read <note> \| vault list [folder] \| vault recent` | Search and read your Obsidian notes (a folder of .md files): vault set, vault search <words>, vault read <note>, vault list, vault recent, vault copy <note \| find words \| nothing> (puts a note and AI instructions on the clipboard to paste into claude.ai, DeepSeek or ChatGPT), vault plan (shows what an AI's edit block would change, without changing anything). Read-only. |
+| vault apply * | `vault apply [edit block] \| vault undo` | Apply the edit block an AI gave you (copied from claude.ai, DeepSeek, ChatGPT...) to your Obsidian notes, with a backup: vault apply (reads the clipboard) or vault apply <json>. vault undo puts the last change back. Asks first. |
+| vault edit * | `vault replace <note> \| <old> \| <new>   or   vault cut <note> \| <text>   or   vault prepend <note> \| <text>` | Edit one Obsidian note: vault replace <note> \| <old text> \| <new text>, vault cut <note> \| <text to remove>, vault prepend <note> \| <text>. Backs up first (vault undo). Asks first. |
+| vault listen | `vault listen [count]` | Leave this running while you chat with claude.ai, DeepSeek or ChatGPT: when you copy an AI's edit block, JeeG shows what it would change and asks y/n to apply it. Ctrl+C to stop. Terminal only. |
+| vault trash * | `vault trash <note>` | Move an Obsidian note to the vault's .trash folder (never deleted for good): vault trash <note>. Can be undone with vault undo. Asks first. |
+| vault write * | `vault append <note> \| <text>   or   vault new <note> \| <text>` | Add text to the end of an Obsidian note or make a new one: vault append <note> \| <text>, vault new <note> \| <text>. Never overwrites or deletes; backs up first (vault undo). Asks first. |
 
 ### personal
 
@@ -1235,6 +1272,7 @@ Run the checks yourself any time:
 | my data lookup | `search my data <words>` | Search your notes, journal, to-dos, expenses and other saved records (search my data milk) |
 | note add | `add note <text>` | Save a quick note (note add call dentist at 5) |
 | note list | `show notes [word]` | Show your recent notes (optionally filter by a word) |
+| playbook | `playbook add <name> = <step> ; <step> \| playbook run <name> \| playbook list \| playbook show <name> \| playbook remove <name>` | Save a reviewed multi-step job under a name and run it any time, by you or by an AI that is allowed to run but not change it (playbook add morning = show reminders ; what is due ; playbook run morning). Adding and removing are terminal only. |
 | study log | `study log <subject> <time> \| study report` | Log study time and see where it goes (study log maths 45 min, study report) |
 | todo add | `add todo <text>` | Add a to-do item (add todo buy milk) |
 | todo clear |  | Remove finished items from the to-do list |
@@ -1257,6 +1295,7 @@ Run the checks yourself any time:
 | calendar feed (online) | `calendar feed add <name> <https address \| file.ics> \| calendar feed upcoming [name] [days] \| calendar feed list \| calendar feed remove <name>` | Show upcoming events from a calendar link or .ics file (calendar feed add work <secret iCal address>, calendar feed upcoming). Works with Google/Outlook secret iCal links, no sign-in. |
 | eye break | `eye break [minutes]` | 20-20-20 eye break reminder every 20 minutes |
 | notify due | `notify due` | Pop up a notification for what is due: birthdays, bills, countdowns, medicine (what is due, notify due) |
+| notify me | `notify <text>` | Show a desktop notification (notify me dinner is ready, notify Front door opened) |
 | pomodoro | `pomodoro [rounds] [N work] [N break]` | Pomodoro focus timer: 25 min work / 5 min break (pomodoro 4 rounds) |
 | remind me | `remind me <when> <what>` | Background reminder (remind me at 5:30pm to call mom / in 20 minutes ... / every 2 hours ...) |
 | remove countdown | `remove countdown <event>` | Delete a countdown (remove countdown exam) |
@@ -1303,8 +1342,12 @@ Run the checks yourself any time:
 | audit log | `audit show [n] \| audit summary \| audit ai \| audit export [file.csv]` | See and export what JeeG ran and who asked (you or an AI): audit show 20, audit summary, audit export. Task names and results only, never what you typed. |
 | breach check (online) | `breach check "<password>"` | Check if a password has appeared in known data leaks (only a 5-character hash prefix is sent) |
 | file hash | `file hash <file> [expected hash]` | Show the SHA-256, SHA-1 and MD5 fingerprint of a file, to check a download (file hash setup.exe) |
+| find secrets | `find secrets [folder]` | Look for passwords, API keys and private keys left in a project folder before you share it (find secrets myproject). Values are hidden in the answer. |
+| identify file | `identify file <file>` | Tell what a file really is from its first bytes, not its name, and warn if the name is misleading (identify file report.pdf) |
+| integrity baseline | `integrity save <folder> \| integrity check <folder> \| integrity list \| integrity forget <folder>` | Save the fingerprints of a folder, then check later which files were added, changed or removed (integrity save myfolder, integrity check myfolder) |
 | password strength | `password strength "<password>"` | Rate how strong a password is, privately (password strength "MyPass123") |
 | shred file * | `shred file <file> [preview]` | Overwrite a file with random data and delete it (cannot be undone) |
+| ssh key audit | `ssh key audit` | Check your SSH keys and folder for weak or risky settings (old key types, no passphrase, loose permissions). Reads only; never shows a key. |
 
 ### selfcheck
 
@@ -1393,6 +1436,7 @@ Run the checks yourself any time:
 | running processes |  | List the programs using the most memory |
 | screen off |  | Turn the screen off without sleeping |
 | screen resolution |  | Show your screen resolution |
+| setup check (online) | `setup check` | Check your saved devices, paired computers, bridge rules, ports and optional tools, and say what to fix (setup check). For the basic JeeG self-check use: doctor |
 | show printers | `show printers` | List your printers and whether they are ready, and the default one |
 | show uptime |  | Show how long the computer has been on |
 | startup programs |  | List programs that start with your computer |
@@ -1528,8 +1572,3 @@ Run the checks yourself any time:
 | open trello |  | Open Trello |
 | open zoom |  | Open Zoom |
 
-
-
-## Talking to other JeeG computers
-
-See `LINK.md`: `link listen`, `link find`, `link pair`, `link send`, `link file`, `link run`, `link level`, `link relay serve`.

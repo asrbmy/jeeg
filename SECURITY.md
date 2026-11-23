@@ -52,3 +52,10 @@ Releases uploaded to PyPI by the `publish` workflow carry build provenance. Chec
     gh attestation verify jeeg-X.Y.Z-py3-none-any.whl --repo asrbmy/jeeg
 
 (download the wheel from the GitHub release first). The workflow also uploads the files and their SHA-256 sums to the release page.
+
+## Reviewed in v2.21
+A code scanner (bandit) was run over the whole program and each finding was checked by hand. Fixed: `check website` accepted `file://`
+addresses, the older-Python fallback for unpacking `.tar` files, and weak-hash flags on hashes that protocols require (WebSocket, the
+breach-check service) or that are only labels. Other findings were checked and left on purpose: listening on all addresses is only done
+when you start a listener (link, relay, bridge sources); web addresses are limited to http and https; feeds that declare XML entities
+are refused. This is a self-review, not an independent audit, and the JeeG link protocol has not had outside review.

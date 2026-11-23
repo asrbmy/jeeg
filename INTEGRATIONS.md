@@ -55,6 +55,10 @@ curl -H "Authorization: Bearer $(jeeg --api-token)" -d '{"query":"gst 2500 18"}'
 
 Examples for Node.js, curl and Python are in `examples/other_languages/`.
 
+## Ready-made plugins
+
+Browser extension (Chrome, Edge, Firefox), Obsidian, VS Code, Claude Desktop, ChatGPT and Gemini tool lists, Ollama and LM Studio chat, Alfred, AutoHotkey, Shortcuts, curl and PowerShell: see `integrations/README.md`.
+
 ## 4. MCP: let an app use JeeG as a tool
 
 See BROWSER.md for driving a real web browser, and MCP.md for every AI app and server JeeG connects to.

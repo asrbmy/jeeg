@@ -1,0 +1,13 @@
+[
+  { "id": "jeeg_tab", "type": "tab", "label": "JeeG", "disabled": false, "info": "Runs a JeeG task. Needs: jeeg --serve-api, and the environment variable JEEG_TOKEN set before starting Node-RED." },
+  { "id": "jeeg_inject", "type": "inject", "z": "jeeg_tab", "name": "Ask JeeG", "props": [ { "p": "payload" } ], "repeat": "", "crontab": "", "once": false, "onceDelay": 0.1,
+    "payload": "convert 5 km to miles", "payloadType": "str", "x": 140, "y": 120, "wires": [ [ "jeeg_build" ] ] },
+  { "id": "jeeg_build", "type": "function", "z": "jeeg_tab", "name": "Build JeeG request", "func": "const token = env.get('JEEG_TOKEN');\nif (!token) { node.error('Set the JEEG_TOKEN environment variable first', msg); return null; }\nmsg.headers = { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' };\nmsg.payload = { query: String(msg.payload).slice(0, 2000) };\nreturn msg;", "outputs": 1, "x": 370, "y": 120, "wires": [ [ "jeeg_http" ] ] },
+  { "id": "jeeg_http", "type": "http request", "z": "jeeg_tab", "name": "POST /v1/run", "method": "POST", "ret": "obj", "paytoqs": "ignore", "url": "http://127.0.0.1:8766/v1/run", "tls": "", "persist": false, "proxy": "", "insecureHTTPParser": false, "authType": "", "senderr": false, "headers": [], "x": 600, "y": 120, "wires": [ [ "jeeg_answer" ] ] },
+  { "id": "jeeg_answer", "type": "function", "z": "jeeg_tab", "name": "Take the answer", "func": "if (!msg.payload || !msg.payload.ok) { node.warn((msg.payload && msg.payload.error) || 'JeeG did not answer'); return null; }\nmsg.payload = msg.payload.result.output;\nreturn msg;", "outputs": 1, "x": 810, "y": 120, "wires": [ [ "jeeg_debug" ] ] },
+  { "id": "jeeg_debug", "type": "debug", "z": "jeeg_tab", "name": "JeeG answer", "active": true, "tosidebar": true, "complete": "payload", "targetType": "msg", "x": 1010, "y": 120, "wires": [] },
+
+  { "id": "jeeg_in", "type": "http in", "z": "jeeg_tab", "name": "JeeG calls Node-RED", "url": "/jeeg", "method": "post", "upload": false, "x": 150, "y": 260, "wires": [ [ "jeeg_event", "jeeg_reply" ] ] },
+  { "id": "jeeg_event", "type": "debug", "z": "jeeg_tab", "name": "Event from JeeG", "active": true, "tosidebar": true, "complete": "payload", "targetType": "msg", "x": 400, "y": 260, "wires": [] },
+  { "id": "jeeg_reply", "type": "http response", "z": "jeeg_tab", "name": "OK", "statusCode": "200", "headers": {}, "x": 400, "y": 320, "wires": [] }
+]

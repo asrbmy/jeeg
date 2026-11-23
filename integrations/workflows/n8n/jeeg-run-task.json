@@ -1,0 +1,59 @@
+{
+  "name": "JeeG: run a task",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "a1b2c3d4-0001-4000-8000-000000000001",
+      "name": "Start",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "assignments": { "assignments": [ { "id": "q1", "name": "query", "value": "convert 5 km to miles", "type": "string" } ] },
+        "options": {}
+      },
+      "id": "a1b2c3d4-0002-4000-8000-000000000002",
+      "name": "What to ask JeeG",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://127.0.0.1:8766/v1/run",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"query\": $json.query } }}",
+        "options": { "timeout": 60000 }
+      },
+      "id": "a1b2c3d4-0003-4000-8000-000000000003",
+      "name": "Run on JeeG",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [680, 300],
+      "notes": "Create a Header Auth credential: Name = Authorization, Value = Bearer <token from: jeeg --api-token>"
+    },
+    {
+      "parameters": {
+        "assignments": { "assignments": [ { "id": "o1", "name": "answer", "value": "={{ $json.result.output }}", "type": "string" } ] },
+        "options": {}
+      },
+      "id": "a1b2c3d4-0004-4000-8000-000000000004",
+      "name": "Answer",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [900, 300]
+    }
+  ],
+  "connections": {
+    "Start": { "main": [ [ { "node": "What to ask JeeG", "type": "main", "index": 0 } ] ] },
+    "What to ask JeeG": { "main": [ [ { "node": "Run on JeeG", "type": "main", "index": 0 } ] ] },
+    "Run on JeeG": { "main": [ [ { "node": "Answer", "type": "main", "index": 0 } ] ] }
+  },
+  "settings": { "executionOrder": "v1" }
+}

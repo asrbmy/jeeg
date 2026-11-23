@@ -11,7 +11,7 @@ exp = re.search(r"\b([0-9a-fA-F]{32}|[0-9a-fA-F]{40}|[0-9a-fA-F]{64})\b", t)
 t2 = t.replace(exp.group(1), " ") if exp else t
 p = path_arg(re.sub(r"^\s*(?:(?:file|of|for)\s+)*(?:hash|checksum|sha256|md5|sha1)?\s*(?:(?:of|for)\s+)?", "", re.sub(r"\b(compare|against|expected|verify|matches?|with)\b", " ", t2, flags=re.I), flags=re.I).strip())
 if p.is_dir(): fail("Give a file, not a folder.")
-hs = {"sha256": hashlib.sha256(), "sha1": hashlib.sha1(), "md5": hashlib.md5()}
+hs = {"sha256": hashlib.sha256(), "sha1": hashlib.sha1(usedforsecurity=False), "md5": hashlib.md5(usedforsecurity=False)}
 with open(p, "rb") as f:
     for c in iter(lambda: f.read(1 << 20), b""):
         for h in hs.values(): h.update(c)

@@ -9,7 +9,7 @@ RELEASE = ["jeeg.py selftest", "tests/test_routing.py", "tests/test_parsers.py",
            "tests/test_v27.py", "tests/test_api.py", "tests/test_bridge.py", "tests/test_v28.py", "tests/test_v29.py", "tests/test_v210.py",
            "tests/test_phone.py", "tests/test_remote.py", "tests/test_fuzz.py", "tests/test_connect.py", "tests/test_v217.py", "tests/test_v218.py",
            "tests/test_v219.py", "tests/test_v220.py", "tests/test_everyday.py", "tests/test_more.py", "tests/test_prod.py", "tests/test_update.py",
-           "tests/test_link.py", "tests/test_iot.py", "tests/test_quality.py", "tests/test_privacy.py", "tests/test_security.py"]
+           "tests/test_link.py", "tests/test_iot.py", "tests/test_ai.py", "tests/test_proto.py", "tests/test_extras.py", "tests/test_plugins.py", "tests/test_agent.py", "tests/test_workflows.py", "tests/test_devsec.py", "tests/test_more2.py", "tests/test_quality.py", "tests/test_privacy.py", "tests/test_security.py"]
 
 
 def run_one(spec: str, limit: int) -> tuple:

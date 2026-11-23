@@ -3,13 +3,15 @@
 # category: network
 # network: yes
 # usage: check website <url>
-import time, urllib.request, urllib.error
+import re, time, urllib.request, urllib.error
 from _lib import args_text, fail
 u = (args_text().split() or [""])[0]
 if not u:
     fail("Give a site, e.g. check website github.com")
 if "://" not in u:
     u = "https://" + u
+if not re.match(r"https?://[^\s\x00-\x1f]+$", u, re.I):
+    fail("Only http and https addresses are allowed.")
 req = urllib.request.Request(u, headers={"User-Agent": "Mozilla/5.0 JeeG"})
 t = time.perf_counter()
 try:

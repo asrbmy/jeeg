@@ -103,7 +103,7 @@ class Telegram:
 
 
 HELP = ("JeeG. Send a task in plain words, for example:  gst 2500 18   or   convert 5 km to miles\n"
-        "/mode shows what I may do.  /stop ends the session.")
+        "/goal <what you want> lets your own AI model plan the steps (set up on the computer with: agent setup).  /mode shows what I may do.  /stop ends the session.")
 
 
 def handle_message(tg: Telegram, msg: dict, st: dict) -> bool:
@@ -138,6 +138,25 @@ def handle_message(tg: Telegram, msg: dict, st: dict) -> bool:
     elif low in {"/stop", "stop"}:
         tg.send(cid, "Stopped. Bye.")
         return False
+    elif re.match(r"/?goal\s+\S", text, re.I):
+        goal = re.sub(r"^/?goal\s+", "", text, flags=re.I)
+        if st["limit"] and st["calls"] >= st["limit"]:
+            tg.send(cid, f"The limit of {st['limit']} requests for this session is used up.")
+            return True
+        st["calls"] += 1
+        try:
+            import jeeg_agent
+            cfg = jeeg_agent.load_cfg(st["state"])
+            if not cfg:
+                tg.send(cid, "The agent is not set up. On the computer run:  agent setup")
+                return True
+            log(f"{jeeg_remote._ts()}  Telegram goal: {goal[:120]}")
+            tg.send(cid, "On it. I will ask on the computer before anything risky.")
+            res = jeeg_agent.run_goal(goal, cfg, st["mode"], st["approver"], st["state"], log, "telegram", st["extra"],
+                                      say=lambda line: tg.send(cid, line.strip()[:300]), max_steps=8, minutes=8)
+            tg.send(cid, ("Question: " + res["answer"] + "\n(Ask again with the answer in the goal.)") if res["outcome"] == "question" else (res["answer"] or "(no answer)")[:3500])
+        except Exception as e:                                                 # noqa: BLE001  the bot must keep running
+            tg.send(cid, f"Could not run that goal: {e}"[:300])
     else:
         if text.startswith("/"):
             text = text.lstrip("/")

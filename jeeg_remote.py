@@ -50,7 +50,7 @@ MAX_OUT = 30_000
 MAX_PARALLEL = 4
 RATE_PER_MIN = 120
 APPROVE_WAIT = 60
-TERMINAL_ONLY = {"web", "ui", "gui", "window", "windows", "desktop", "kit", "audit", "link", "setup", "update", "upgrade", "plugin", "plugins", "exit", "quit", "q", "first", "completion", "report", "share",
+TERMINAL_ONLY = {"agent", "skill", "skills", "remember", "web", "ui", "gui", "window", "windows", "desktop", "kit", "audit", "link", "bridge", "setup", "update", "upgrade", "plugin", "plugins", "exit", "quit", "q", "first", "completion", "report", "share",
                  "autorun", "connect", "learn", "tour", "tutorial", "routines", "ai", "install", "selfcheck", "batch"}
 MODES = ("safe", "read", "ask", "god")
 TUNNELS = ("cloudflared", "ngrok", "ssh")
@@ -71,6 +71,7 @@ READ_ONLY = frozenset({
     "weather_report", "show_timetable", "todays_classes", "list_snippets", "todo_list", "list_links", "show_contacts", "show_ledger",
     "upcoming_bills", "upcoming_birthdays", "show_env_variables", "show_path", "health_check", "world_time", "week_number",
     "weekday_of", "sunrise_sunset", "news_headlines", "define_word", "wiki_summary", "stock_price", "gold_price",
+    "vault", "find_todo", "find_secrets", "env_diff", "log_analyze", "semver_compare", "identify_file", "ssh_key_audit",
 })
 _WRITERS = {"add_expense", "note_add", "shopping_add", "shopping_remove", "habit_done", "remind_me", "add_countdown"}
 

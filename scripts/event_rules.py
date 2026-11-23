@@ -28,7 +28,7 @@ def rules():
 
 
 def h(s):
-    return hashlib.sha1(s.encode("utf-8")).hexdigest()[:12]
+    return hashlib.sha1(s.encode("utf-8"), usedforsecurity=False).hexdigest()[:12]
 
 
 def clean(s):                                       # an item's text may be written by a stranger: it must never become a second command

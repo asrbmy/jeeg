@@ -1,6 +1,8 @@
 # keywords: find file, search file, locate, where is, find document, find my, look for file, file search
 # desc: Find files by name under your home folder (find file invoice pdf)
 # category: files
+# patterns: ^\s*find\s+(?:my\s+)?files?\b
+# priority: 3
 # usage: find file <name words>
 import fnmatch
 from pathlib import Path

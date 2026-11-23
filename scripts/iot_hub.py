@@ -1,7 +1,7 @@
 # keywords: iot, iot scene, iot list, my devices, all devices, home scene, run scene, scenes
 # desc: One place for your home devices and computers: see everything (iot list) and save scenes that do several things at once (iot scene add night = device off lamp ; mqtt publish home lights/hall off)
 # category: network
-# usage: iot list | iot scene add <name> = <step> ; <step> | iot scene run <name> | iot scene list | iot scene remove <name>
+# usage: iot list | iot status | iot scene add <name> = <step> ; <step> | iot scene run <name> | iot scene list | iot scene remove <name>
 # rawargs: full
 # network: yes
 # patterns: ^\s*iot\b
@@ -10,28 +10,13 @@ import json, os, re, subprocess, sys, time
 from pathlib import Path
 from _lib import args_text, fail
 from _conn import load_reg, save_reg, clean_name
+import _steps
 
 t = re.sub(r"^\s*iot\s*", "", args_text(), flags=re.I).strip()
 words = t.split()
 cmd = words[0].lower() if words else "list"
-ALLOWED = {"device", "devices", "mqtt", "serial", "computer", "computers", "ssh", "wake", "pause"}
-LINK_OK = {"send", "run", "ping"}
 MAX_STEPS = 20
-
-
-def check_step(s):
-    w = s.split()
-    if not w:
-        fail("A scene step is empty.")
-    first = w[0].lower()
-    if first == "link":
-        if len(w) < 2 or w[1].lower() not in LINK_OK:
-            fail("Scenes can use  link send / link run / link ping  only.")
-    elif first == "pause":
-        if len(w) != 2 or not w[1].isdigit() or int(w[1]) > 60:
-            fail("Use  pause <seconds>  (up to 60).")
-    elif first not in ALLOWED:
-        fail(f"A scene step can be: {', '.join(sorted(ALLOWED - {'devices', 'computers'}))}, link send/run/ping. Not '{first}'.")
+check_step = _steps.check_step
 
 
 if cmd == "list":
@@ -64,6 +49,19 @@ if cmd == "list":
         print("Scenes:  " + ", ".join(sorted(sc)))
     if not shown:
         print("Nothing saved yet. Add a smart plug (device add), an MQTT broker (mqtt add), a computer (computer add) or pair another JeeG (link pair).")
+elif cmd == "status":
+    devs = load_reg("devices")
+    if not devs:
+        print("No smart devices saved. Add one:  device add lamp shelly 192.168.1.50")
+    on = off = down = 0
+    for name in sorted(devs):
+        good, line = _steps.run_step(f"device status {name}", timeout=15)
+        text = line.upper()
+        state = "ON" if (good and " IS ON" in text) else "OFF" if (good and " IS OFF" in text) else "not reachable"
+        on, off, down = on + (state == "ON"), off + (state == "OFF"), down + (state == "not reachable")
+        print(f"  {name:<16}{state}")
+    if devs:
+        print(f"{on} on, {off} off, {down} not reachable.")
 elif cmd == "scene":
     sub = words[1].lower() if len(words) > 1 else "list"
     sc = load_reg("scenes")
@@ -98,17 +96,9 @@ elif cmd == "scene":
         engine = Path(__file__).resolve().parent.parent / "jeeg.py"
         bad = 0
         for i, s in enumerate(sc[name], 1):
-            check_step(s)                                   # the file could have been edited by hand
-            if s.split()[0].lower() == "pause":
-                time.sleep(int(s.split()[1]))
-                print(f"  {i}. waited {s.split()[1]} s")
-                continue
-            r = subprocess.run([sys.executable, str(engine), s], capture_output=True, text=True, timeout=120,
-                               stdin=subprocess.DEVNULL, env=dict(os.environ))     # no --yes: steps that need a yes will say so
-            lines = [x for x in (r.stdout + "\n" + r.stderr).splitlines() if x.strip() and not x.startswith(">>") and not re.search(r"^(ok|failed.*) in [\d.]+s$", x)]
-            out = (lines[-1] if lines else "")[:140]
-            print(f"  {i}. {s}  ->  {'ok' if r.returncode == 0 else 'FAILED'}  {out}")
-            bad += r.returncode != 0
+            good, out = _steps.run_step(s)                    # checked again here: the file could have been edited by hand; no --yes
+            print(f"  {i}. {s}  ->  {'ok' if good else 'FAILED'}  {out}")
+            bad += not good
         print(f"Scene '{name}': {len(sc[name]) - bad} of {len(sc[name])} steps worked." if bad else f"Scene '{name}' done.")
         if bad:
             sys.exit(1)

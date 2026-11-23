@@ -53,6 +53,35 @@ ok(app.entry.get() == "shutdown pc", "Up brings back the last line")
 app.entry.delete(0, "end"); app.entry.insert(0, "clear"); app.submit(); root.update()
 ok("gst 100 18" not in app.text(), "clear empties the panel")
 go("list money"); ok("[money]" in app.text() and "add expense" in app.text(), "category listing")
+# Computers menu
+m = app.computers_menu
+idx = {m.entrycget(i, "label"): i for i in range(m.index("end") + 1) if m.type(i) == "command"}
+labels = list(idx)
+ok("Paired computers" in labels and "Channels" in labels and "Bridge rules" in labels and "How to pair (needs a terminal)..." in labels, "Computers menu entries: " + str(labels))
+class Inline:                                   # no mainloop here, so run the worker on this thread
+    def __init__(self, target=None, daemon=None, **k): self.t = target
+    def start(self): self.t()
+real_thread = jeeg_gui.threading.Thread
+jeeg_gui.threading.Thread = Inline
+m.invoke(idx["Paired computers"])
+jeeg_gui.threading.Thread = real_thread
+import time
+for _ in range(150):
+    root.update()
+    if "No paired" in app.text(): break
+    time.sleep(0.1)
+ok("task> link peers" in app.text() and ("No paired" in app.text()), "menu runs link peers: " + app.text()[-200:])
+shown = []
+app.messagebox.showinfo = lambda *a, **k: shown.append(a)
+m.invoke(idx["How to pair (needs a terminal)..."])
+ok(shown and "link listen" in shown[0][1] and "6-digit" in shown[0][1], "pairing help explains the terminal step")
+import tkinter.simpledialog as sd
+answers = iter(["beta", "full"])
+sd.askstring = lambda *a, **k: next(answers)
+asked2 = []
+app.messagebox.askyesno = lambda *a, **k: (asked2.append(a), False)[1]
+app.ask_level()
+ok(asked2 and "link level" not in app.text().split("link peers")[-1], "full access asks first, and No does nothing")
 root.destroy()
 print(f"{P} passed, {F} failed")
 sys.exit(1 if F else 0)

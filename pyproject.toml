@@ -28,12 +28,14 @@ ocr = ["pytesseract", "pillow"]
 [project.urls]
 Homepage = "https://github.com/asrbmy/jeeg"
 Issues = "https://github.com/asrbmy/jeeg/issues"
+Author = "https://asrbmy.github.io"
+"Link with iQ" = "https://linkwithiq.github.io"
 
 [project.scripts]
 jeeg = "jeeg:cli"
 
 [tool.setuptools]
-py-modules = ["jeeg", "jeeg_cmds", "jeeg_api", "jeeg_bridge", "jeeg_autorun", "jeeg_remote", "jeeg_connect", "jeeg_gui", "jeeg_policy", "jeeg_migrate", "jeeg_link", "jeeg_relay"]
+py-modules = ["jeeg", "jeeg_cmds", "jeeg_api", "jeeg_bridge", "jeeg_autorun", "jeeg_remote", "jeeg_connect", "jeeg_gui", "jeeg_policy", "jeeg_migrate", "jeeg_link", "jeeg_relay", "jeeg_chan", "jeeg_mind", "jeeg_agent"]
 packages = ["jeeg_scripts"]
 package-dir = { "jeeg_scripts" = "scripts" }
 

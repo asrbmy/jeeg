@@ -1,12 +1,13 @@
 {
   "manifest_version": 3,
   "name": "JeeG",
-  "version": "0.1.0",
-  "description": "Run a JeeG task on the text you selected. Talks only to JeeG on this computer (127.0.0.1).",
-  "permissions": ["storage", "activeTab", "scripting"],
+  "version": "0.2.0",
+  "description": "Run JeeG tasks on selected text, the page title or a link. Talks only to JeeG on this computer (127.0.0.1).",
+  "permissions": ["storage", "activeTab", "scripting", "contextMenus"],
   "host_permissions": ["http://127.0.0.1/*"],
+  "background": { "service_worker": "background.js", "scripts": ["background.js"] },
   "action": { "default_popup": "popup.html", "default_title": "JeeG" },
   "options_page": "options.html",
-  "minimum_chrome_version": "102",
-  "browser_specific_settings": { "gecko": { "id": "jeeg@localhost", "strict_min_version": "109.0" } }
+  "minimum_chrome_version": "121",
+  "browser_specific_settings": { "gecko": { "id": "jeeg@localhost", "strict_min_version": "121.0" } }
 }

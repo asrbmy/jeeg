@@ -26,7 +26,7 @@ if not cards: fail("No 'question | answer' lines found in " + str(p))
 prog = load("flashcards.json", {})
 today = datetime.date.today()
 GAP = [0, 1, 3, 7, 21]                      # days until a card returns, by box 1..5
-def cid(q): return hashlib.sha1(q.lower().encode("utf-8")).hexdigest()[:12]
+def cid(q): return hashlib.sha1(q.lower().encode("utf-8"), usedforsecurity=False).hexdigest()[:12]
 due = [c for c in cards if datetime.date.fromisoformat(prog.get(cid(c[0]), {}).get("due", today.isoformat())) <= today]
 new = sum(1 for c in cards if cid(c[0]) not in prog)
 if not due:

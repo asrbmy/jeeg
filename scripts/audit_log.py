@@ -17,7 +17,7 @@ if f.exists():
         try:
             d = json.loads(ln)
             rows.append({"time": datetime.datetime.fromtimestamp(int(d["t"])).strftime("%Y-%m-%d %H:%M:%S"), "task": str(d["s"]).replace("_", " "),
-                         "result": "ok" if d.get("rc") == 0 else f"exit {d.get('rc')}", "seconds": d.get("dt", 0), "asked_by": ("computer:" + str(d["peer"])) if d.get("peer") else ("AI" if d.get("ai") else "you")})
+                         "result": "ok" if d.get("rc") == 0 else f"exit {d.get('rc')}", "seconds": d.get("dt", 0), "asked_by": ("rule:" + str(d["bridge"])) if d.get("bridge") else ("computer:" + str(d["peer"])) if d.get("peer") else ("AI" if d.get("ai") else "you")})
         except (ValueError, KeyError, TypeError):
             continue
 if not rows:

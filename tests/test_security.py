@@ -125,5 +125,15 @@ for name, argv in (("crypto_price", ["bit&coin=x#y"]), ("daily_briefing", ["pune
 check("crypto request cannot be injected into", caught and "coin=x" not in caught[0] and "#" not in caught[0] and caught[0].count("&") == 2, caught)
 check("briefing request quotes text", len(caught) > 1 and "?x=1" not in caught[1], caught)
 
+# ---- v2.21 hardening: check website scheme, tar unpacking
+import subprocess as _sp, tempfile as _tf, tarfile as _tar, io as _io, os as _os
+_env = dict(_os.environ, JEEG_HOME=_tf.mkdtemp())
+_r = _sp.run([sys.executable, str(ROOT / "jeeg.py"), "check", "website", "file:///etc/passwd"], capture_output=True, text=True, env=_env, stdin=_sp.DEVNULL, timeout=60)
+check("check website refuses file:// addresses", _r.returncode != 0 and "http" in (_r.stdout + _r.stderr), _r.stdout + _r.stderr)
+_d = _tf.mkdtemp(); _t = _tar.open(_os.path.join(_d, "evil.tar"), "w")
+_i = _tar.TarInfo("../escape.txt"); _i.size = 2; _t.addfile(_i, _io.BytesIO(b"hi")); _t.close()
+_r = _sp.run([sys.executable, str(ROOT / "jeeg.py"), "unzip", _os.path.join(_d, "evil.tar")], capture_output=True, text=True, env=_env, stdin=_sp.DEVNULL, timeout=60)
+check("a tar with ../ paths is refused", _r.returncode != 0 and not _os.path.exists(_os.path.join(_os.path.dirname(_d), "escape.txt")), _r.stdout + _r.stderr)
+
 print(f"security: {total - len(fails)}/{total} passed")
 sys.exit(1 if fails else 0)

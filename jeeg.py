@@ -648,6 +648,8 @@ def log_run(e: dict, rc: int, dt: float) -> None:
     rec = {"t": int(time.time()), "s": e["name"], "rc": rc, "dt": round(dt, 2)}
     if os.environ.get("JEEG_VIA_AI") == "1":
         rec["ai"] = 1                                   # the audit log tells you which runs an AI asked for
+    if os.environ.get("JEEG_VIA_BRIDGE"):
+        rec["bridge"] = os.environ["JEEG_VIA_BRIDGE"][:40]
     if os.environ.get("JEEG_VIA_PEER"):
         rec["peer"] = os.environ["JEEG_VIA_PEER"][:40]  # ...and which runs another JeeG computer asked for
     _append_line("log.jsonl", json.dumps(rec))
@@ -1473,6 +1475,30 @@ def revive_reminders(dirs, opt) -> None:
         pass
 
 
+def _exit_when_terminal_closes() -> None:
+    """If the terminal window disappears while we wait at the prompt, some readline builds spin at 100% CPU forever. Watch for the hang-up and leave."""
+    if os.name != "posix" or sys.stdin is None or not sys.stdin.isatty():
+        return
+    try:
+        import select
+        import threading
+        fd = sys.stdin.fileno()
+        p = select.poll()
+        p.register(fd, select.POLLHUP | select.POLLERR | select.POLLNVAL)
+
+        def watch():
+            while True:
+                time.sleep(1)
+                try:
+                    if p.poll(0):
+                        os._exit(0)
+                except (OSError, ValueError):
+                    os._exit(0)
+        threading.Thread(target=watch, daemon=True).start()
+    except (ImportError, OSError, ValueError):
+        pass
+
+
 def main(argv: list[str]) -> int:
     opt = {"yes": False, "dry": False, "timeout": None, "json": False, "out": None, "quiet": False}
     cli_dirs, words, i = [], [], 0
@@ -1575,11 +1601,16 @@ def main(argv: list[str]) -> int:
     print(f"JeeG {__version__} - {n} tasks. Say what to do ('list' for help, 'exit' to quit).")
     offer_tour(dirs, opt)
     nudge_backup()
+    _exit_when_terminal_closes()
+    blank = 0
     while True:
         try:
             line = input("task> ")
-        except (EOFError, KeyboardInterrupt):
+        except (EOFError, KeyboardInterrupt, OSError):      # OSError: the terminal window went away
             print()
+            return 0
+        blank = blank + 1 if not line.strip() else 0
+        if blank > 500:                                     # a closed terminal can answer with endless empty lines: stop instead of spinning
             return 0
         if handle(line, dirs, opt) is None:
             return 0

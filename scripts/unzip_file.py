@@ -31,8 +31,12 @@ elif tarfile.is_tarfile(src):
             fail("Archive contains unsafe entries; refusing to extract.")
         if sum(m.size for m in members if m.isfile()) > 20 * 1024 ** 3: fail("Archive expands to more than 20 GB; refusing.")
         dest.mkdir()
-        try: tf.extractall(dest, filter="data")
-        except TypeError: tf.extractall(dest)          # older Python without extraction filters
+        if hasattr(tarfile, "data_filter"):
+            tf.extractall(dest, filter="data")  # nosec B202 - members were checked above, and the data filter is applied
+        else:                                          # older Python without extraction filters: extract only plain files and folders, one by one
+            for m in members:
+                if not (m.isfile() or m.isdir()): fail("Archive contains unusual entries; refusing to extract.")
+                tf.extract(m, dest)
         n = len(members)
 else:
     fail("Not a supported archive (.zip, .tar, .tar.gz, .tgz).")
