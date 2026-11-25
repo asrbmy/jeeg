@@ -2,7 +2,7 @@
 
 Dates, time zones, reminders and timers, routines, to-dos, notes, journal, habits, birthdays, lists and reports.
 
-69 tasks. Each entry shows the **usage** (`<x>` you fill in, `[x]` optional), what the task does, how it behaves, other words that also find it, and the script file you can read or edit. Say the task name, or the usage with your words filled in. `explain <words>` shows how any phrase is matched; `<task> preview` or `--dry-run` shows what would happen without doing it.
+72 tasks. Each entry shows the **usage** (`<x>` you fill in, `[x]` optional), what the task does, how it behaves, other words that also find it, and the script file you can read or edit. Say the task name, or the usage with your words filled in. `explain <words>` shows how any phrase is matched; `<task> preview` or `--dry-run` shows what would happen without doing it.
 
 Categories on this page: [time](#time), [reminders](#reminders), [routines](#routines), [productivity](#productivity), [lists](#lists), [shopping](#shopping), [journal](#journal), [habits](#habits), [birthdays](#birthdays), [personal](#personal), [work](#work)
 
@@ -135,6 +135,14 @@ Categories on this page: [time](#time), [reminders](#reminders), [routines](#rou
 **What it does:** Pop up a notification for what is due: birthdays, bills, countdowns, medicine (what is due, notify due)  
 **Also found by:** `what is due`, `due today`, `due soon`, `check due`, `anything due`, `remind due`, `due items`  
 **Script:** `scripts/notify_due.py`
+
+### notify me
+
+**Usage:** `notify <text>`  
+**What it does:** Show a desktop notification (notify me dinner is ready, notify Front door opened)  
+**Also found by:** `notification`, `show notification`, `popup message`, `desktop alert`, `alert me`  
+**Your words:** the whole sentence is passed (quotes kept)  
+**Script:** `scripts/notify_me.py`
 
 ### pomodoro
 
@@ -313,6 +321,14 @@ Categories on this page: [time](#time), [reminders](#reminders), [routines](#rou
 **Also found by:** `notes`, `show notes`, `list notes`, `my notes`, `read notes`, `search notes`, `find note`, `recent notes`  
 **Script:** `scripts/note_list.py`
 
+### playbook
+
+**Usage:** `playbook add <name> = <step> ; <step> | playbook run <name> | playbook list | playbook show <name> | playbook remove <name>`  
+**What it does:** Save a reviewed multi-step job under a name and run it any time, by you or by an AI that is allowed to run but not change it (playbook add morning = show reminders ; what is due ; playbook run morning). Adding and removing are terminal only.  
+**Also found by:** `playbooks`, `saved job`, `reviewed job`, `multi step job`, `run playbook`, `ai playbook`  
+**Your words:** the whole sentence is passed (quotes kept)  
+**Script:** `scripts/playbook.py`
+
 ### study log
 
 **Usage:** `study log <subject> <time> | study report`  
@@ -373,6 +389,15 @@ Categories on this page: [time](#time), [reminders](#reminders), [routines](#rou
 **Also found by:** `passport expiry`, `licence expiry`, `license expiry`, `add document`, `my documents`, `remove document`, `id expiry`, `document expires`  
 **Your words:** the whole sentence is passed (quotes kept)  
 **Script:** `scripts/document_expiry.py`
+
+### family board
+
+**Usage:** `board add <text> | board list | board done <number> | board undo <number>`  
+**What it does:** A shared to-do board for a family or small team. Items sync to the paired computers you share the 'board' channel with (board add buy milk, board list, board done 2, channel share board with kitchen-pc)  
+**Behaviour:** can use the internet.  
+**Also found by:** `board`, `shared list`, `shared to do`, `shared chores`, `team board`, `board add`, `board done`  
+**Your words:** the whole sentence is passed (quotes kept)  
+**Script:** `scripts/family_board.py`
 
 ### meal planner
 

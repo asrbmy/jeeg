@@ -127,7 +127,7 @@ footer{padding-block:28px 48px;border-top:1px solid var(--line);color:var(--mute
     <div class="brand"><span class="mark" aria-hidden="true">G</span>JeeG</div>
     <div class="right">
       <nav class="nav" aria-label="Sections">
-        <a class="opt" href="#does">What it does</a><a class="opt" href="#how">How it works</a><a href="#install">Install</a><a href="#contact">Contact</a>
+        <a class="opt" href="https://github.com/asrbmy/jeeg/wiki">Wiki</a><a class="opt" href="#does">What it does</a><a class="opt" href="#how">How it works</a><a href="#install">Install</a><a href="#contact">Contact</a>
       </nav>
       <button class="theme" id="theme" type="button" aria-label="Switch colour theme">Theme</button>
     </div>
@@ -146,12 +146,12 @@ footer{padding-block:28px 48px;border-top:1px solid var(--line);color:var(--mute
         </form>
       </div>
       <div class="chips" id="chips"></div>
-      <p class="note">The demo shows recorded examples. The real JeeG runs on your own computer and knows all 496 tasks.</p>
+      <p class="note">The demo shows recorded examples. The real JeeG runs on your own computer and knows all 602 tasks.</p>
     </div>
 
     <section aria-label="Key facts">
       <div class="facts">
-        <div class="fact"><b>496</b><span>tasks included</span></div>
+        <div class="fact"><b>602</b><span>tasks included</span></div>
         <div class="fact"><b>65 ms</b><span>typical start time</span></div>
         <div class="fact"><b>16 MB</b><span>memory in use</span></div>
         <div class="fact"><b>0</b><span>packages for the core</span></div>
@@ -167,12 +167,14 @@ footer{padding-block:28px 48px;border-top:1px solid var(--line);color:var(--mute
         <div class="row"><h3>Files</h3><p><code>large folders downloads</code><code>rename photos by date pics</code><code>undo</code></p></div>
         <div class="row"><h3>Apps and web</h3><p><code>open youtube</code><code>send whatsapp to mom hi</code><code>weather in pune</code></p></div>
         <div class="row"><h3>System</h3><p><code>battery status</code><code>who uses port 3000</code><code>keep awake 2 hours</code></p></div>
+        <div class="row"><h3>Security</h3><p><code>find secrets myproject</code><code>env diff .env.example .env</code><code>integrity check ~/site</code></p></div>
+        <div class="row"><h3>Your own AI (optional)</h3><p><code>agent setup</code><code>agent goal tidy my downloads</code><code>skill add</code> Off until you set it up. Your model, your key or your own computer.</p></div>
         <div class="row"><h3>Developer</h3><p><code>git status</code><code>run tests</code><code>csv summary data.csv</code><code>text diff a.txt b.txt</code></p></div>
       </div>
     </section>
 
     <section id="how">
-      <div class="sec-head"><span class="label">How it works</span><h2>No model, no cloud</h2>
+      <div class="sec-head"><span class="label">How it works</span><h2>No model, no cloud, by default</h2>
         <p>Each script starts with a few header lines. JeeG scores your words against them and runs the best match. Nothing runs in the background.</p></div>
       <div class="rows">
         <div class="row"><h3>1. You type</h3><p>Plain words in any order. A typo or two is fine.</p></div>
@@ -237,7 +239,7 @@ footer{padding-block:28px 48px;border-top:1px solid var(--line);color:var(--mute
   <p style="text-align:center;margin:18px 0"><a href="tasks.html">Search all tasks</a></p></main>
 
   <footer>
-    <span><b>JeeG</b> &middot; MIT licence</span>
+    <span><b>JeeG</b> &middot; MIT licence &middot; made and maintained by <a href="https://asrbmy.github.io">asrbmy</a>, owned by <a href="https://linkwithiq.github.io">Link with iQ</a> &middot; <a href="https://github.com/asrbmy/jeeg/wiki">Wiki</a></span>
     <span>One folder of scripts. Your computer, your data. &middot; <a href="https://github.com/asrbmy/jeeg">GitHub</a></span>
   </footer>
 </div>
@@ -285,7 +287,7 @@ footer{padding-block:28px 48px;border-top:1px solid var(--line);color:var(--mute
       var r=el("div","route");r.appendChild(document.createTextNode("Ran the "));r.appendChild(el("b",null,m.task));r.appendChild(document.createTextNode(" task"));
       rep.appendChild(r);rep.appendChild(el("pre",null,m.out));
     }else{
-      rep.appendChild(el("p",null,"This demo only knows its recorded examples (use the buttons below). The real JeeG matches all 496 tasks and shows the closest ones when it is unsure."));
+      rep.appendChild(el("p",null,"This demo only knows its recorded examples (use the buttons below). The real JeeG matches all 602 tasks and shows the closest ones when it is unsure."));
     }
     a.appendChild(av);a.appendChild(rep);out.appendChild(a);out.scrollTop=out.scrollHeight;
   }

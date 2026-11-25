@@ -1,6 +1,6 @@
 # Examples Gallery
 
-A gallery of one-liners with their **real output**, captured from JeeG 2.20.0 on 17 November 2026. Each group was run in a fresh temporary home. Anything that depends on the date, the time or chance (coin flips, random numbers, passwords, "days left") will differ when you run it. For the complete list of tasks see the [Task Catalog](Task-Catalog).
+A gallery of one-liners with their **real output**, captured from JeeG 2.21.0 on 24 November 2026. Each group was run in a fresh temporary home. Anything that depends on the date, the time or chance (coin flips, random numbers, passwords, "days left") will differ when you run it. For the complete list of tasks see the [Task Catalog](Task-Catalog).
 
 ## Maths, units and tables
 
@@ -121,13 +121,13 @@ Time-zone and astronomy tasks work **offline**: sunrise and moon phase are calcu
 ```text
 task> time in london and tokyo
 >> world time  (time in london and tokyo)
-London        Tue 17 Nov  11:56 AM   (GMT, UTC+0000)
-Tokyo         Tue 17 Nov  08:56 PM   (JST, UTC+0900)
+London        Tue 24 Nov  03:41 PM   (GMT, UTC+0000)
+Tokyo         Wed 25 Nov  12:41 AM   (JST, UTC+0900)
 
 task> meeting time 9 am india in london
 >> convert time zone  (meeting 9 am india in london)
-Tue 17 Nov 09:00 AM in India (IST)
-  = Tue 17 Nov 03:30 AM in London (GMT)
+Tue 24 Nov 09:00 AM in India (IST)
+  = Tue 24 Nov 03:30 AM in London (GMT)
 
 task> unix timestamp 1700000000
 >> unix timestamp  (unix timestamp 1700000000)
@@ -145,13 +145,13 @@ task> days between 1 jan 2027 and 1 jan 2028
 
 task> sunrise delhi
 >> sunrise sunset  (delhi)
-Delhi, Tue 17 Nov 2026
-  sunrise 06:46 AM   sunset 05:28 PM   daylight 10h 42m
+Delhi, Tue 24 Nov 2026
+  sunrise 06:51 AM   sunset 05:26 PM   daylight 10h 34m
   (calculated offline, accurate to about 2 minutes; places: Ahmedabad, Bangalore, Bengaluru, Berlin, Bhopal, Chandigarh, Chennai, Colombo... see _astro.py for the full list)
 
 task> moon phase
 >> moon phase
-First quarter: about 52% lit, 7.6 days into the cycle
+Full moon: about 100% lit, 14.7 days into the cycle
 Next new moon:  about Wed 09 Dec 2026
 Next full moon: about Tue 24 Nov 2026
 (simple calculation, correct to within about a day; official dates can differ slightly)
@@ -162,27 +162,27 @@ Next full moon: about Tue 24 Nov 2026
 ```text
 task> flip coin
 >> flip coin
-Heads
+Tails
 
 task> roll 2d6
 >> roll dice  (2d6)
-2d6: [4, 5]  total 9
+2d6: [3, 1]  total 4
 
 task> random number 1 100
 >> random number  (1 100)
-13   (between 1 and 100)
+58   (between 1 and 100)
 
 task> random choice pizza, burger, pasta
 >> random choice  (pizza, burger, pasta)
--> burger
+-> pizza
 
 task> generate password 16
 >> generate password  (16)
-BrNIt_5Q#)QaPbCc
+sGGEeuxHadn2L@&E
 
 task> generate uuid
 >> generate uuid
-1992e3e8-a4fa-4df0-9bd0-ddeffd131099
+c974acb8-ec55-4312-867b-6ef331e44a78
 
 task> count words the quick brown fox
 >> count words  (quick brown fox)
@@ -269,21 +269,21 @@ task> electricity bill 250 units at 6.5 fixed 100
 
 task> add warranty laptop 12 mar 2027
 >> warranty tracker  (add warranty laptop 12 mar 2027)
-Saved laptop: 12 Mar 2027 (in 115 day(s)).
+Saved laptop: 12 Mar 2027 (in 108 day(s)).
 
 task> warranties
 >> warranty tracker  (warranties)
 Warranty entries, soonest first:
-  laptop                    2027-03-12  in 115 day(s)
+  laptop                    2027-03-12  in 108 day(s)
 
 task> add vehicle due insurance bike 15 dec 2026
 >> vehicle dues  (add vehicle due insurance bike 15 dec 2026)
-Saved insurance bike: 15 Dec 2026 (in 28 day(s)).
+Saved insurance bike: 15 Dec 2026 (in 21 day(s)).
 
 task> vehicle dues
 >> vehicle dues  (vehicle dues)
 Vehicle due entries, soonest first:
-  insurance bike            2026-12-15  in 28 day(s)    soon
+  insurance bike            2026-12-15  in 21 day(s)    soon
 
 task> trip budget 4 days 2 people 3000 a day fare 8000
 >> trip budget  (4 days 2 people 3000 a day fare 8000)

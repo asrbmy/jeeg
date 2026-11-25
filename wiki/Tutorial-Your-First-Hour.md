@@ -1,6 +1,6 @@
 # Tutorial: Your First Hour
 
-Every block of output below was captured by **really running JeeG** (version 2.20.0) in a fresh, empty home folder, on 17 November 2026. Your output will match except for things that depend on the day, the time or chance. Lines starting `>>` show which task JeeG chose and which words it passed on as arguments.
+Every block of output below was captured by **really running JeeG** (version 2.21.0) in a fresh, empty home folder, on 24 November 2026. Your output will match except for things that depend on the day, the time or chance. Lines starting `>>` show which task JeeG chose and which words it passed on as arguments.
 
 You will need JeeG installed ([Install and First Run](Install-and-First-Run)). You can type each line at the `task>` prompt (`jeeg`), or one at a time as `jeeg "<line>"`.
 
@@ -90,7 +90,7 @@ Note saved.
 
 task> show notes
 >> note list
-2026-11-17 17:26  idea for the weekend
+2026-11-24 21:11  idea for the weekend
 
 task> search my data dentist
 >> my data lookup  (search my dentist)
@@ -117,9 +117,9 @@ Recorded 90.00 under 'tea'.
 
 task> show expenses
 >> show expenses
-2026-11-17      250.00  lunch
-2026-11-17    1,200.00  groceries
-2026-11-17       90.00  tea
+2026-11-24      250.00  lunch
+2026-11-24    1,200.00  groceries
+2026-11-24       90.00  tea
 -- 3 item(s), total 1,540.00  (November 2026)
 
 task> expense total
@@ -167,8 +167,8 @@ task> days between 1 jan 2027 and 25 dec 2027
 
 task> age calculator 14 aug 2001
 >> age calculator  (14 aug 2001)
-Age: 25 years, 3 months  (9,226 days old)
-Next birthday in 270 days
+Age: 25 years, 3 months  (9,233 days old)
+Next birthday in 263 days
 
 task> week number 25 dec 2026
 >> week number  (week number 25 dec 2026)

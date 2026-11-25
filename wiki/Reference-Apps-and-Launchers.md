@@ -2,7 +2,7 @@
 
 Opening apps and websites, workspace shortcuts, social and AI sites, and the linked-app and MCP tasks.
 
-113 tasks. Each entry shows the **usage** (`<x>` you fill in, `[x]` optional), what the task does, how it behaves, other words that also find it, and the script file you can read or edit. Say the task name, or the usage with your words filled in. `explain <words>` shows how any phrase is matched; `<task> preview` or `--dry-run` shows what would happen without doing it.
+116 tasks. Each entry shows the **usage** (`<x>` you fill in, `[x]` optional), what the task does, how it behaves, other words that also find it, and the script file you can read or edit. Say the task name, or the usage with your words filled in. `explain <words>` shows how any phrase is matched; `<task> preview` or `--dry-run` shows what would happen without doing it.
 
 Categories on this page: [apps](#apps), [apps_setup](#apps-setup), [apps_write](#apps-write), [workspace](#workspace), [social](#social), [ai](#ai), [entertainment](#entertainment), [tools](#tools), [reference](#reference), [food](#food), [utility](#utility)
 
@@ -488,6 +488,15 @@ Categories on this page: [apps](#apps), [apps_setup](#apps-setup), [apps_write](
 
 ## ai
 
+### agent
+
+**Usage:** `agent goal <goal> careful (checks its own answer) | agent stats | agent setup [backup] | agent goal <what you want> [read|ask|safe] [steps 8] [for 10 minutes] [plan first] | agent plan <goal> | agent last | agent history | agent again <n> | agent audit | agent template list|run <name> | agent schedule add|list|run|on|off|remove | agent limit <calls> | agent status | agent test | agent forget`  
+**What it does:** Give JeeG a goal and a model you chose (Ollama, LM Studio, or your own Claude/ChatGPT/DeepSeek key) plans the steps; JeeG runs them and asks you before anything risky. agent setup | goal | plan | last | history | again | audit | template | schedule | limit | status | forget  
+**Behaviour:** can use the internet.  
+**Also found by:** `ai agent`, `agent goal`, `work on a goal`, `autonomous`, `do this for me step by step`, `agent setup`, `agent last`  
+**Your words:** the whole sentence is passed (quotes kept)  
+**Script:** `scripts/agent.py`
+
 ### open chatgpt
 
 **What it does:** Open ChatGPT  
@@ -512,6 +521,22 @@ Categories on this page: [apps](#apps), [apps_setup](#apps-setup), [apps_write](
 **What it does:** Open Perplexity (or ask it)  
 **Also found by:** `ai`, `answer`, `ask`, `search`  
 **Script:** `scripts/open_perplexity.py`
+
+### remember
+
+**Usage:** `remember <fact> [for 30 days] | remember review | remember list | remember search <words> | remember forget <number|all>`  
+**What it does:** Tell JeeG facts or preferences to remember on this computer (remember I prefer metric units); the agent uses them. remember list | remember search <words> | remember forget <number|all>. Never keeps passwords.  
+**Also found by:** `jeeg remember`, `memory list`, `what do you remember`, `forget memory`, `my preferences memory`, `remember that`  
+**Your words:** the whole sentence is passed (quotes kept)  
+**Script:** `scripts/remember.py`
+
+### skill
+
+**Usage:** `skill pack list|show|install <pack> | skill improve <name> | skill undo <name> | skill add <name> = <step> ; <step> | skill run <name> [read|ask|safe] | skill list | skill show <name> | skill describe <name> = <text> | skill remove <name> | skill export <name> | skill import <file>`  
+**What it does:** Save a list of plain-words steps as a skill and run it any time (skill add morning = show reminders ; what is due). The agent can use your skills. skill add | run | list | show | remove | describe | share  
+**Also found by:** `skills`, `jeeg skill`, `save skill`, `run skill`, `skill list`, `skill add`  
+**Your words:** the whole sentence is passed (quotes kept)  
+**Script:** `scripts/skill.py`
 
 
 ## entertainment

@@ -56,3 +56,7 @@
 ## Added later
 
 `jeeg gui` · `browser table|pdf|watch|changes|flow ...` · `add document ...` · `recurring add|apply` · `track start|stop|report` · `import bank <csv>` · `calendar file ...` · `mileage ...` · `80c ...` · `meal plan ...`
+
+## Agent, plugins and tools (v2.21)
+
+`agent setup [backup]` · `agent goal <goal> [safe|read|ask] [steps N] [for N minutes] [plan first] [careful]` · `agent plan|again|last|history|audit|stats|status|test|limit|forget` · `agent template ...` · `agent schedule add|list|on|off|remove|run` · `remember <fact>|list|search|forget|review` · `skill add|run|list|show|export|import|pack|improve|undo` · `vault copy|plan|apply|undo|listen|read|search|list|recent` · `find todo|secrets` · `env diff` · `log analyze` · `semver a vs b` · `identify file` · `ssh key audit` · `integrity save|check|list|forget` · Telegram `/goal ...`

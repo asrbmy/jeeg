@@ -2,7 +2,7 @@
 
 Status of your computer, power and screen control, volume and brightness, devices, and household helpers.
 
-57 tasks. Each entry shows the **usage** (`<x>` you fill in, `[x]` optional), what the task does, how it behaves, other words that also find it, and the script file you can read or edit. Say the task name, or the usage with your words filled in. `explain <words>` shows how any phrase is matched; `<task> preview` or `--dry-run` shows what would happen without doing it.
+59 tasks. Each entry shows the **usage** (`<x>` you fill in, `[x]` optional), what the task does, how it behaves, other words that also find it, and the script file you can read or edit. Say the task name, or the usage with your words filled in. `explain <words>` shows how any phrase is matched; `<task> preview` or `--dry-run` shows what would happen without doing it.
 
 Categories on this page: [system](#system), [power](#power), [hardware](#hardware), [home](#home), [selfcheck](#selfcheck)
 
@@ -168,6 +168,14 @@ Categories on this page: [system](#system), [power](#power), [hardware](#hardwar
 **Also found by:** `display resolution`, `screen size`, `monitor resolution`, `display size`, `how many pixels`, `resolution`  
 **Script:** `scripts/screen_resolution.py`
 
+### setup check
+
+**Usage:** `setup check`  
+**What it does:** Check your saved devices, paired computers, bridge rules, ports and optional tools, and say what to fix (setup check). For the basic JeeG self-check use: doctor  
+**Behaviour:** can use the internet.  
+**Also found by:** `check setup`, `check my setup`, `check devices and link`, `devices and link check`, `are my devices ok`  
+**Script:** `scripts/setup_check.py`
+
 ### show printers
 
 **Usage:** `show printers`  
@@ -287,6 +295,14 @@ Categories on this page: [system](#system), [power](#power), [hardware](#hardwar
 **Also found by:** `android`, `adb`, `android phone`, `my android`, `android battery`, `android screenshot`, `phone over usb`  
 **Your words:** the whole sentence is passed (quotes kept)  
 **Script:** `scripts/android_adb.py`
+
+### bluetooth devices
+
+**Usage:** `bluetooth list | bluetooth connect <name> | bluetooth disconnect <name>`  
+**What it does:** List paired Bluetooth devices and connect or disconnect one (bluetooth list, bluetooth connect headphones). Uses the system's own tools; Linux needs bluetoothctl, macOS needs blueutil for connect.  
+**Also found by:** `bluetooth list`, `bluetooth connect`, `bluetooth disconnect`, `paired bluetooth`  
+**Your words:** the whole sentence is passed (quotes kept)  
+**Script:** `scripts/bluetooth_devices.py`
 
 ### mute volume
 

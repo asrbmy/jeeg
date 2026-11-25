@@ -2,7 +2,7 @@
 
 Calculators for loans, savings, tax, bills and splitting, your expense records and budgets, a lending ledger, a small stock list and invoices.
 
-52 tasks. Each entry shows the **usage** (`<x>` you fill in, `[x]` optional), what the task does, how it behaves, other words that also find it, and the script file you can read or edit. Say the task name, or the usage with your words filled in. `explain <words>` shows how any phrase is matched; `<task> preview` or `--dry-run` shows what would happen without doing it.
+53 tasks. Each entry shows the **usage** (`<x>` you fill in, `[x]` optional), what the task does, how it behaves, other words that also find it, and the script file you can read or edit. Say the task name, or the usage with your words filled in. `explain <words>` shows how any phrase is matched; `<task> preview` or `--dry-run` shows what would happen without doing it.
 
 Categories on this page: [money](#money)
 
@@ -269,6 +269,14 @@ Categories on this page: [money](#money)
 **Also found by:** `rd`, `recurring deposit`, `monthly deposit`, `post office rd`  
 **Your words:** passed through untouched  
 **Script:** `scripts/rd_maturity.py`
+
+### receipts
+
+**Usage:** `receipt add <amount> <category> <shop...> [date YYYY-MM-DD] | receipt attach <id> <file> | receipt list [YYYY[-MM]] | receipt total [YYYY[-MM]] | receipt report <YYYY> | receipt remove <id>`  
+**What it does:** Keep receipts for tax time: receipt add 450 groceries "Big Bazaar", receipt attach 3 photo.jpg, receipt list 2026-11, receipt total 2026-11, receipt report 2026  
+**Also found by:** `receipt`, `add receipt`, `receipt total`, `keep receipt`, `bill receipt`, `receipt list`, `receipt report`  
+**Your words:** the whole sentence is passed (quotes kept)  
+**Script:** `scripts/receipts.py`
 
 ### recurring costs
 

@@ -2,7 +2,7 @@
 
 Finding, organising, renaming and cleaning files; folders; backups; the clipboard; snippets; data files.
 
-71 tasks. Each entry shows the **usage** (`<x>` you fill in, `[x]` optional), what the task does, how it behaves, other words that also find it, and the script file you can read or edit. Say the task name, or the usage with your words filled in. `explain <words>` shows how any phrase is matched; `<task> preview` or `--dry-run` shows what would happen without doing it.
+76 tasks. Each entry shows the **usage** (`<x>` you fill in, `[x]` optional), what the task does, how it behaves, other words that also find it, and the script file you can read or edit. Say the task name, or the usage with your words filled in. `explain <words>` shows how any phrase is matched; `<task> preview` or `--dry-run` shows what would happen without doing it.
 
 Categories on this page: [files](#files), [folders](#folders), [backup](#backup), [clipboard](#clipboard), [snippets](#snippets), [data](#data), [security](#security)
 
@@ -385,6 +385,14 @@ Categories on this page: [files](#files), [folders](#folders), [backup](#backup)
 **Also found by:** `backup status`, `last backup`, `when did i back up`, `backup check`, `is my data backed up`, `data size`, `how much data`  
 **Script:** `scripts/backup_info.py`
 
+### backup share
+
+**Usage:** `backup share <computer>`  
+**What it does:** Share a backup zip of your JeeG data to a paired computer over the encrypted link (backup share kitchen-pc). It arrives in their Downloads/JeeG received folder. Asks first.  
+**Behaviour:** asks before running; can use the internet.  
+**Your words:** the whole sentence is passed (quotes kept)  
+**Script:** `scripts/backup_share.py`
+
 ### export data
 
 **Usage:** `export data [folder]`  
@@ -546,6 +554,30 @@ Categories on this page: [files](#files), [folders](#folders), [backup](#backup)
 **Your words:** passed through untouched  
 **Script:** `scripts/file_hash.py`
 
+### find secrets
+
+**Usage:** `find secrets [folder]`  
+**What it does:** Look for passwords, API keys and private keys left in a project folder before you share it (find secrets myproject). Values are hidden in the answer.  
+**Also found by:** `scan for secrets`, `leaked keys in code`, `api keys in code`, `hardcoded passwords`, `secret scan`, `leaked token`  
+**Your words:** the whole sentence is passed (quotes kept)  
+**Script:** `scripts/find_secrets.py`
+
+### identify file
+
+**Usage:** `identify file <file>`  
+**What it does:** Tell what a file really is from its first bytes, not its name, and warn if the name is misleading (identify file report.pdf)  
+**Also found by:** `what type of file`, `real file type`, `check file type`, `file signature`, `magic bytes`, `is this file really a pdf`  
+**Your words:** the whole sentence is passed (quotes kept)  
+**Script:** `scripts/identify_file.py`
+
+### integrity baseline
+
+**Usage:** `integrity save <folder> | integrity check <folder> | integrity list | integrity forget <folder>`  
+**What it does:** Save the fingerprints of a folder, then check later which files were added, changed or removed (integrity save myfolder, integrity check myfolder)  
+**Also found by:** `integrity save`, `integrity check`, `detect changed files`, `file tampering check`, `watch folder for changes`, `folder fingerprint`  
+**Your words:** the whole sentence is passed (quotes kept)  
+**Script:** `scripts/integrity_baseline.py`
+
 ### password strength
 
 **Usage:** `password strength "<password>"`  
@@ -563,6 +595,13 @@ Categories on this page: [files](#files), [folders](#folders), [backup](#backup)
 **Also found by:** `secure delete`, `wipe file`, `permanently delete file`, `erase file`, `destroy file`, `shred`, `securely delete`  
 **Your words:** passed through untouched  
 **Script:** `scripts/shred_file.py`
+
+### ssh key audit
+
+**Usage:** `ssh key audit`  
+**What it does:** Check your SSH keys and folder for weak or risky settings (old key types, no passphrase, loose permissions). Reads only; never shows a key.  
+**Also found by:** `audit ssh keys`, `check ssh keys`, `ssh key security`, `ssh folder permissions`, `authorized keys check`  
+**Script:** `scripts/ssh_key_audit.py`
 
 
 Back to [Home](Home) | [Task Catalog](Task-Catalog).

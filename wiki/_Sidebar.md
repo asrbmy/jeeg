@@ -33,6 +33,15 @@
 - [Phone, Web Page and Connectors](Phone-Web-Page-and-Connectors)
 - [Programs, Network and Shop](Programs-Network-and-Shop)
 
+**Agent and plugins**
+- [Agent, Memory and Skills](Agent-Memory-and-Skills)
+- [Plugins and Extensions](Plugins-and-Extensions)
+- [Obsidian and AI Websites](Obsidian-and-AI-Websites)
+- [Workflow Tools](Workflow-Tools)
+- [JeeG Link](JeeG-Link)
+- [AI, Channels, Bridge and Protocols](AI-Channels-Bridge-and-Protocols)
+- [Developer and Security Tasks](Developer-and-Security-Tasks)
+
 **Maintain**
 - [Testing and Releasing](Testing-and-Releasing)
 - [Troubleshooting](Troubleshooting)
@@ -40,3 +49,4 @@
 - [Glossary](Glossary)
 
 - [Admin and Audit](Admin-and-Audit)
+- [About and Credits](About-and-Credits)

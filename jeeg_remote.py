@@ -395,7 +395,7 @@ def run_for_ai(query, mode: str, approver: Approver, state, log=print, source: s
         out, err = show(d)
         return ("(preview only: nothing was changed)\n" + out), err
     if mode == "ask":
-        if not approver.ask(f"The AI wants JeeG to run:  {q}", key):
+        if not approver.ask(f"The AI wants JeeG to run:  {q}" + _card(q), key):
             log(f"{_ts()}  AI (ask) DENIED  {q}")
             return "The person at the computer said no (or did not answer).", True
     if not approver.write_ok():
@@ -410,6 +410,17 @@ def run_for_ai(query, mode: str, approver: Approver, state, log=print, source: s
         log(f"{_ts()}  AI ({mode}) confirmed  {q}")
         d = dispatch({"op": "run", "query": q, "yes": True, "timeout": 120}, allow_confirm=True, home=home, source=source + "-" + mode)
     return show(d)
+
+
+def _card(q: str) -> str:
+    """Two extra lines for an approval question: which task would run and what it does, so the answer is an informed one."""
+    try:
+        m = jeeg_api.find(q, limit=1)
+        if m:
+            return f"\n      -> task {m[0].name}: {(m[0].description or '')[:110]}"
+    except Exception:                                                  # noqa: BLE001
+        pass
+    return ""
 
 
 def _ts() -> str:

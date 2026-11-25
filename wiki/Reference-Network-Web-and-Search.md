@@ -2,11 +2,29 @@
 
 Network checks, watching pages, feeds, looking things up, maps, travel, mail and the real browser.
 
-75 tasks. Each entry shows the **usage** (`<x>` you fill in, `[x]` optional), what the task does, how it behaves, other words that also find it, and the script file you can read or edit. Say the task name, or the usage with your words filled in. `explain <words>` shows how any phrase is matched; `<task> preview` or `--dry-run` shows what would happen without doing it.
+87 tasks. Each entry shows the **usage** (`<x>` you fill in, `[x]` optional), what the task does, how it behaves, other words that also find it, and the script file you can read or edit. Say the task name, or the usage with your words filled in. `explain <words>` shows how any phrase is matched; `<task> preview` or `--dry-run` shows what would happen without doing it.
 
 Categories on this page: [network](#network), [web](#web), [search](#search), [maps](#maps), [travel](#travel), [info](#info), [email](#email), [links](#links), [browser](#browser)
 
 ## network
+
+### ai channel
+
+**Usage:** `channel export <name> [file] | channel search <word> | channel list | channel post <name> [as <label>:] <text> | channel read <name> [n] | channel wait <name> [seconds] | channel share <name> with <computer> | channel unshare <name> with <computer> | channel pull <name> from <computer> | channel remove <name>`  
+**What it does:** Shared message boards that people and AIs on different JeeG computers read and write (channel post lab hello, channel read lab, channel share lab with kitchen-pc). Messages from others are information, never commands.  
+**Behaviour:** can use the internet.  
+**Also found by:** `channel`, `channels`, `message board`, `shared channel`, `ai to ai`, `talk to other ai`  
+**Your words:** the whole sentence is passed (quotes kept)  
+**Script:** `scripts/ai_channel.py`
+
+### bridge
+
+**Usage:** `bridge add <name> when <source> [if contains <word>] then <step> ; <step> | bridge list | bridge remove <name> | bridge test <name> <message> | bridge run [minutes]`  
+**What it does:** Rules that connect things: when a message arrives from MQTT, a webhook, UDP/TCP, serial, WebSocket, a channel or a chat, do steps on something else (bridge add door when mqtt home door/front if contains open then ha on light.hall ; channel post lab door opened). Run them with: bridge run. Terminal only.  
+**Behaviour:** can use the internet.  
+**Also found by:** `bridge rule`, `when message then`, `if this then that`, `connect devices`, `protocol bridge`, `automation rule`  
+**Your words:** the whole sentence is passed (quotes kept)  
+**Script:** `scripts/bridge.py`
 
 ### check internet
 
@@ -63,6 +81,33 @@ Categories on this page: [network](#network), [web](#web), [search](#search), [m
 **Also found by:** `clear dns`, `dns cache`, `reset dns`, `dns problem`  
 **Script:** `scripts/flush_dns.py`
 
+### handoff
+
+**Usage:** `handoff allow <computer> | handoff ask <computer> <request> | handoff inbox | handoff reply <id> <text> | handoff result <id> [seconds] | handoff list`  
+**What it does:** Ask the AI or person at another JeeG computer to do a job and get the answer back (handoff ask kitchen-pc summarise report.pdf, then handoff result <id>). Both sides must run: handoff allow <computer>  
+**Behaviour:** can use the internet.  
+**Also found by:** `hand off`, `ask another ai`, `job for another computer`, `ai job`, `delegate to other jeeg`  
+**Your words:** the whole sentence is passed (quotes kept)  
+**Script:** `scripts/handoff.py`
+
+### home assistant
+
+**Usage:** `ha add <name> <address> | ha states [filter] | ha on|off|toggle <entity> | ha call <domain.service> <entity> [json] | ha list | ha remove <name>`  
+**What it does:** Control Home Assistant (add it once with ha add home http://homeassistant.local:8123, then ha states light, ha on light.kitchen, ha call switch.turn_off switch.fan). The access token is asked for and kept private.  
+**Behaviour:** can use the internet.  
+**Also found by:** `ha`, `hass`, `smart home hub`, `home assistant lights`, `ha entity`  
+**Your words:** the whole sentence is passed (quotes kept)  
+**Script:** `scripts/home_assistant.py`
+
+### iot hub
+
+**Usage:** `iot list | iot status | iot scene add <name> = <step> ; <step> | iot scene run <name> | iot scene list | iot scene remove <name>`  
+**What it does:** One place for your home devices and computers: see everything (iot list) and save scenes that do several things at once (iot scene add night = device off lamp ; mqtt publish home lights/hall off)  
+**Behaviour:** can use the internet.  
+**Also found by:** `iot`, `iot scene`, `iot list`, `my devices`, `all devices`, `home scene`, `run scene`, `scenes`  
+**Your words:** the whole sentence is passed (quotes kept)  
+**Script:** `scripts/iot_hub.py`
+
 ### listening ports
 
 **What it does:** Show which programs are listening on network ports  
@@ -76,6 +121,24 @@ Categories on this page: [network](#network), [web](#web), [search](#search), [m
 **Also found by:** `network usage`, `bandwidth`, `download speed now`, `current speed`, `data usage now`, `upload speed now`, `network monitor`, `internet usage`  
 **Your words:** passed through untouched  
 **Script:** `scripts/live_network_speed.py`
+
+### modbus device
+
+**Usage:** `modbus read <host[:502]> holding|input|coil|discrete <address> [count] [unit N]`  
+**What it does:** Read Modbus TCP devices on your network such as PLCs and energy meters (modbus read 192.168.1.60 holding 0 2). Writing is a separate task that asks first: modbus write ...  
+**Behaviour:** can use the internet.  
+**Also found by:** `modbus`, `plc`, `modbus tcp`, `industrial controller`, `holding register`, `energy meter modbus`  
+**Your words:** the whole sentence is passed (quotes kept)  
+**Script:** `scripts/modbus_device.py`
+
+### modbus write
+
+**Usage:** `modbus write <host[:502]> holding <address> <value> | modbus write <host[:502]> coil <address> on|off`  
+**What it does:** Write to a Modbus TCP device (modbus write 192.168.1.60 coil 5 on, modbus write 192.168.1.60 holding 10 500). Asks first.  
+**Behaviour:** asks before running; can use the internet.  
+**Also found by:** `write plc`, `set modbus register`, `modbus coil`  
+**Your words:** the whole sentence is passed (quotes kept)  
+**Script:** `scripts/modbus_write.py`
 
 ### mqtt message
 
@@ -127,6 +190,24 @@ Categories on this page: [network](#network), [web](#web), [search](#search), [m
 **Your words:** passed through untouched  
 **Script:** `scripts/port_owner.py`
 
+### rest api
+
+**Usage:** `rest add <name> <https address> [bearer|header <Header-Name>|none] | rest get <name> [path] | rest list | rest remove <name>`  
+**What it does:** Save a web service once (rest add shop https://api.example.com bearer, you are asked for the key) and call it (rest get shop /orders, rest post shop /items {"name":"x"}).  
+**Behaviour:** can use the internet.  
+**Also found by:** `rest`, `api call`, `call api`, `http api`, `json api`, `api token`  
+**Your words:** the whole sentence is passed (quotes kept)  
+**Script:** `scripts/rest_api.py`
+
+### rest post
+
+**Usage:** `rest post <name> <path> <json>`  
+**What it does:** Send JSON to a saved web service (rest post shop /items {"name":"x"}). Asks first. Save the service with: rest add  
+**Behaviour:** asks before running; can use the internet.  
+**Also found by:** `post to api`, `send json to api`, `api post`  
+**Your words:** the whole sentence is passed (quotes kept)  
+**Script:** `scripts/rest_post.py`
+
 ### rss feed
 
 **Usage:** `feed add <url> [name] | feed list | feed remove <n> | read feeds [n]`  
@@ -154,6 +235,15 @@ Categories on this page: [network](#network), [web](#web), [search](#search), [m
 **Your words:** the whole sentence is passed (quotes kept)  
 **Script:** `scripts/scan_network.py`
 
+### setup home
+
+**Usage:** `setup home [192.168.1 | 192.168.1.50]`  
+**What it does:** Look on your home network for Home Assistant, MQTT brokers, Shelly and Tasmota plugs, and print the exact commands to save them (setup home, or setup home 192.168.1)  
+**Behaviour:** can use the internet.  
+**Also found by:** `find home devices`, `discover devices`, `find smart home`, `scan for devices`, `home setup`, `find mqtt`, `find home assistant`  
+**Your words:** the whole sentence is passed (quotes kept)  
+**Script:** `scripts/setup_home.py`
+
 ### share file
 
 **Usage:** `send <file> to my phone`  
@@ -178,6 +268,15 @@ Categories on this page: [network](#network), [web](#web), [search](#search), [m
 **Also found by:** `smart plug`, `device on`, `device off`, `shelly`, `tasmota`, `switch device`, `home device`  
 **Your words:** the whole sentence is passed (quotes kept)  
 **Script:** `scripts/smart_device.py`
+
+### socket tools
+
+**Usage:** `tcp send <host:port> <text> | tcp read <host:port> [seconds] | udp send <host:port> <text> | udp listen <port> [seconds] | ws send <ws://address> <text> | ws read <ws://address> [seconds]`  
+**What it does:** Talk to devices over plain TCP, UDP or WebSocket on your own network (tcp send 192.168.1.40:9000 hello, udp send 192.168.1.40:4210 on, udp listen 4210 10, ws send ws://192.168.1.5:81 hi)  
+**Behaviour:** can use the internet.  
+**Also found by:** `tcp`, `udp`, `websocket`, `ws`, `raw socket`, `send tcp message`, `send udp packet`, `listen udp`  
+**Your words:** the whole sentence is passed (quotes kept)  
+**Script:** `scripts/socket_tools.py`
 
 ### ssh hosts
 
@@ -245,6 +344,15 @@ Categories on this page: [network](#network), [web](#web), [search](#search), [m
 **What it does:** Show the Wi-Fi network you are connected to  
 **Also found by:** `wifi`, `wi-fi`, `ssid`, `wireless`, `signal`, `wifi name`, `which wifi`, `network name`  
 **Script:** `scripts/wifi_info.py`
+
+### zigbee devices
+
+**Usage:** `zigbee devices <broker> | zigbee on|off|toggle <broker> <device> | zigbee set <broker> <device> <key> <value> | zigbee get <broker> <device>`  
+**What it does:** Switch Zigbee devices through zigbee2mqtt over your saved MQTT broker (zigbee devices home, zigbee on home hall-lamp, zigbee off home hall-lamp, zigbee set home hall-lamp brightness 120). Save the broker first: mqtt add  
+**Behaviour:** can use the internet.  
+**Also found by:** `zigbee`, `zigbee2mqtt`, `zigbee lights`, `z2m`  
+**Your words:** the whole sentence is passed (quotes kept)  
+**Script:** `scripts/zigbee_devices.py`
 
 
 ## web

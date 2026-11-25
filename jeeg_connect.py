@@ -154,6 +154,7 @@ def handle_message(tg: Telegram, msg: dict, st: dict) -> bool:
             tg.send(cid, "On it. I will ask on the computer before anything risky.")
             res = jeeg_agent.run_goal(goal, cfg, st["mode"], st["approver"], st["state"], log, "telegram", st["extra"],
                                       say=lambda line: tg.send(cid, line.strip()[:300]), max_steps=8, minutes=8)
+            jeeg_agent.park_suggestions(st["state"], res, "telegram")
             tg.send(cid, ("Question: " + res["answer"] + "\n(Ask again with the answer in the goal.)") if res["outcome"] == "question" else (res["answer"] or "(no answer)")[:3500])
         except Exception as e:                                                 # noqa: BLE001  the bot must keep running
             tg.send(cid, f"Could not run that goal: {e}"[:300])

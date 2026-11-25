@@ -1,6 +1,6 @@
 # Recipes and Workflows
 
-Longer, realistic sequences. Every transcript is real output captured from JeeG 2.20.0 on 17 November 2026 in a clean temporary home folder (so lists start empty). Dates, "days left" figures and anything random depend on when you run it. Files used in the examples are created for the demo; **the folder `~` below stands for the temporary home**.
+Longer, realistic sequences. Every transcript is real output captured from JeeG 2.21.0 on 24 November 2026 in a clean temporary home folder (so lists start empty). Dates, "days left" figures and anything random depend on when you run it. Files used in the examples are created for the demo; **the folder `~` below stands for the temporary home**.
 
 Contents: [Month of spending](#recipe-1-a-month-of-spending) | [Compare two loans](#recipe-2-compare-two-loans) | [Save for a goal](#recipe-3-save-for-a-goal) | [Tidy Downloads safely](#recipe-4-tidy-downloads-safely) | [Daily health log](#recipe-5-a-daily-health-log) | [Student week](#recipe-6-a-student-week) | [People and money owed](#recipe-7-people-birthdays-and-who-owes-whom) | [Small shop](#recipe-8-a-small-shop) | [Text tricks](#recipe-9-text-tricks) | [Your own routine](#recipe-10-your-own-routine) | [Backup](#recipe-11-back-up-your-data) | [Git without leaving JeeG](#recipe-12-git-without-leaving-jeeg) | [Make your own task](#recipe-13-make-your-own-task) | [Preview before you act](#recipe-14-see-what-would-happen-first)
 
@@ -52,11 +52,11 @@ Spending - November 2026
 
 task> spending forecast
 >> spending forecast
-Day 17 of 30: spent 18,500.00
-At this pace the month ends near 32,647.06  (about 1,088.24 a day; 14,147.06 still to come)
+Day 24 of 30: spent 18,500.00
+At this pace the month ends near 23,125.00  (about 770.83 a day; 4,625.00 still to come)
 Against your budgets (projected):
-  eating-out           3,882.35 of 2,000.00       OVER
-  groceries            6,176.47 of 3,000.00       OVER
+  eating-out           2,750.00 of 2,000.00       OVER
+  groceries            4,375.00 of 3,000.00       OVER
 Likely to go over: groceries, eating-out
 ```
 
@@ -217,14 +217,14 @@ Today: 1,000 ml of your 2,500 ml goal (40%). Change the goal with:  water goal 3
 
 task> sleep log 7.5 hours
 >> sleep log  (7.5 hours)
-Logged 7.5 hours for 2026-11-17.
-Recent nights: 11-17 7.5h
+Logged 7.5 hours for 2026-11-24.
+Recent nights: 11-24 7.5h
 Average of these 1: 7.5 h
 
 task> weight 72.5 kg
 >> weight log  (72.5 kg)
-Logged 72.5 kg for 2026-11-17.
-Recent: 11-17 72.5
+Logged 72.5 kg for 2026-11-24.
+Recent: 11-24 72.5
 
 task> weight goal 70
 >> weight log  (goal 70)
@@ -242,7 +242,7 @@ Saved vitamin-d: 08:00.  Say 'medicine today' to see it, 'medicine remind' to ge
 
 task> medicine today
 >> medicine today
-Medicines for Tuesday 17 November:
+Medicines for Tuesday 24 November:
   vitamin-d
      08:00  [ ] (missed?)
 
@@ -252,7 +252,7 @@ Ticked vitamin-d for 08:00.
 
 task> medicine today
 >> medicine today
-Medicines for Tuesday 17 November:
+Medicines for Tuesday 24 November:
   vitamin-d
      08:00  [x]
 ```
@@ -290,7 +290,7 @@ task> study report
 Last 7 days: 1.2 hours
   maths               0.8 h  ##
   physics             0.5 h  #
-Best day: 2026-11-17 (75 min)
+Best day: 2026-11-24 (75 min)
 
 task> attendance 42 of 50 need 75
 >> attendance percentage  (42 of 50 need 75)
@@ -358,8 +358,8 @@ Recorded 200.00 received from ravi. Still owed to you: 300.00.
 task> ledger ravi
 >> show ledger  (ledger ravi)
 ravi: owes you 300.00
-  2026-11-17  +500.00  lunch
-  2026-11-17  -200.00  settled
+  2026-11-24  +500.00  lunch
+  2026-11-24  -200.00  settled
 ```
 
 Ten-digit numbers are assumed Indian (+91). `send whatsapp to mom see you at 5` opens a WhatsApp chat with the message typed and **you** press Send. The ledger tasks (`lend`, `borrow`, `settle`) are private: they are never written to command history. `upcoming birthdays` and `what is due` pull these dates onto one list.
@@ -549,7 +549,7 @@ No expenses recorded for November 2026.
 Done
 ```
 
-Use `edit routines` to open the file in your editor. Date variables (`{today}`, `17 November 2026`, `{month}`, `{year}`, `{weekday}`, `{week}`, `{time}`) are filled in when the routine runs. To run a routine every morning by itself: `autorun add "run routine morning Asha" at 8:00 weekdays` (see [Routines, Aliases, Variables and Automation](Routines-Aliases-Variables-and-Automation)).
+Use `edit routines` to open the file in your editor. Date variables (`{today}`, `24 November 2026`, `{month}`, `{year}`, `{weekday}`, `{week}`, `{time}`) are filled in when the routine runs. To run a routine every morning by itself: `autorun add "run routine morning Asha" at 8:00 weekdays` (see [Routines, Aliases, Variables and Automation](Routines-Aliases-Variables-and-Automation)).
 
 ## Recipe 11: Back up your data
 
@@ -566,12 +566,12 @@ Note saved.
 
 task> backup status
 >> backup info
-4 data file(s), 452 B in total.
+5 data file(s), 480 B in total.
 Never backed up. Type:  export data
 
 task> export data ~/backups
 >> export data  (~/backups)
-Backed up 4 file(s) -> ~/backups/jeeg_backup_20261117_1726.zip
+Backed up 5 file(s) -> ~/backups/jeeg_backup_20261124_2111.zip
 Keep it somewhere safe (another drive or cloud folder). Restore with:  import data <file>
 ```
 
@@ -592,11 +592,11 @@ task> git diff
 
 task> git log
 >> git log
-* b700c52 (HEAD -> master) first
+* 7eaad27 (HEAD -> master) first
 
 task> git branch
 >> git branch
-* master b700c52 first
+* master 7eaad27 first
 
 task> git contributors
 >> git contributors
@@ -604,7 +604,7 @@ task> git contributors
 
 task> git recent changes
 >> git recent changes
-b700c52  2026-11-17  Demo  first
+7eaad27  2026-11-24  Demo  first
 
  a.txt | 1 +
  1 file changed, 1 insertion(+)
@@ -628,7 +628,7 @@ The first four lines are the **header**: they are how JeeG finds the task. Every
 
 ```text
 task> --dir ~/mytasks reindex
-Indexed 549 tasks.
+Indexed 603 tasks.
 
 task> --dir ~/mytasks explain tea timer green
    2.10  tea timer                args: green  <- would run
@@ -647,7 +647,7 @@ task> --dir ~/mytasks tea timer
 Brew black tea for 4 minutes at 100 C.
 
 task> --dir ~/mytasks selftest
-selftest: 549/549 ok
+selftest: 603/603 ok
 ```
 
 `reindex` rebuilt the cache (one more task than before); `explain` showed the new task winning; the run printed our line; `selftest` confirmed every task, including the new one, is described, compiles, and is found by its own name. To keep a folder of your own tasks permanently, set `TASK_SCRIPTS_DIR` or start with `--dir` each time (see [Plugins and Writing Your Own Tasks](Plugins-and-Writing-Your-Own-Tasks)).
@@ -662,7 +662,7 @@ selftest: 549/549 ok
 
 ```text
 task> --dry-run shutdown pc
-[dry-run] /usr/bin/python3 /home/claude/tr2/scripts/shutdown_pc.py
+[dry-run] /usr/local/bin/python3 /home/claude/tr2/scripts/shutdown_pc.py
 
 task> delete empty folders downloads preview
 >> delete empty folders  (downloads preview)
@@ -671,8 +671,12 @@ task> delete empty folders downloads preview
 
 task> privacy
 Your data lives only in ~/.jeeg (readable only by you). JeeG has no account and no telemetry, and nothing runs in the background except reminders you set yourself.
-483 of 548 tasks never touch the network. These 65 can, and only when you run them:
+520 of 602 tasks never touch the network. These 82 can, and only when you run them:
+  agent                 Give JeeG a goal and a model you chose (Ollama, LM Studio, or your own
+  ai channel            Shared message boards that people and AIs on different JeeG computers
+  backup share          Share a backup zip of your JeeG data to a paired computer over the enc
   breach check          Check if a password has appeared in known data leaks (only a 5-charact
+  bridge                Rules that connect things: when a message arrives from MQTT, a webhook
   browser do            Act on a page in the real browser, by the numbers that  browser look
   browser look          Look at websites in a real browser (browser open example.com, browser
   browser setup         Set up the real browser (browser start, browser start hidden, browser
@@ -690,12 +694,8 @@ Your data lives only in ~/.jeeg (readable only by you). JeeG has no account and 
   dns lookup            Look up the IP addresses of a domain
   event rules           Run a task when something new shows up in a linked app: rule add issue
   exchange rates        Table of today's exchange rates against the rupee (exchange rates, exc
-  find software         Find an app in your package manager (search app video editor), or list
-  fleet check           Ask every saved computer (see "computer add") for its health at once:
-  git clone             Clone a repository (git clone https://github.com/user/repo)
-  git pull              Pull the latest changes (fast-forward only)
-  git push              Push commits to the remote
-... (44 more lines)
+  family board          A shared to-do board for a family or small team. Items sync to the pai
+... (61 more lines)
 ```
 
 (The list printed by `privacy` is long; the demo shows only its start.)

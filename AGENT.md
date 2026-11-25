@@ -28,6 +28,54 @@ When a run ends the model may suggest a fact; **you** are asked `Keep this? [y/N
 The agent can run your skills (`{"skill": ...}`) and, after a run that worked, JeeG asks **you** whether to save the steps as a
 skill. Skills cannot start the agent, change memory or contain secrets. Each run still goes through the gate, so risky steps ask.
 
+## Plan first, then approve once
+    agent plan tidy my downloads            shows the whole plan with a label on every step; nothing runs
+    agent goal tidy my downloads plan first  shows the plan, asks "Run exactly this plan?", then runs only those steps
+Labels: `safe`, `looks only`, `asks first`, `terminal only (an AI cannot run it)`, `unknown task`. Steps marked "asks first" still ask
+when they come up; the plan cannot be changed while it runs, and a refused or failed step stops it. A last model call only writes the summary.
+
+## Scheduled goals (unattended, look-only)
+    agent schedule add brief daily at 08:00 read = tell me what is due and the weather
+    agent schedule add disk every 6 hours safe = check disk space and tell me if it is low
+    agent schedule list | on <name> | off <name> | remove <name> | notify <name>     agent schedule run [once]
+`agent schedule run` is a foreground loop in a JeeG window (leave it open, or start it with your computer's own startup tools).
+Scheduled runs use only `safe` or `read` tasks and nobody is asked anything, so anything that needs a yes is refused. Times:
+`every 15 minutes` to `every 30 days`, `daily at 08:00`, `weekdays at 08:00`. Up to 20 schedules, 6 steps and 5 minutes per run.
+`notify` sends the result with your own `notify me` setup. Facts a run suggests wait in `remember review`.
+
+## Templates, history, audit
+    agent template list | run <name>     cleanup-report, notes-week, morning-brief, disk-check, project-health (all look-only)
+    agent history      the last runs, with steps and model calls          agent again <number>    run one again
+    agent audit [n]    every request the model made, marked ok / REFUSED / FAILED
+
+## Limits and a backup model
+    agent limit 100              model calls per day (default 200); the agent stops when it is used up
+    agent setup backup           a second model used only when the main one fails (local first, a paid key as backup, or the reverse)
+`agent status` shows today's calls and both models.
+
+## Notes as memory
+When you have run `vault set`, the agent is told it may search and read your Obsidian notes (look only) with `vault search` and `vault read`.
+
+## More on memory and skills
+    remember I am travelling for 30 days     expires by itself        remember forget expired
+    remember review      facts a model, Telegram or a schedule suggested wait here until you say y or n
+    skill pack list | show <pack> | install <pack>     developer, student, home: read every step (with labels) before you say y
+    skill improve <name>    after a skill fails, a model proposes fixed steps; you see old and new side by side and say y; `skill undo <name>` goes back
+Imported skills and packs are shown step by step with the same labels before they are saved.
+
+## Smarter runs (v3)
+
+JeeG cannot make your model smarter, but it gives the model better help:
+
+- **Task hints.** The model is shown the real tasks that match the goal, with their usage lines, so it uses exact wording. In safe and read modes, tasks that would be refused are left out.
+- **Failure hints.** A failed request comes back with the closest task and how to use it.
+- **Careful mode.** `agent goal <goal> careful` makes one extra model call that checks the answer against the results. If a fact is not backed up, the model must find out or say it does not know. A failed check never blocks an answer.
+- **Several looks at once.** `{"run_many": [...]}` runs up to 4 look-only requests; anything risky is refused there and must run alone.
+- **Long runs.** Older results are shortened so small models keep the goal in view.
+- **Lessons.** When a wrong wording is followed by one that works, a lesson is parked for `remember review`. You decide; nothing is kept silently.
+- **Skills.** A saved skill that matches the goal is suggested to the model.
+- **`agent stats`** shows runs, finished goals, steps and calls per model, and a tip if a model finishes less than half its goals.
+
 ## From your phone (Telegram)
 `telegram start` as usual, pair the chat, then send `/goal tidy up and tell me what you did`. Progress and the answer come back to
 the chat. Risky steps still wait for **y** on the computer (or the phone approval, if you turned it on). While a goal runs
@@ -48,4 +96,8 @@ the chat. Risky steps still wait for **y** on the computer (or the phone approva
 - A model can still choose a bad plan or be misled by text it reads. The `ask` mode and `agent last` are your protection; use
   `read` for anything unattended-looking.
 - Tested with a scripted stand-in model, not the live services or a real Ollama/LM Studio. Not a copy of Cowork, OpenClaw or
-  Hermes: it has no screen control, no browser driving, and no background self-running; those would be separate work.
+  Hermes: it has no screen control and no browser driving (see the end of this file), and it does not run by itself unless you leave
+  `agent schedule run` open.
+- Sub-goals: a plan shows progress as "step 2 of 5"; the agent does not spawn separate sub-agents.
+- Not built, on purpose: screen control (looking at the screen and clicking) and browser driving. They need a vision model and
+  per-app approval, and I could not test them honestly here. Voice is not included, as you asked.

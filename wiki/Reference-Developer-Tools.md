@@ -2,7 +2,7 @@
 
 Git, projects, packages, data formats, HTTP, ports, containers and testing helpers.
 
-64 tasks. Each entry shows the **usage** (`<x>` you fill in, `[x]` optional), what the task does, how it behaves, other words that also find it, and the script file you can read or edit. Say the task name, or the usage with your words filled in. `explain <words>` shows how any phrase is matched; `<task> preview` or `--dry-run` shows what would happen without doing it.
+68 tasks. Each entry shows the **usage** (`<x>` you fill in, `[x]` optional), what the task does, how it behaves, other words that also find it, and the script file you can read or edit. Say the task name, or the usage with your words filled in. `explain <words>` shows how any phrase is matched; `<task> preview` or `--dry-run` shows what would happen without doing it.
 
 Categories on this page: [developer](#developer)
 
@@ -98,6 +98,22 @@ Categories on this page: [developer](#developer)
 **Also found by:** `dotenv`, `env file`, `missing env`, `check env`, `env example`, `environment variables file`, `env keys`  
 **Your words:** the whole sentence is passed (quotes kept)  
 **Script:** `scripts/env_check.py`
+
+### env diff
+
+**Usage:** `env diff <file1> <file2>`  
+**What it does:** Compare two .env files and show which keys are missing or different, without printing the values (env diff .env.example .env)  
+**Also found by:** `compare env files`, `compare dotenv`, `missing env variables`, `env file differences`  
+**Your words:** the whole sentence is passed (quotes kept)  
+**Script:** `scripts/env_diff.py`
+
+### find todo
+
+**Usage:** `find todo [folder]`  
+**What it does:** List TODO, FIXME and HACK comments in a project folder (find todo myproject)  
+**Also found by:** `find fixme`, `todo comments`, `list todos in code`, `fixme comments`, `leftover todo`  
+**Your words:** the whole sentence is passed (quotes kept)  
+**Script:** `scripts/find_todo.py`
 
 ### git branch
 
@@ -257,6 +273,14 @@ Categories on this page: [developer](#developer)
 **Behaviour:** asks before running.  
 **Also found by:** `free port`, `port in use`, `stop server`, `address already in use`, `close port`, `stop process on port`  
 **Script:** `scripts/kill_port.py`
+
+### log analyze
+
+**Usage:** `log analyze <file>`  
+**What it does:** Summarise a log file: counts by level, the most common errors, and the busiest minutes (log analyze app.log)  
+**Also found by:** `analyze log`, `log summary`, `log errors`, `count errors in log`, `summarize log file`, `log file report`  
+**Your words:** the whole sentence is passed (quotes kept)  
+**Script:** `scripts/log_analyze.py`
 
 ### mcp call
 
@@ -429,6 +453,14 @@ Categories on this page: [developer](#developer)
 **What it does:** Run the tests of the project in this folder (run tests): pytest, unittest, npm, go or cargo is detected  
 **Also found by:** `run the tests`, `test project`, `pytest`, `unit tests`, `npm test`, `run unittest`, `test my code`, `execute tests`, `check tests`  
 **Script:** `scripts/run_tests.py`
+
+### semver compare
+
+**Usage:** `semver <version> vs <version>`  
+**What it does:** Compare two version numbers the way package managers do (semver 1.2.3 vs 1.10.0)  
+**Also found by:** `semver`, `compare versions`, `version compare`, `which version is newer`, `version greater than`, `compare semver`  
+**Your words:** the whole sentence is passed (quotes kept)  
+**Script:** `scripts/semver_compare.py`
 
 ### serve folder
 
